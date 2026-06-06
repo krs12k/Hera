@@ -21,7 +21,21 @@
                         <label class="form-label">Email *</label>
                         <input type="email" name="email" class="form-control form-control-lg" required>
                     </div>
-                    <button type="submit" class="btn btn-warning btn-lg w-100 fw-bold">
+
+                    <!-- Consentement RGPD -->
+                    <div class="mb-4 p-3 rounded" style="background:#f8f9fa;border:1px solid #dee2e6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="consent" id="consent" required>
+                            <label class="form-check-label" for="consent" style="font-size:0.85rem">
+                                J'accepte que <strong>{{ resto.name }}</strong> conserve mon prénom et mon email
+                                pour gérer mon programme de fidélité.
+                                Ces données ne seront pas transmises à des tiers.
+                                <a href="{{ url_for('confidentialite') }}" target="_blank">En savoir plus</a>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
                         Je m'inscris !
                     </button>
                 </form>

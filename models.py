@@ -23,6 +23,7 @@ class Restaurant(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     clients = db.relationship('Client', backref='restaurant', lazy=True)
+    point_rules = db.relationship('PointRule', backref='restaurant', lazy=True, cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -39,6 +40,7 @@ class Client(db.Model):
     first_name = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), nullable=False)
     total_points = db.Column(db.Integer, default=0)
+    rgpd_consent = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     visits = db.relationship('Visit', backref='client', lazy=True)
@@ -58,3 +60,12 @@ class Visit(db.Model):
     amount_spent = db.Column(db.Float, nullable=True)
     note = db.Column(db.String(200), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class PointRule(db.Model):
+    __tablename__ = 'point_rules'
+
+    id = db.Column(db.Integer, primary_key=True)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'), nullable=False)
+    label = db.Column(db.String(100), nullable=False)
+    points = db.Column(db.Integer, nullable=False)

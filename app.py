@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
-from models import db, Restaurant, Client, Visit
+from models import db, Restaurant, Client, Visit, PointRule
 from config import Config
 import qrcode
 import io
@@ -99,7 +99,8 @@ def logout():
 def dashboard():
     clients = Client.query.filter_by(restaurant_id=current_user.id).order_by(Client.total_points.desc()).all()
     total_visits = Visit.query.filter_by(restaurant_id=current_user.id).count()
-    return render_template('dashboard/index.html', clients=clients, total_visits=total_visits)
+    rules = PointRule.query.filter_by(restaurant_id=current_user.id).all()
+    return render_template('dashboard/index.html', clients=clients, total_visits=total_visits, rules=rules)
 
 
 # ── Valider une visite client ───────────────────────────────────
@@ -127,7 +128,18 @@ def valider_visite(client_id):
         )
         return redirect(url_for('dashboard'))
 
-    points = current_user.points_per_visit
+    # Calcul des points via les règles cochées, sinon valeur par défaut
+    rule_ids = request.form.getlist('rule_ids')
+    if rule_ids:
+        rules = PointRule.query.filter(
+            PointRule.id.in_([int(r) for r in rule_ids]),
+            PointRule.restaurant_id == current_user.id
+        ).all()
+        points = sum(r.points for r in rules)
+        note = note or ', '.join(r.label for r in rules)
+    else:
+        points = current_user.points_per_visit
+
     client.total_points += points
     visit = Visit(
         client_id=client.id,
@@ -172,7 +184,8 @@ def parametres():
         flash('Paramètres mis à jour !', 'success')
         return redirect(url_for('parametres'))
 
-    return render_template('dashboard/parametres.html')
+    rules = PointRule.query.filter_by(restaurant_id=current_user.id).all()
+    return render_template('dashboard/parametres.html', rules=rules)
 
 
 # ── Envoyer un message aux clients ─────────────────────────────
@@ -213,6 +226,38 @@ def envoyer_message():
     return render_template('dashboard/message.html', clients=clients)
 
 
+# ── Règles de points ────────────────────────────────────────────
+@app.route('/dashboard/regles/ajouter', methods=['POST'])
+@login_required
+def ajouter_regle():
+    label = request.form.get('label', '').strip()
+    points_str = request.form.get('points', '').strip()
+    if label and points_str.isdigit() and int(points_str) > 0:
+        rule = PointRule(restaurant_id=current_user.id, label=label, points=int(points_str))
+        db.session.add(rule)
+        db.session.commit()
+        flash(f'Règle "{label}" ajoutée.', 'success')
+    else:
+        flash('Nom et points valides requis.', 'danger')
+    return redirect(url_for('parametres'))
+
+
+@app.route('/dashboard/regles/supprimer/<int:rule_id>', methods=['POST'])
+@login_required
+def supprimer_regle(rule_id):
+    rule = PointRule.query.filter_by(id=rule_id, restaurant_id=current_user.id).first_or_404()
+    db.session.delete(rule)
+    db.session.commit()
+    flash('Règle supprimée.', 'info')
+    return redirect(url_for('parametres'))
+
+
+# ── Politique de confidentialité ────────────────────────────────
+@app.route('/confidentialite')
+def confidentialite():
+    return render_template('confidentialite.html')
+
+
 # ── Page QR code ────────────────────────────────────────────────
 @app.route('/dashboard/qrcode')
 @login_required
@@ -246,9 +291,13 @@ def client_register(token):
         first_name = request.form['first_name']
         email = request.form['email']
 
+        consent = request.form.get('consent') == 'on'
         client = Client.query.filter_by(restaurant_id=resto.id, email=email).first()
         if not client:
-            client = Client(restaurant_id=resto.id, first_name=first_name, email=email)
+            if not consent:
+                flash('Tu dois accepter les conditions pour t\'inscrire.', 'danger')
+                return redirect(url_for('client_register', token=token))
+            client = Client(restaurant_id=resto.id, first_name=first_name, email=email, rgpd_consent=True)
             db.session.add(client)
             db.session.commit()
             flash('Bienvenue ! Tu es maintenant inscrit au programme de fidélité.', 'success')

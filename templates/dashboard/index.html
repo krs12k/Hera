@@ -181,7 +181,34 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Client : <strong id="modalClientName"></strong></p>
+                    <p class="mb-3">Client : <strong id="modalClientName"></strong></p>
+
+                    {% if rules %}
+                    <!-- Sélection des produits -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ce que le client a pris</label>
+                        <div id="rulesContainer">
+                            {% for rule in rules %}
+                            <div class="form-check p-2 mb-1 rounded rule-item" style="background:#f8f9fa">
+                                <input class="form-check-input rule-check" type="checkbox"
+                                       name="rule_ids" value="{{ rule.id }}"
+                                       id="rule{{ rule.id }}" data-points="{{ rule.points }}">
+                                <label class="form-check-label d-flex justify-content-between w-100" for="rule{{ rule.id }}">
+                                    <span>{{ rule.label }}</span>
+                                    <span class="badge" style="background:var(--turquoise);color:#fff">+{{ rule.points }} pts</span>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-2 text-end">
+                            <span class="text-muted" style="font-size:0.85rem">Total : </span>
+                            <strong id="totalPoints">0</strong>
+                            <span class="text-muted" style="font-size:0.85rem"> pts</span>
+                            <small class="text-muted d-block" style="font-size:0.78rem">Si aucun produit coché : {{ current_user.points_per_visit }} pts par défaut</small>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <div class="mb-3">
                         <label class="form-label">
                             Montant dépensé (€)
@@ -193,18 +220,20 @@
                                class="form-control" placeholder="Ex: 18.50"
                                {% if current_user.minimum_amount > 0 %}required{% endif %}>
                         {% if current_user.minimum_amount == 0 %}
-                            <small class="text-muted">Optionnel — aucun minimum défini</small>
+                            <small class="text-muted">Optionnel</small>
                         {% endif %}
                     </div>
+
+                    {% if not rules %}
                     <div class="mb-3">
                         <label class="form-label">Note sur la commande <span class="text-muted">(optionnel)</span></label>
-                        <input type="text" name="note" class="form-control"
-                               placeholder="Ex: menu midi, burger + dessert…">
+                        <input type="text" name="note" class="form-control" placeholder="Ex: menu midi, burger + dessert…">
                     </div>
+                    {% endif %}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-success fw-bold">+{{ current_user.points_per_visit }} pts</button>
+                    <button type="submit" class="btn btn-success fw-bold" id="submitVisite">Valider la visite</button>
                 </div>
             </form>
         </div>
@@ -217,6 +246,15 @@ modalVisite.addEventListener('show.bs.modal', function (event) {
     const btn = event.relatedTarget
     document.getElementById('modalClientName').textContent = btn.getAttribute('data-client-name')
     document.getElementById('formVisite').action = '/dashboard/valider/' + btn.getAttribute('data-client-id')
+})
+
+// Calcul dynamique des points dans le modal
+document.querySelectorAll('.rule-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+        const total = Array.from(document.querySelectorAll('.rule-check:checked'))
+            .reduce((sum, el) => sum + parseInt(el.dataset.points), 0)
+        document.getElementById('totalPoints').textContent = total
+    })
 })
 
 // Rotation de la flèche à l'ouverture/fermeture
