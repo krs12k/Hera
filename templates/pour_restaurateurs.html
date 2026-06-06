@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}hera — Pour les restaurateurs{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<div class="text-center py-5">
+    <h1 class="fw-bold" style="letter-spacing:-1px">Fait pour les restaurateurs<br>de quartier</h1>
+    <p class="text-muted mt-3 fs-5">Pas de commission. Pas de complexité. Juste vos clients qui reviennent.</p>
+    <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-lg px-5 mt-3">Commencer gratuitement</a>
+</div>
+
+<!-- Problème / Solution -->
+<div class="row g-4 my-4 align-items-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-4 h-100" style="background:#fff5f5">
+            <h5 class="fw-bold mb-3">❌ Sans hera</h5>
+            <ul class="text-muted" style="line-height:2">
+                <li>Cartes papier perdues ou oubliées</li>
+                <li>Aucune donnée sur vos clients fidèles</li>
+                <li>Impossible de les recontacter</li>
+                <li>Commissions à 25-30% sur les plateformes</li>
+                <li>Outils trop complexes ou trop chers</li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-4 h-100" style="background:#f0fffe">
+            <h5 class="fw-bold mb-3" style="color:var(--turquoise)">✅ Avec hera</h5>
+            <ul class="text-muted" style="line-height:2">
+                <li>QR code numérique, rien à perdre</li>
+                <li>Tableau de bord clair avec tous vos clients</li>
+                <li>Envoyez un message à tous vos inscrits</li>
+                <li>Zéro commission — c'est votre relation client</li>
+                <li>Prêt en 2 minutes, sans formation</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Chiffres clés -->
+<div class="row g-3 text-center my-5">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4">
+            <div class="fw-bold" style="font-size:2.5rem;color:var(--turquoise)">0€</div>
+            <div class="text-muted">de commission</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4">
+            <div class="fw-bold" style="font-size:2.5rem;color:var(--turquoise)">2 min</div>
+            <div class="text-muted">pour s'installer</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4">
+            <div class="fw-bold" style="font-size:2.5rem;color:var(--turquoise)">100%</div>
+            <div class="text-muted">vos données client</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-4">
+            <div class="fw-bold" style="font-size:2.5rem;color:var(--turquoise)">0</div>
+            <div class="text-muted">app à télécharger</div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA final -->
+<div class="text-center py-5 mb-4">
+    <h3 class="fw-bold">Rejoignez les restaurateurs belges qui fidélisent autrement</h3>
+    <p class="text-muted mt-2">Créez votre compte et générez votre QR code en moins de 2 minutes.</p>
+    <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-lg px-5 mt-2">Je crée mon compte gratuit</a>
+</div>
+
+{% endblock %}

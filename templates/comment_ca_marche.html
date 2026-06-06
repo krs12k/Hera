@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}hera — Comment ça marche{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="fw-bold" style="letter-spacing:-1px">Comment ça marche ?</h1>
+    <p class="text-muted mt-2">Simple pour le restaurateur, agréable pour le client.</p>
+</div>
+
+<!-- Étapes -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4 text-center">
+        <div class="step-circle">1</div>
+        <h5 class="mt-3 fw-bold">Le restaurateur s'inscrit</h5>
+        <p class="text-muted">Il crée son compte en 2 minutes et configure son programme : points par visite, montant minimum, récompense.</p>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="step-circle">2</div>
+        <h5 class="mt-3 fw-bold">Il affiche son QR code</h5>
+        <p class="text-muted">Un QR code unique est généré. Il l'imprime et le pose à la caisse. Aucun matériel supplémentaire nécessaire.</p>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="step-circle">3</div>
+        <h5 class="mt-3 fw-bold">Les clients s'inscrivent</h5>
+        <p class="text-muted">Le client scanne le QR code avec son téléphone, laisse son prénom et son email. C'est tout — pas d'app à télécharger.</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-4 text-center">
+        <div class="step-circle">4</div>
+        <h5 class="mt-3 fw-bold">La visite est validée</h5>
+        <p class="text-muted">Après chaque repas, le restaurateur valide la visite depuis son dashboard. Il note le montant dépensé et la commande.</p>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="step-circle">5</div>
+        <h5 class="mt-3 fw-bold">Les points s'accumulent</h5>
+        <p class="text-muted">Le client accumule des points à chaque visite validée. Il peut voir sa progression en rescannant le QR code.</p>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="step-circle">6</div>
+        <h5 class="mt-3 fw-bold">La récompense est débloquée</h5>
+        <p class="text-muted">Une fois le seuil atteint, le client présente son écran au restaurateur qui remet les points à zéro. Simple et honnête.</p>
+    </div>
+</div>
+
+<!-- CTA -->
+<div class="text-center py-4 bg-white rounded-4 shadow-sm p-5 mb-5">
+    <h3 class="fw-bold">Prêt à fidéliser vos clients ?</h3>
+    <p class="text-muted">Inscription gratuite, aucune carte de crédit requise.</p>
+    <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-lg px-5 mt-2">Créer mon compte</a>
+</div>
+{% endblock %}

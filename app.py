@@ -25,10 +25,22 @@ with app.app_context():
     db.create_all()
 
 
-# ── Page d'accueil ──────────────────────────────────────────────
+# ── Pages publiques ─────────────────────────────────────────────
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/comment-ca-marche')
+def comment_ca_marche():
+    return render_template('comment_ca_marche.html')
+
+@app.route('/pour-les-restaurateurs')
+def pour_restaurateurs():
+    return render_template('pour_restaurateurs.html')
+
+@app.route('/tarifs')
+def tarifs():
+    return render_template('tarifs.html')
 
 
 # ── Inscription restaurateur ────────────────────────────────────
