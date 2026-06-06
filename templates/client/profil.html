@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Mes points — {{ resto.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 text-center">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="fs-1">⭐</div>
+                <h2 class="mt-2">Bonjour {{ client.first_name }} !</h2>
+                <p class="text-muted">Chez <strong>{{ resto.name }}</strong></p>
+
+                <div class="display-4 fw-bold text-warning my-3">
+                    {{ client.total_points }} pts
+                </div>
+
+                <div class="progress mb-2" style="height: 20px;">
+                    <div class="progress-bar bg-warning" role="progressbar"
+                         style="width: {{ progression }}%">
+                        {{ progression }}%
+                    </div>
+                </div>
+                <p class="text-muted">
+                    {{ client.total_points }} / {{ resto.reward_threshold }} points
+                    pour obtenir : <strong>{{ resto.reward_description }}</strong>
+                </p>
+
+                {% if client.total_points >= resto.reward_threshold %}
+                <div class="alert alert-success mt-3">
+                    🎁 Tu as atteint la récompense ! Montre cet écran au restaurateur.
+                </div>
+                {% else %}
+                <p class="text-muted mt-3">
+                    Encore <strong>{{ resto.reward_threshold - client.total_points }} points</strong>
+                    avant ta récompense !
+                </p>
+                {% endif %}
+
+                <a href="{{ url_for('client_register', token=resto.qr_token) }}"
+                   class="btn btn-outline-dark btn-sm mt-2">Retour</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

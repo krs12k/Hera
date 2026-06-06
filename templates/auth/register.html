@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Inscription — Hera{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h2 class="mb-4 text-center">Créer mon compte restaurant</h2>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Nom du restaurant *</label>
+                        <input type="text" name="name" class="form-control" placeholder="Ex: Chez Marie" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email *</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe *</label>
+                        <input type="password" name="password" class="form-control" minlength="6" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Adresse</label>
+                        <input type="text" name="address" class="form-control" placeholder="Rue, ville">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" name="phone" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100 fw-bold">Créer mon compte</button>
+                </form>
+                <p class="text-center mt-3 text-muted">
+                    Déjà un compte ? <a href="{{ url_for('login') }}">Se connecter</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

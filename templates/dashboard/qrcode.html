@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Mon QR code — Hera{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 text-center">
+        <h2 class="mb-4">Mon QR code de fidélité</h2>
+
+        <div class="card border-0 shadow-sm p-4 mb-4">
+            <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR code" class="img-fluid mx-auto" style="max-width: 280px;">
+        </div>
+
+        <div class="alert alert-info text-start">
+            <strong>Comment l'utiliser ?</strong><br>
+            Imprime ce QR code et affiche-le à ta caisse. Tes clients le scannent avec leur téléphone et s'inscrivent en 10 secondes.
+        </div>
+
+        <div class="card border-0 shadow-sm p-3 mb-4 text-start">
+            <p class="text-muted mb-1"><small>Lien d'inscription (pour tester sur cet ordinateur) :</small></p>
+            <a href="{{ registration_url }}" class="text-break" target="_blank">{{ registration_url }}</a>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-center">
+            <a href="{{ url_for('generate_qr') }}" class="btn btn-warning" download="qrcode-fidelite.png">
+                Télécharger l'image PNG
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark">
+                Retour au dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

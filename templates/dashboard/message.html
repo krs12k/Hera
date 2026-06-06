@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Message clients — {{ current_user.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>✉️ Message à mes clients</h2>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark btn-sm">← Retour</a>
+        </div>
+
+        {% if not clients %}
+        <div class="alert alert-warning">
+            Aucun client inscrit pour le moment. Affiche ton QR code pour en avoir !
+        </div>
+        {% else %}
+
+        <div class="alert alert-info">
+            Ce message sera envoyé à <strong>{{ clients|length }} client(s)</strong> :
+            {{ clients|map(attribute='first_name')|join(', ') }}.
+        </div>
+
+        {% if not config.MAIL_USERNAME %}
+        <div class="alert alert-danger">
+            <strong>Email non configuré.</strong><br>
+            Pour envoyer des emails, définis les variables d'environnement
+            <code>MAIL_USERNAME</code> et <code>MAIL_PASSWORD</code> avant de lancer l'app.<br>
+            <small>Exemple avec Gmail : active "Mots de passe d'application" dans ton compte Google.</small>
+        </div>
+        {% endif %}
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Sujet</label>
+                        <input type="text" name="sujet" class="form-control"
+                               placeholder="Ex: Menu spécial ce weekend !" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Message</label>
+                        <textarea name="contenu" class="form-control" rows="6" required
+                                  placeholder="Écris ton message ici…"></textarea>
+                        <small class="text-muted">Ton nom ({{ current_user.name }}) sera ajouté automatiquement en signature.</small>
+                    </div>
+                    <button type="submit" class="btn btn-dark w-100 fw-bold"
+                            onclick="return confirm('Envoyer ce message à {{ clients|length }} client(s) ?')">
+                        Envoyer à {{ clients|length }} client(s)
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

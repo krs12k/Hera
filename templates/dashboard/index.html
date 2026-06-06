@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — {{ current_user.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h2>Bonjour, {{ current_user.name }} 👋</h2>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('envoyer_message') }}" class="btn btn-outline-dark">✉️ Message clients</a>
+        <a href="{{ url_for('parametres') }}" class="btn btn-outline-secondary">⚙️ Paramètres</a>
+        <a href="{{ url_for('qrcode_page') }}" class="btn btn-warning">📱 Mon QR code</a>
+    </div>
+</div>
+
+<!-- Statistiques -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="fs-1 fw-bold text-warning">{{ clients|length }}</div>
+            <div class="text-muted">Clients inscrits</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="fs-1 fw-bold text-success">{{ total_visits }}</div>
+            <div class="text-muted">Visites enregistrées</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="fs-1 fw-bold text-info">
+                {% if current_user.minimum_amount > 0 %}
+                    {{ "%.2f"|format(current_user.minimum_amount) }} €
+                {% else %}
+                    Aucun
+                {% endif %}
+            </div>
+            <div class="text-muted">Minimum pour 1 point</div>
+        </div>
+    </div>
+</div>
+
+<!-- Récompense actuelle -->
+<div class="alert alert-light border mb-4">
+    <strong>Récompense :</strong> {{ current_user.reward_description }}
+    à partir de <strong>{{ current_user.reward_threshold }} points</strong>
+    — <strong>{{ current_user.points_per_visit }} pts</strong> par visite validée
+</div>
+
+<!-- Liste clients -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title mb-3">Mes clients</h5>
+        {% if clients %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Prénom</th>
+                        <th>Email</th>
+                        <th>Points</th>
+                        <th>Progression</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    {% set progression = [((client.total_points / current_user.reward_threshold) * 100)|int, 100]|min %}
+                    <tr>
+                        <td><strong>{{ client.first_name }}</strong></td>
+                        <td class="text-muted">{{ client.email }}</td>
+                        <td>
+                            <span class="badge bg-warning text-dark fs-6">{{ client.total_points }} pts</span>
+                            {% if client.total_points >= current_user.reward_threshold %}
+                                <span class="badge bg-success ms-1">🎁 Récompense dispo</span>
+                            {% endif %}
+                        </td>
+                        <td style="min-width: 120px;">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" style="width: {{ progression }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ progression }}%</small>
+                        </td>
+                        <td>
+                            <!-- Bouton ouvre le modal de validation -->
+                            <button class="btn btn-sm btn-success"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalVisite"
+                                    data-client-id="{{ client.id }}"
+                                    data-client-name="{{ client.first_name }}">
+                                ✔ Valider visite
+                            </button>
+                            <!-- Réinitialiser points -->
+                            <form method="POST" action="{{ url_for('reinitialiser_points', client_id=client.id) }}"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Remettre les points à zéro pour {{ client.first_name }} ?')">
+                                <button class="btn btn-sm btn-outline-secondary">Récompense utilisée</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <div class="fs-1">📭</div>
+            <p class="mt-2">Aucun client encore inscrit.</p>
+            <p>Affichez votre QR code à la caisse pour que vos clients s'inscrivent.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal validation visite -->
+<div class="modal fade" id="modalVisite" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" id="formVisite">
+                <div class="modal-header">
+                    <h5 class="modal-title">Valider une visite</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Client : <strong id="modalClientName"></strong></p>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Montant dépensé (€)
+                            {% if current_user.minimum_amount > 0 %}
+                                <span class="text-danger">— minimum {{ "%.2f"|format(current_user.minimum_amount) }} €</span>
+                            {% endif %}
+                        </label>
+                        <input type="number" name="amount" step="0.01" min="0"
+                               class="form-control"
+                               placeholder="Ex: 18.50"
+                               {% if current_user.minimum_amount > 0 %}required{% endif %}>
+                        {% if current_user.minimum_amount == 0 %}
+                            <small class="text-muted">Optionnel — aucun minimum défini</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Note sur la commande <span class="text-muted">(optionnel)</span></label>
+                        <input type="text" name="note" class="form-control"
+                               placeholder="Ex: menu midi, burger + dessert…">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success fw-bold">
+                        +{{ current_user.points_per_visit }} pts
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const modalVisite = document.getElementById('modalVisite')
+modalVisite.addEventListener('show.bs.modal', function (event) {
+    const btn = event.relatedTarget
+    const clientId = btn.getAttribute('data-client-id')
+    const clientName = btn.getAttribute('data-client-name')
+    document.getElementById('modalClientName').textContent = clientName
+    document.getElementById('formVisite').action = '/dashboard/valider/' + clientId
+})
+</script>
+{% endblock %}

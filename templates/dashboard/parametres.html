@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Paramètres — {{ current_user.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Paramètres</h2>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark btn-sm">← Retour</a>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="POST">
+
+                    <h5 class="mb-3 text-muted">Infos du restaurant</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Nom du restaurant</label>
+                        <input type="text" name="name" class="form-control" value="{{ current_user.name }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Adresse</label>
+                            <input type="text" name="address" class="form-control" value="{{ current_user.address or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Téléphone</label>
+                            <input type="tel" name="phone" class="form-control" value="{{ current_user.phone or '' }}">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <h5 class="mb-3 text-muted">Programme de fidélité</h5>
+
+                    <div class="mb-3">
+                        <label class="form-label">Montant minimum pour gagner des points (€)</label>
+                        <input type="number" name="minimum_amount" step="0.01" min="0"
+                               class="form-control" value="{{ "%.2f"|format(current_user.minimum_amount) }}">
+                        <small class="text-muted">Mets 0 pour ne pas imposer de minimum.</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Points accordés par visite</label>
+                            <input type="number" name="points_per_visit" min="1"
+                                   class="form-control" value="{{ current_user.points_per_visit }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Points nécessaires pour la récompense</label>
+                            <input type="number" name="reward_threshold" min="1"
+                                   class="form-control" value="{{ current_user.reward_threshold }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Description de la récompense</label>
+                        <input type="text" name="reward_description" class="form-control"
+                               value="{{ current_user.reward_description }}" required
+                               placeholder="Ex: 1 repas offert, 1 dessert gratuit…">
+                    </div>
+
+                    <!-- Aperçu -->
+                    <div class="alert alert-warning">
+                        <strong>Aperçu :</strong> le client doit dépenser au moins
+                        <strong id="previewMin">{{ "%.2f"|format(current_user.minimum_amount) }} €</strong>
+                        par visite pour gagner des points. Après
+                        <strong id="previewThreshold">{{ current_user.reward_threshold }}</strong> points,
+                        il obtient : <em id="previewReward">{{ current_user.reward_description }}</em>.
+                    </div>
+
+                    <button type="submit" class="btn btn-warning w-100 fw-bold">Enregistrer les paramètres</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelector('[name=minimum_amount]').addEventListener('input', function() {
+    document.getElementById('previewMin').textContent = parseFloat(this.value || 0).toFixed(2) + ' €'
+})
+document.querySelector('[name=reward_threshold]').addEventListener('input', function() {
+    document.getElementById('previewThreshold').textContent = this.value
+})
+document.querySelector('[name=reward_description]').addEventListener('input', function() {
+    document.getElementById('previewReward').textContent = this.value
+})
+</script>
+{% endblock %}
