@@ -1,19 +1,150 @@
+/* ── Variables ─────────────────────────────────────────────── */
+:root {
+    --turquoise: #1BBFB2;
+    --turquoise-light: #E8F8F7;
+    --turquoise-dark: #13998E;
+    --dark: #1A1A2E;
+    --light: #F4FFFE;
+    --text-muted: #7A9E9C;
+}
+
+/* ── Base ──────────────────────────────────────────────────── */
+* { font-family: 'Inter', sans-serif; }
+
 body {
-    background-color: #f8f9fa;
+    background-color: var(--light);
+    color: var(--dark);
 }
 
-.navbar-brand {
-    font-size: 1.3rem;
+/* ── Navbar ────────────────────────────────────────────────── */
+.hera-nav {
+    background-color: var(--dark);
+    padding: 14px 0;
 }
 
+.hera-logo {
+    text-decoration: none;
+    display: flex;
+    align-items: baseline;
+    gap: 1px;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: #ffffff;
+}
+
+.logo-dot {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--turquoise);
+    line-height: 1;
+}
+
+.nav-username {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-right: 4px;
+}
+
+/* ── Boutons ───────────────────────────────────────────────── */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.hera-btn-gold {
+    background-color: var(--turquoise);
+    color: #ffffff;
+    border: none;
+}
+
+.hera-btn-gold:hover {
+    background-color: var(--turquoise-dark);
+    color: #ffffff;
+}
+
+/* ── Cards ─────────────────────────────────────────────────── */
 .card {
     border-radius: 12px;
+    background-color: #ffffff;
 }
 
-.btn {
-    border-radius: 8px;
+/* ── Page d'accueil ────────────────────────────────────────── */
+.hero-section {
+    padding: 80px 0 60px;
+    text-align: center;
 }
 
+.hero-title {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+}
+
+.hero-title span {
+    color: var(--turquoise);
+}
+
+.hero-sub {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin-top: 16px;
+    font-weight: 300;
+}
+
+.hero-underline {
+    display: block;
+    width: 48px;
+    height: 3px;
+    background: var(--turquoise);
+    margin: 24px auto 32px;
+}
+
+/* ── Feature cards ─────────────────────────────────────────── */
+.feature-card {
+    border: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    padding: 32px 24px;
+    transition: transform 0.2s;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(27, 191, 178, 0.15);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+}
+
+.feature-card h5 {
+    font-weight: 600;
+    letter-spacing: -0.3px;
+}
+
+/* ── Progress ──────────────────────────────────────────────── */
 .progress {
     border-radius: 10px;
+    background-color: var(--turquoise-light);
+}
+
+.progress-bar {
+    background-color: var(--turquoise) !important;
+}
+
+/* ── Badge ─────────────────────────────────────────────────── */
+.badge.bg-warning {
+    background-color: var(--turquoise) !important;
+    color: #ffffff !important;
+}
+
+/* ── Formulaires ───────────────────────────────────────────── */
+.form-control:focus {
+    border-color: var(--turquoise);
+    box-shadow: 0 0 0 0.2rem rgba(27, 191, 178, 0.2);
 }
