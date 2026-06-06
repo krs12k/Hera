@@ -52,9 +52,10 @@
         <h5 class="card-title mb-3">Mes clients</h5>
         {% if clients %}
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table align-middle mb-0">
                 <thead class="table-light">
                     <tr>
+                        <th style="width:32px"></th>
                         <th>Prénom</th>
                         <th>Email</th>
                         <th>Points</th>
@@ -65,7 +66,18 @@
                 <tbody>
                     {% for client in clients %}
                     {% set progression = [((client.total_points / current_user.reward_threshold) * 100)|int, 100]|min %}
+                    {% set visits_sorted = client.visits|sort(attribute='created_at', reverse=True) %}
+
+                    <!-- Ligne principale -->
                     <tr>
+                        <td>
+                            <button class="btn btn-sm btn-link p-0 toggle-history"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#history-{{ client.id }}"
+                                    title="Voir l'historique">
+                                <span class="chevron">▶</span>
+                            </button>
+                        </td>
                         <td><strong>{{ client.first_name }}</strong></td>
                         <td class="text-muted">{{ client.email }}</td>
                         <td>
@@ -81,7 +93,6 @@
                             <small class="text-muted">{{ progression }}%</small>
                         </td>
                         <td>
-                            <!-- Bouton ouvre le modal de validation -->
                             <button class="btn btn-sm btn-success"
                                     data-bs-toggle="modal"
                                     data-bs-target="#modalVisite"
@@ -89,7 +100,6 @@
                                     data-client-name="{{ client.first_name }}">
                                 ✔ Valider visite
                             </button>
-                            <!-- Réinitialiser points -->
                             <form method="POST" action="{{ url_for('reinitialiser_points', client_id=client.id) }}"
                                   class="d-inline"
                                   onsubmit="return confirm('Remettre les points à zéro pour {{ client.first_name }} ?')">
@@ -97,6 +107,56 @@
                             </form>
                         </td>
                     </tr>
+
+                    <!-- Ligne historique (collapse) -->
+                    <tr class="collapse" id="history-{{ client.id }}">
+                        <td colspan="6" class="p-0">
+                            <div class="history-panel px-4 py-3">
+                                <p class="text-muted mb-2" style="font-size:0.85rem">
+                                    <strong>Historique des visites</strong> — {{ visits_sorted|length }} visite(s)
+                                </p>
+                                {% if visits_sorted %}
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Heure</th>
+                                            <th>Montant</th>
+                                            <th>Commande</th>
+                                            <th>Points</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for visit in visits_sorted %}
+                                        <tr>
+                                            <td>{{ visit.created_at.strftime('%d/%m/%Y') }}</td>
+                                            <td class="text-muted">{{ visit.created_at.strftime('%H:%M') }}</td>
+                                            <td>
+                                                {% if visit.amount_spent %}
+                                                    {{ "%.2f"|format(visit.amount_spent) }} €
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if visit.note %}
+                                                    {{ visit.note }}
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td><span class="badge bg-warning text-dark">+{{ visit.points_earned }} pts</span></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
+                                <p class="text-muted mb-0" style="font-size:0.85rem">Aucune visite enregistrée.</p>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+
                     {% endfor %}
                 </tbody>
             </table>
@@ -122,7 +182,6 @@
                 </div>
                 <div class="modal-body">
                     <p>Client : <strong id="modalClientName"></strong></p>
-
                     <div class="mb-3">
                         <label class="form-label">
                             Montant dépensé (€)
@@ -131,14 +190,12 @@
                             {% endif %}
                         </label>
                         <input type="number" name="amount" step="0.01" min="0"
-                               class="form-control"
-                               placeholder="Ex: 18.50"
+                               class="form-control" placeholder="Ex: 18.50"
                                {% if current_user.minimum_amount > 0 %}required{% endif %}>
                         {% if current_user.minimum_amount == 0 %}
                             <small class="text-muted">Optionnel — aucun minimum défini</small>
                         {% endif %}
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label">Note sur la commande <span class="text-muted">(optionnel)</span></label>
                         <input type="text" name="note" class="form-control"
@@ -147,9 +204,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-success fw-bold">
-                        +{{ current_user.points_per_visit }} pts
-                    </button>
+                    <button type="submit" class="btn btn-success fw-bold">+{{ current_user.points_per_visit }} pts</button>
                 </div>
             </form>
         </div>
@@ -160,10 +215,15 @@
 const modalVisite = document.getElementById('modalVisite')
 modalVisite.addEventListener('show.bs.modal', function (event) {
     const btn = event.relatedTarget
-    const clientId = btn.getAttribute('data-client-id')
-    const clientName = btn.getAttribute('data-client-name')
-    document.getElementById('modalClientName').textContent = clientName
-    document.getElementById('formVisite').action = '/dashboard/valider/' + clientId
+    document.getElementById('modalClientName').textContent = btn.getAttribute('data-client-name')
+    document.getElementById('formVisite').action = '/dashboard/valider/' + btn.getAttribute('data-client-id')
+})
+
+// Rotation de la flèche à l'ouverture/fermeture
+document.querySelectorAll('.toggle-history').forEach(btn => {
+    const target = document.querySelector(btn.getAttribute('data-bs-target'))
+    target.addEventListener('show.bs.collapse', () => btn.querySelector('.chevron').style.transform = 'rotate(90deg)')
+    target.addEventListener('hide.bs.collapse', () => btn.querySelector('.chevron').style.transform = 'rotate(0deg)')
 })
 </script>
 {% endblock %}

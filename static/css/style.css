@@ -192,3 +192,28 @@ body {
 .footer-link:hover {
     color: var(--turquoise);
 }
+
+/* ── Historique visites ─────────────────────────────────────── */
+.chevron {
+    display: inline-block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+}
+
+.history-panel {
+    background: var(--turquoise-light);
+    border-left: 3px solid var(--turquoise);
+}
+
+.history-panel table th {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.history-panel table td {
+    font-size: 0.85rem;
+}
