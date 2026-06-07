@@ -29,13 +29,12 @@ def load_user(user_id):
 
 with app.app_context():
     db.create_all()
-    with db.engine.connect() as conn:
-        for col, definition in [("point_mode", "VARCHAR(20) DEFAULT 'simple'")]:
-            try:
-                conn.execute(text(f"ALTER TABLE restaurants ADD COLUMN {col} {definition}"))
-                conn.commit()
-            except Exception:
-                pass
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(text("ALTER TABLE restaurants ADD COLUMN point_mode VARCHAR(20) DEFAULT 'simple'"))
+            conn.commit()
+    except Exception:
+        pass
 
 stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
 
