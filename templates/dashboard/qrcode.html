@@ -14,23 +14,18 @@
         <div class="d-flex justify-content-center mb-4">
             <div class="poster" id="poster">
                 <div class="poster-top-bar"></div>
-
                 <div class="poster-body">
-                    <!-- Logo hera -->
                     <div class="poster-brand">
                         <span class="poster-logo-text">hera</span><span class="poster-logo-dot">.</span>
                         <div class="poster-tagline">Programme de fidélité</div>
                     </div>
 
-                    <!-- Nom du restaurant -->
                     <div class="poster-restaurant">{{ current_user.name }}</div>
 
-                    <!-- QR Code -->
                     <div class="poster-qr-wrap">
                         <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR code" class="poster-qr-img">
                     </div>
 
-                    <!-- CTA -->
                     <div class="poster-cta">
                         <div class="poster-cta-icon">📱</div>
                         <div class="poster-cta-title">Scannez pour rejoindre le club</div>
@@ -50,12 +45,15 @@
 
         <!-- Boutons -->
         <div class="d-flex gap-3 justify-content-center flex-wrap mb-4">
-            <button onclick="window.print()" class="btn hera-btn-gold btn-lg fw-bold px-4">
-                🖨️ Imprimer (A4)
+            <button onclick="window.print()" class="btn btn-outline-dark btn-lg px-4">
+                🖨️ Imprimer
             </button>
-            <a href="{{ url_for('generate_qr') }}" class="btn btn-outline-dark btn-lg px-4" download="qrcode-hera.png">
-                ⬇️ Télécharger PNG
-            </a>
+            <button onclick="downloadPNG()" class="btn btn-outline-secondary btn-lg px-4">
+                🖼️ Télécharger PNG
+            </button>
+            <button onclick="downloadPDF()" class="btn hera-btn-gold btn-lg px-4 fw-bold">
+                📄 Télécharger PDF
+            </button>
         </div>
 
         <!-- Lien test -->
@@ -75,7 +73,7 @@
     box-shadow: 0 12px 40px rgba(0,0,0,0.13);
     overflow: hidden;
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
 }
 .poster-top-bar {
     height: 10px;
@@ -85,19 +83,17 @@
     padding: 2.5rem 2rem 2rem;
     text-align: center;
 }
-.poster-brand {
-    margin-bottom: 1.2rem;
-}
+.poster-brand { margin-bottom: 1.2rem; }
 .poster-logo-text {
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 800;
     color: #1A1A2E;
     letter-spacing: -1px;
 }
 .poster-logo-dot {
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 800;
-    color: var(--turquoise);
+    color: #1BBFB2;
 }
 .poster-tagline {
     font-size: 0.72rem;
@@ -107,7 +103,7 @@
     margin-top: 2px;
 }
 .poster-restaurant {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: #1A1A2E;
     margin-bottom: 1.5rem;
@@ -118,19 +114,14 @@
     margin-bottom: 1.5rem;
 }
 .poster-qr-img {
-    width: 210px;
-    height: 210px;
+    width: 260px;
+    height: 260px;
     padding: 10px;
-    border: 3px solid var(--turquoise-light);
+    border: 3px solid #E8F8F7;
     border-radius: 16px;
 }
-.poster-cta {
-    margin-bottom: 1.2rem;
-}
-.poster-cta-icon {
-    font-size: 1.4rem;
-    margin-bottom: 4px;
-}
+.poster-cta { margin-bottom: 1.2rem; }
+.poster-cta-icon { font-size: 1.4rem; margin-bottom: 4px; }
 .poster-cta-title {
     font-size: 1.05rem;
     font-weight: 700;
@@ -140,10 +131,7 @@
     margin-top: 6px;
     font-size: 0.9rem;
     font-weight: 600;
-    color: var(--turquoise);
-}
-.poster-arrow {
-    margin: 0 4px;
+    color: #1BBFB2;
 }
 .poster-hint {
     font-size: 0.72rem;
@@ -156,22 +144,19 @@
 /* ── Impression A4 ── */
 @media print {
     @page { size: A4; margin: 0; }
-
     body * { visibility: hidden !important; }
     #poster, #poster * { visibility: visible !important; }
-
     #poster {
         position: fixed;
         top: 0; left: 0;
-        width: 100vw;
-        height: 100vh;
+        width: 100vw; height: 100vh;
         max-width: none;
         border-radius: 0;
         box-shadow: none;
         display: flex;
         flex-direction: column;
     }
-    .poster-top-bar { height: 16px; }
+    .poster-top-bar { height: 18px; }
     .poster-body {
         flex: 1;
         display: flex;
@@ -180,13 +165,57 @@
         justify-content: center;
         padding: 3rem;
     }
-    .poster-logo-text, .poster-logo-dot { font-size: 3rem; }
+    .poster-logo-text, .poster-logo-dot { font-size: 3.5rem; }
     .poster-tagline { font-size: 0.9rem; letter-spacing: 4px; }
-    .poster-restaurant { font-size: 2.2rem; margin-bottom: 2rem; }
-    .poster-qr-img { width: 300px; height: 300px; }
-    .poster-cta-title { font-size: 1.4rem; }
-    .poster-cta-reward { font-size: 1.1rem; }
-    .poster-hint { font-size: 0.85rem; margin-top: 1rem; }
+    .poster-restaurant { font-size: 2.4rem; margin-bottom: 2rem; }
+    .poster-qr-img { width: 340px; height: 340px; }
+    .poster-cta-title { font-size: 1.5rem; }
+    .poster-cta-reward { font-size: 1.15rem; }
+    .poster-hint { font-size: 0.88rem; margin-top: 1.5rem; }
 }
 </style>
+
+<!-- Librairies pour export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+async function downloadPNG() {
+    const btn = event.target
+    btn.textContent = '⏳ Génération...'
+    btn.disabled = true
+    try {
+        const canvas = await html2canvas(document.getElementById('poster'), { scale: 3, useCORS: true })
+        const link = document.createElement('a')
+        link.download = 'hera-qrcode-{{ current_user.name|replace(" ", "-") }}.png'
+        link.href = canvas.toDataURL('image/png')
+        link.click()
+    } finally {
+        btn.textContent = '🖼️ Télécharger PNG'
+        btn.disabled = false
+    }
+}
+
+async function downloadPDF() {
+    const btn = event.target
+    btn.textContent = '⏳ Génération...'
+    btn.disabled = true
+    try {
+        const canvas = await html2canvas(document.getElementById('poster'), { scale: 3, useCORS: true })
+        const imgData = canvas.toDataURL('image/png')
+        const { jsPDF } = window.jspdf
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+        const pageW = 210
+        const pageH = 297
+        const imgW = pageW
+        const imgH = canvas.height * pageW / canvas.width
+        const offsetY = (pageH - imgH) / 2
+        pdf.addImage(imgData, 'PNG', 0, Math.max(0, offsetY), imgW, Math.min(imgH, pageH))
+        pdf.save('hera-qrcode-{{ current_user.name|replace(" ", "-") }}.pdf')
+    } finally {
+        btn.textContent = '📄 Télécharger PDF'
+        btn.disabled = false
+    }
+}
+</script>
 {% endblock %}
