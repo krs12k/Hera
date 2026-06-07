@@ -20,6 +20,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h2>Bonjour, {{ current_user.name }} 👋</h2>
     <div class="d-flex gap-2">
+        <a href="{{ url_for('statistiques') }}" class="btn btn-outline-dark">📊 Statistiques</a>
         <a href="{{ url_for('envoyer_message') }}" class="btn btn-outline-dark">✉️ Message clients</a>
         <a href="{{ url_for('parametres') }}" class="btn btn-outline-secondary">⚙️ Paramètres</a>
         <a href="{{ url_for('qrcode_page') }}" class="btn btn-warning">📱 Mon QR code</a>

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session, make_response
-from sqlalchemy import text
+from sqlalchemy import text, func
+from collections import defaultdict
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
@@ -202,6 +203,52 @@ def dashboard():
     total_visits = Visit.query.filter_by(restaurant_id=current_user.id).count()
     rules = PointRule.query.filter_by(restaurant_id=current_user.id).all()
     return render_template('dashboard/index.html', clients=clients, total_visits=total_visits, rules=rules)
+
+
+# ── Statistiques ────────────────────────────────────────────────
+@app.route('/dashboard/statistiques')
+@login_required
+@subscription_required
+def statistiques():
+    # Visites par jour sur 30 jours
+    thirty_days_ago = datetime.utcnow() - timedelta(days=29)
+    all_visits = Visit.query.filter_by(restaurant_id=current_user.id)\
+        .filter(Visit.created_at >= thirty_days_ago).all()
+
+    visits_by_day = defaultdict(int)
+    for v in all_visits:
+        visits_by_day[v.created_at.strftime('%d/%m')] += 1
+
+    labels, data = [], []
+    for i in range(30):
+        day = (thirty_days_ago + timedelta(days=i)).strftime('%d/%m')
+        labels.append(day)
+        data.append(visits_by_day.get(day, 0))
+
+    # Stats globales
+    total_visits = Visit.query.filter_by(restaurant_id=current_user.id).count()
+    total_clients = Client.query.filter_by(restaurant_id=current_user.id).count()
+    total_points = db.session.query(func.sum(Visit.points_earned))\
+        .filter(Visit.restaurant_id == current_user.id).scalar() or 0
+
+    first_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0)
+    visits_this_month = Visit.query.filter_by(restaurant_id=current_user.id)\
+        .filter(Visit.created_at >= first_of_month).count()
+
+    clients_rewarded = Client.query.filter(
+        Client.restaurant_id == current_user.id,
+        Client.total_points >= current_user.reward_threshold
+    ).count()
+
+    top_clients = Client.query.filter_by(restaurant_id=current_user.id)\
+        .order_by(Client.total_points.desc()).limit(5).all()
+
+    return render_template('dashboard/stats.html',
+        labels=labels, data=data,
+        total_visits=total_visits, total_clients=total_clients,
+        total_points=total_points, visits_this_month=visits_this_month,
+        clients_rewarded=clients_rewarded, top_clients=top_clients
+    )
 
 
 # ── Valider une visite client ───────────────────────────────────
