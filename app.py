@@ -1,12 +1,15 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
 from models import db, Restaurant, Client, Visit, PointRule
 from config import Config
+from datetime import datetime
+from functools import wraps
 import qrcode
 import io
 import base64
+import stripe
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -25,6 +28,25 @@ def load_user(user_id):
 
 with app.app_context():
     db.create_all()
+
+stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
+
+def subscription_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not current_user.can_access:
+            flash('Ton essai gratuit est terminé. Abonne-toi pour continuer.', 'warning')
+            return redirect(url_for('abonnement'))
+        return f(*args, **kwargs)
+    return decorated
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated
 
 
 # ── Pages publiques ─────────────────────────────────────────────
@@ -98,6 +120,7 @@ def logout():
 # ── Dashboard restaurateur ──────────────────────────────────────
 @app.route('/dashboard')
 @login_required
+@subscription_required
 def dashboard():
     clients = Client.query.filter_by(restaurant_id=current_user.id).order_by(Client.total_points.desc()).all()
     total_visits = Visit.query.filter_by(restaurant_id=current_user.id).count()
@@ -321,6 +344,145 @@ def client_profil(token):
     client = Client.query.filter_by(restaurant_id=resto.id, email=email).first_or_404()
     progression = min(int((client.total_points / resto.reward_threshold) * 100), 100)
     return render_template('client/profil.html', client=client, resto=resto, progression=progression)
+
+
+# ── Page abonnement ─────────────────────────────────────────────
+@app.route('/abonnement')
+@login_required
+def abonnement():
+    return render_template('abonnement.html')
+
+
+# ── Créer session Stripe Checkout ───────────────────────────────
+@app.route('/abonnement/checkout', methods=['POST'])
+@login_required
+def checkout():
+    try:
+        price_id = app.config.get('STRIPE_PRICE')
+        if not price_id:
+            # Crée le prix dynamiquement si pas encore configuré
+            product = stripe.Product.create(name='hera Pro')
+            price = stripe.Price.create(
+                product=product.id,
+                unit_amount=790,
+                currency='eur',
+                recurring={'interval': 'month'},
+            )
+            price_id = price.id
+
+        customer = stripe.Customer.create(
+            email=current_user.email,
+            name=current_user.name,
+        )
+        current_user.stripe_customer_id = customer.id
+        db.session.commit()
+
+        checkout_session = stripe.checkout.Session.create(
+            customer=customer.id,
+            payment_method_types=['card'],
+            line_items=[{'price': price_id, 'quantity': 1}],
+            mode='subscription',
+            success_url=url_for('abonnement_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=url_for('abonnement', _external=True),
+        )
+        return redirect(checkout_session.url)
+    except Exception as e:
+        flash(f'Erreur Stripe : {str(e)}', 'danger')
+        return redirect(url_for('abonnement'))
+
+
+# ── Succès paiement ──────────────────────────────────────────────
+@app.route('/abonnement/success')
+@login_required
+def abonnement_success():
+    session_id = request.args.get('session_id')
+    if session_id:
+        try:
+            checkout_session = stripe.checkout.Session.retrieve(session_id)
+            current_user.subscription_status = 'active'
+            current_user.stripe_subscription_id = checkout_session.subscription
+            db.session.commit()
+        except Exception:
+            pass
+    flash('Abonnement activé ! Bienvenue sur hera Pro.', 'success')
+    return redirect(url_for('dashboard'))
+
+
+# ── Webhook Stripe ───────────────────────────────────────────────
+@app.route('/stripe/webhook', methods=['POST'])
+@csrf.exempt
+def stripe_webhook():
+    payload = request.get_data()
+    sig = request.headers.get('Stripe-Signature')
+    webhook_secret = app.config.get('STRIPE_WEBHOOK_SECRET')
+
+    try:
+        if webhook_secret:
+            event = stripe.Webhook.construct_event(payload, sig, webhook_secret)
+        else:
+            event = stripe.Event.construct_from(request.get_json(), stripe.api_key)
+    except Exception:
+        return '', 400
+
+    if event['type'] == 'customer.subscription.deleted':
+        sub = event['data']['object']
+        resto = Restaurant.query.filter_by(stripe_subscription_id=sub['id']).first()
+        if resto:
+            resto.subscription_status = 'inactive'
+            db.session.commit()
+
+    elif event['type'] in ('invoice.payment_succeeded',):
+        invoice = event['data']['object']
+        resto = Restaurant.query.filter_by(stripe_customer_id=invoice['customer']).first()
+        if resto:
+            resto.subscription_status = 'active'
+            db.session.commit()
+
+    elif event['type'] == 'invoice.payment_failed':
+        invoice = event['data']['object']
+        resto = Restaurant.query.filter_by(stripe_customer_id=invoice['customer']).first()
+        if resto:
+            resto.subscription_status = 'inactive'
+            db.session.commit()
+
+    return '', 200
+
+
+# ── Admin — Login ────────────────────────────────────────────────
+@app.route('/hera-admin', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if password == app.config.get('ADMIN_PASSWORD'):
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
+        flash('Mot de passe incorrect.', 'danger')
+    return render_template('admin/login.html')
+
+
+@app.route('/hera-admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('admin_login'))
+
+
+# ── Admin — Dashboard ────────────────────────────────────────────
+@app.route('/hera-admin/dashboard')
+@admin_required
+def admin_dashboard():
+    restaurants = Restaurant.query.order_by(Restaurant.created_at.desc()).all()
+    return render_template('admin/dashboard.html', restaurants=restaurants, now=datetime.utcnow())
+
+
+# ── Admin — Toggle gratuit ───────────────────────────────────────
+@app.route('/hera-admin/toggle-free/<int:resto_id>', methods=['POST'])
+@admin_required
+def admin_toggle_free(resto_id):
+    resto = Restaurant.query.get_or_404(resto_id)
+    resto.is_free = not resto.is_free
+    db.session.commit()
+    flash(f'{"Gratuit activé" if resto.is_free else "Gratuit désactivé"} pour {resto.name}.', 'success')
+    return redirect(url_for('admin_dashboard'))
 
 
 if __name__ == '__main__':

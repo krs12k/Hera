@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 import secrets
 
 db = SQLAlchemy()
@@ -20,6 +20,14 @@ class Restaurant(UserMixin, db.Model):
     reward_threshold = db.Column(db.Integer, default=100)
     reward_description = db.Column(db.String(200), default='1 repas offert')
     minimum_amount = db.Column(db.Float, default=0.0)
+
+    # Abonnement
+    subscription_status = db.Column(db.String(20), default='trial')  # trial, active, inactive
+    is_free = db.Column(db.Boolean, default=False)
+    trial_ends_at = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(days=14))
+    stripe_customer_id = db.Column(db.String(100), nullable=True)
+    stripe_subscription_id = db.Column(db.String(100), nullable=True)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     clients = db.relationship('Client', backref='restaurant', lazy=True)
@@ -30,6 +38,23 @@ class Restaurant(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    @property
+    def can_access(self):
+        if self.is_free:
+            return True
+        if self.subscription_status == 'active':
+            return True
+        if self.subscription_status == 'trial' and self.trial_ends_at > datetime.utcnow():
+            return True
+        return False
+
+    @property
+    def trial_days_left(self):
+        if self.subscription_status == 'trial':
+            delta = self.trial_ends_at - datetime.utcnow()
+            return max(0, delta.days)
+        return 0
 
 
 class Client(db.Model):

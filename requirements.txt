@@ -2,8 +2,10 @@ flask
 flask-sqlalchemy
 flask-login
 flask-mail
+flask-wtf
 werkzeug
 qrcode
 pillow
 gunicorn
 psycopg2-binary
+stripe

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}hera — Abonnement{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 text-center py-5">
+
+        {% if current_user.subscription_status == 'trial' %}
+        <div class="alert alert-warning mb-4">
+            ⏳ Il te reste <strong>{{ current_user.trial_days_left }} jour(s)</strong> d'essai gratuit.
+        </div>
+        {% else %}
+        <div class="alert alert-danger mb-4">
+            Ton essai gratuit est terminé. Abonne-toi pour continuer à utiliser hera.
+        </div>
+        {% endif %}
+
+        <div class="card border-0 shadow p-5" style="border: 2px solid var(--turquoise) !important;">
+            <div class="badge mb-3 mx-auto" style="background:var(--turquoise);color:#fff;width:fit-content;padding:6px 16px">hera Pro</div>
+            <div class="fw-bold mb-1" style="font-size:3rem">7,90 €</div>
+            <div class="text-muted mb-4">par mois · sans engagement</div>
+
+            <ul class="text-start text-muted mb-4" style="line-height:2.2">
+                <li>Clients illimités</li>
+                <li>QR code unique</li>
+                <li>Tableau de bord complet</li>
+                <li>Règles de points par produit</li>
+                <li>Historique des visites</li>
+                <li>Envoi de messages aux clients</li>
+            </ul>
+
+            <form method="POST" action="{{ url_for('checkout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
+                    S'abonner pour 7,90 €/mois
+                </button>
+            </form>
+            <p class="text-muted mt-3" style="font-size:0.8rem">Paiement sécurisé par Stripe. Résiliable à tout moment.</p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -2,6 +2,13 @@
 {% block title %}Dashboard — {{ current_user.name }}{% endblock %}
 
 {% block content %}
+{% if current_user.subscription_status == 'trial' %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center">
+    <span>⏳ Essai gratuit — <strong>{{ current_user.trial_days_left }} jour(s) restant(s)</strong></span>
+    <a href="{{ url_for('abonnement') }}" class="btn btn-sm btn-warning fw-bold">S'abonner — 7,90 €/mois</a>
+</div>
+{% endif %}
+
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h2>Bonjour, {{ current_user.name }} 👋</h2>
     <div class="d-flex gap-2">
