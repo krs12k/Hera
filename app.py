@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session, make_response
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
@@ -314,11 +314,21 @@ def generate_qr():
 def client_register(token):
     resto = Restaurant.query.filter_by(qr_token=token).first_or_404()
 
+    # Cookie de mémorisation
+    cookie_key = f'hera_client_{token}'
+    saved_email = request.cookies.get(cookie_key)
+    if saved_email:
+        client = Client.query.filter_by(restaurant_id=resto.id, email=saved_email).first()
+        if client:
+            return redirect(url_for('client_commander', token=token, email=saved_email))
+
     if request.method == 'POST':
         email = request.form['email'].strip()
         client = Client.query.filter_by(restaurant_id=resto.id, email=email).first()
         if client:
-            return redirect(url_for('client_commander', token=token, email=email))
+            resp = make_response(redirect(url_for('client_commander', token=token, email=email)))
+            resp.set_cookie(cookie_key, email, max_age=30*24*3600)
+            return resp
         else:
             return redirect(url_for('client_nouveau', token=token, email=email))
 
@@ -346,7 +356,9 @@ def client_nouveau(token):
             db.session.add(client)
             db.session.commit()
 
-        return redirect(url_for('client_commander', token=token, email=email))
+        resp = make_response(redirect(url_for('client_commander', token=token, email=email)))
+        resp.set_cookie(f'hera_client_{token}', email, max_age=30*24*3600)
+        return resp
 
     return render_template('client/nouveau.html', resto=resto, email=email)
 
