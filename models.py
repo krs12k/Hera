@@ -45,7 +45,7 @@ class Restaurant(UserMixin, db.Model):
             return True
         if self.subscription_status == 'active':
             return True
-        if self.subscription_status == 'trial' and self.trial_ends_at > datetime.utcnow():
+        if self.subscription_status == 'trial' and self.trial_ends_at and self.trial_ends_at > datetime.utcnow():
             return True
         return False
 
