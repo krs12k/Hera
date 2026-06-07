@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session, make_response
+from sqlalchemy import text
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
@@ -28,6 +29,13 @@ def load_user(user_id):
 
 with app.app_context():
     db.create_all()
+    with db.engine.connect() as conn:
+        for col, definition in [("point_mode", "VARCHAR(20) DEFAULT 'simple'")]:
+            try:
+                conn.execute(text(f"ALTER TABLE restaurants ADD COLUMN {col} {definition}"))
+                conn.commit()
+            except Exception:
+                pass
 
 stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
 
@@ -196,8 +204,16 @@ def reinitialiser_points(client_id):
 def parametres():
     if request.method == 'POST':
         current_user.name = request.form['name']
+        new_email = request.form.get('email', '').strip()
+        if new_email and new_email != current_user.email:
+            existing = Restaurant.query.filter_by(email=new_email).first()
+            if existing:
+                flash('Cet email est déjà utilisé par un autre compte.', 'danger')
+                return redirect(url_for('parametres'))
+            current_user.email = new_email
         current_user.address = request.form.get('address', '')
         current_user.phone = request.form.get('phone', '')
+        current_user.point_mode = request.form.get('point_mode', 'simple')
         current_user.points_per_visit = int(request.form['points_per_visit'])
         current_user.reward_threshold = int(request.form['reward_threshold'])
         current_user.reward_description = request.form['reward_description']

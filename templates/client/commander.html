@@ -33,7 +33,7 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="email" value="{{ email }}">
 
-                    {% if rules %}
+                    {% if resto.point_mode == 'categories' and rules %}
                     <div class="mb-4">
                         {% for rule in rules %}
                         <div class="d-flex align-items-center justify-content-between p-3 mb-2 rounded" style="background:#f8f9fa">
@@ -52,15 +52,6 @@
                             </div>
                         </div>
                         {% endfor %}
-
-                        <div class="text-center mt-3 p-2 rounded" style="background:#e8f8f7">
-                            <span class="text-muted">Points gagnés : </span>
-                            <strong id="totalPoints" style="color:var(--turquoise);font-size:1.2rem">0</strong>
-                            <span class="text-muted"> pts</span>
-                            <small class="text-muted d-block" style="font-size:0.78rem">
-                                Si rien sélectionné : {{ resto.points_per_visit }} pts par défaut
-                            </small>
-                        </div>
                     </div>
                     {% else %}
                     <div class="text-center mb-4 p-3 rounded" style="background:#e8f8f7">

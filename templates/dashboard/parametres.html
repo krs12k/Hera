@@ -9,14 +9,26 @@
             <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark btn-sm">← Retour</a>
         </div>
 
-        <div class="card border-0 shadow-sm">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <!-- Infos du restaurant -->
+        <div class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <h5 class="mb-3 text-muted">Infos du restaurant</h5>
+                    <h5 class="mb-3 fw-bold">Infos du restaurant</h5>
                     <div class="mb-3">
                         <label class="form-label">Nom du restaurant</label>
                         <input type="text" name="name" class="form-control" value="{{ current_user.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email du compte</label>
+                        <input type="email" name="email" class="form-control" value="{{ current_user.email }}">
+                        <small class="text-muted">Modifiez cet email avec précaution — il sert à vous connecter.</small>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -30,58 +42,81 @@
                     </div>
 
                     <hr class="my-4">
-                    <h5 class="mb-3 text-muted">Programme de fidélité</h5>
+                    <h5 class="mb-3 fw-bold">Programme de fidélité</h5>
 
-                    <div class="mb-3">
-                        <label class="form-label">Montant minimum pour gagner des points (€)</label>
-                        <input type="number" name="minimum_amount" step="0.01" min="0"
-                               class="form-control" value="{{ "%.2f"|format(current_user.minimum_amount) }}">
-                        <small class="text-muted">Mets 0 pour ne pas imposer de minimum.</small>
+                    <!-- Toggle mode -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Comment attribuer les points ?</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="point_mode" id="mode_simple" value="simple"
+                                   {{ 'checked' if (current_user.point_mode or 'simple') == 'simple' else '' }}>
+                            <label class="btn btn-outline-secondary text-start p-3" for="mode_simple">
+                                <strong>Visites simples</strong><br>
+                                <small class="text-muted">Points fixes à chaque visite</small>
+                            </label>
+                            <input type="radio" class="btn-check" name="point_mode" id="mode_categories" value="categories"
+                                   {{ 'checked' if current_user.point_mode == 'categories' else '' }}>
+                            <label class="btn btn-outline-secondary text-start p-3" for="mode_categories">
+                                <strong>Par produit</strong><br>
+                                <small class="text-muted">Points selon la commande</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Section mode simple -->
+                    <div id="section-simple">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Points accordés par visite</label>
+                                <input type="number" name="points_per_visit" min="1"
+                                       class="form-control" value="{{ current_user.points_per_visit }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Montant minimum (€)</label>
+                                <input type="number" name="minimum_amount" step="0.01" min="0"
+                                       class="form-control" value="{{ '%.2f'|format(current_user.minimum_amount) }}">
+                                <small class="text-muted">0 = pas de minimum</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section mode catégories -->
+                    <div id="section-categories" class="d-none">
+                        <div class="alert alert-light border mb-3" style="font-size:0.9rem">
+                            Le client sélectionne ce qu'il a commandé depuis son téléphone. Les points sont calculés automatiquement selon vos règles.
+                            <br>Si rien n'est sélectionné, <strong>{{ current_user.points_per_visit }} pts</strong> sont attribués par défaut.
+                        </div>
+                        <input type="hidden" name="minimum_amount" value="{{ '%.2f'|format(current_user.minimum_amount) }}">
+                        <input type="hidden" name="points_per_visit" value="{{ current_user.points_per_visit }}" id="hidden-ppv">
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Points accordés par visite</label>
-                            <input type="number" name="points_per_visit" min="1"
-                                   class="form-control" value="{{ current_user.points_per_visit }}" required>
-                        </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Points nécessaires pour la récompense</label>
                             <input type="number" name="reward_threshold" min="1"
                                    class="form-control" value="{{ current_user.reward_threshold }}" required>
                         </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Description de la récompense</label>
+                            <input type="text" name="reward_description" class="form-control"
+                                   value="{{ current_user.reward_description }}" required
+                                   placeholder="Ex: 1 repas offert, 1 dessert gratuit…">
+                        </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="form-label">Description de la récompense</label>
-                        <input type="text" name="reward_description" class="form-control"
-                               value="{{ current_user.reward_description }}" required
-                               placeholder="Ex: 1 repas offert, 1 dessert gratuit…">
-                    </div>
-
-                    <!-- Aperçu -->
-                    <div class="alert alert-warning">
-                        <strong>Aperçu :</strong> le client doit dépenser au moins
-                        <strong id="previewMin">{{ "%.2f"|format(current_user.minimum_amount) }} €</strong>
-                        par visite pour gagner des points. Après
-                        <strong id="previewThreshold">{{ current_user.reward_threshold }}</strong> points,
-                        il obtient : <em id="previewReward">{{ current_user.reward_description }}</em>.
-                    </div>
-
-                    <button type="submit" class="btn btn-warning w-100 fw-bold">Enregistrer les paramètres</button>
+                    <button type="submit" class="btn hera-btn-gold w-100 fw-bold">Enregistrer</button>
                 </form>
             </div>
         </div>
 
-        <!-- Règles de points -->
-        <div class="card border-0 shadow-sm mt-4">
+        <!-- Règles de points (mode catégories) -->
+        <div id="card-rules" class="card border-0 shadow-sm {{ 'd-none' if (current_user.point_mode or 'simple') != 'categories' else '' }}">
             <div class="card-body p-4">
-                <h5 class="fw-bold mb-1">Règles de points par produit</h5>
+                <h5 class="fw-bold mb-1">Produits et points</h5>
                 <p class="text-muted mb-3" style="font-size:0.9rem">
-                    Définissez combien de points chaque produit rapporte. Lors d'une visite, vous cochez ce que le client a pris et les points sont calculés automatiquement.
+                    Chaque produit que le client peut sélectionner depuis son téléphone.
                 </p>
 
-                <!-- Règles existantes -->
                 {% if rules %}
                 <div class="mb-3">
                     {% for rule in rules %}
@@ -99,15 +134,14 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted mb-3" style="font-size:0.85rem">Aucune règle définie. Ajoutez vos premiers produits ci-dessous.</p>
+                <p class="text-muted mb-3" style="font-size:0.85rem">Aucun produit défini. Ajoutez-en ci-dessous.</p>
                 {% endif %}
 
-                <!-- Ajouter une règle -->
                 <form method="POST" action="{{ url_for('ajouter_regle') }}" class="d-flex gap-2 align-items-end">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="flex-grow-1">
                         <label class="form-label mb-1" style="font-size:0.85rem">Nom du produit</label>
-                        <input type="text" name="label" class="form-control" placeholder="Ex: Boisson, Repas midi, Dessert…" required>
+                        <input type="text" name="label" class="form-control" placeholder="Ex: Boisson, Menu midi, Dessert…" required>
                     </div>
                     <div style="width:110px">
                         <label class="form-label mb-1" style="font-size:0.85rem">Points</label>
@@ -122,14 +156,14 @@
 </div>
 
 <script>
-document.querySelector('[name=minimum_amount]').addEventListener('input', function() {
-    document.getElementById('previewMin').textContent = parseFloat(this.value || 0).toFixed(2) + ' €'
-})
-document.querySelector('[name=reward_threshold]').addEventListener('input', function() {
-    document.getElementById('previewThreshold').textContent = this.value
-})
-document.querySelector('[name=reward_description]').addEventListener('input', function() {
-    document.getElementById('previewReward').textContent = this.value
-})
+function updateMode() {
+    const mode = document.querySelector('input[name="point_mode"]:checked').value
+    const isSimple = mode === 'simple'
+    document.getElementById('section-simple').classList.toggle('d-none', !isSimple)
+    document.getElementById('section-categories').classList.toggle('d-none', isSimple)
+    document.getElementById('card-rules').classList.toggle('d-none', isSimple)
+}
+document.querySelectorAll('input[name="point_mode"]').forEach(r => r.addEventListener('change', updateMode))
+updateMode()
 </script>
 {% endblock %}
