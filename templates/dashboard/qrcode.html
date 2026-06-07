@@ -1,33 +1,192 @@
 {% extends 'base.html' %}
-{% block title %}Mon QR code — Hera{% endblock %}
+{% block title %}Mon QR code — {{ current_user.name }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6 text-center">
-        <h2 class="mb-4">Mon QR code de fidélité</h2>
+    <div class="col-md-7">
 
-        <div class="card border-0 shadow-sm p-4 mb-4">
-            <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR code" class="img-fluid mx-auto" style="max-width: 280px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Mon QR code</h2>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark btn-sm">← Retour</a>
         </div>
 
-        <div class="alert alert-info text-start">
-            <strong>Comment l'utiliser ?</strong><br>
-            Imprime ce QR code et affiche-le à ta caisse. Tes clients le scannent avec leur téléphone et s'inscrivent en 10 secondes.
+        <!-- Poster -->
+        <div class="d-flex justify-content-center mb-4">
+            <div class="poster" id="poster">
+                <div class="poster-top-bar"></div>
+
+                <div class="poster-body">
+                    <!-- Logo hera -->
+                    <div class="poster-brand">
+                        <span class="poster-logo-text">hera</span><span class="poster-logo-dot">.</span>
+                        <div class="poster-tagline">Programme de fidélité</div>
+                    </div>
+
+                    <!-- Nom du restaurant -->
+                    <div class="poster-restaurant">{{ current_user.name }}</div>
+
+                    <!-- QR Code -->
+                    <div class="poster-qr-wrap">
+                        <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR code" class="poster-qr-img">
+                    </div>
+
+                    <!-- CTA -->
+                    <div class="poster-cta">
+                        <div class="poster-cta-icon">📱</div>
+                        <div class="poster-cta-title">Scannez pour rejoindre le club</div>
+                        <div class="poster-cta-reward">
+                            {{ current_user.reward_threshold }} points
+                            <span class="poster-arrow">→</span>
+                            {{ current_user.reward_description }}
+                        </div>
+                    </div>
+
+                    <div class="poster-hint">
+                        Pointez votre téléphone vers le QR code · Inscription en 30 secondes · C'est gratuit
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="card border-0 shadow-sm p-3 mb-4 text-start">
-            <p class="text-muted mb-1"><small>Lien d'inscription (pour tester sur cet ordinateur) :</small></p>
-            <a href="{{ registration_url }}" class="text-break" target="_blank">{{ registration_url }}</a>
-        </div>
-
-        <div class="d-flex gap-2 justify-content-center">
-            <a href="{{ url_for('generate_qr') }}" class="btn btn-warning" download="qrcode-fidelite.png">
-                Télécharger l'image PNG
+        <!-- Boutons -->
+        <div class="d-flex gap-3 justify-content-center flex-wrap mb-4">
+            <button onclick="window.print()" class="btn hera-btn-gold btn-lg fw-bold px-4">
+                🖨️ Imprimer (A4)
+            </button>
+            <a href="{{ url_for('generate_qr') }}" class="btn btn-outline-dark btn-lg px-4" download="qrcode-hera.png">
+                ⬇️ Télécharger PNG
             </a>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark">
-                Retour au dashboard
-            </a>
         </div>
+
+        <!-- Lien test -->
+        <div class="card border-0 shadow-sm p-3 text-center">
+            <p class="text-muted mb-1" style="font-size:0.82rem">Tester le lien directement :</p>
+            <a href="{{ registration_url }}" class="text-break" target="_blank" style="font-size:0.82rem; color:var(--turquoise)">{{ registration_url }}</a>
+        </div>
+
     </div>
 </div>
+
+<style>
+/* ── Poster écran ── */
+.poster {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.13);
+    overflow: hidden;
+    width: 100%;
+    max-width: 400px;
+}
+.poster-top-bar {
+    height: 10px;
+    background: linear-gradient(90deg, var(--turquoise), var(--turquoise-dark));
+}
+.poster-body {
+    padding: 2.5rem 2rem 2rem;
+    text-align: center;
+}
+.poster-brand {
+    margin-bottom: 1.2rem;
+}
+.poster-logo-text {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1A1A2E;
+    letter-spacing: -1px;
+}
+.poster-logo-dot {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--turquoise);
+}
+.poster-tagline {
+    font-size: 0.72rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-top: 2px;
+}
+.poster-restaurant {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1A1A2E;
+    margin-bottom: 1.5rem;
+}
+.poster-qr-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+.poster-qr-img {
+    width: 210px;
+    height: 210px;
+    padding: 10px;
+    border: 3px solid var(--turquoise-light);
+    border-radius: 16px;
+}
+.poster-cta {
+    margin-bottom: 1.2rem;
+}
+.poster-cta-icon {
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+}
+.poster-cta-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1A1A2E;
+}
+.poster-cta-reward {
+    margin-top: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--turquoise);
+}
+.poster-arrow {
+    margin: 0 4px;
+}
+.poster-hint {
+    font-size: 0.72rem;
+    color: #bbb;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 1rem;
+    line-height: 1.6;
+}
+
+/* ── Impression A4 ── */
+@media print {
+    @page { size: A4; margin: 0; }
+
+    body * { visibility: hidden !important; }
+    #poster, #poster * { visibility: visible !important; }
+
+    #poster {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw;
+        height: 100vh;
+        max-width: none;
+        border-radius: 0;
+        box-shadow: none;
+        display: flex;
+        flex-direction: column;
+    }
+    .poster-top-bar { height: 16px; }
+    .poster-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+    }
+    .poster-logo-text, .poster-logo-dot { font-size: 3rem; }
+    .poster-tagline { font-size: 0.9rem; letter-spacing: 4px; }
+    .poster-restaurant { font-size: 2.2rem; margin-bottom: 2rem; }
+    .poster-qr-img { width: 300px; height: 300px; }
+    .poster-cta-title { font-size: 1.4rem; }
+    .poster-cta-reward { font-size: 1.1rem; }
+    .poster-hint { font-size: 0.85rem; margin-top: 1rem; }
+}
+</style>
 {% endblock %}
