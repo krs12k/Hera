@@ -21,7 +21,7 @@
     <h2>Bonjour, {{ current_user.name }} 👋</h2>
     <div class="d-flex gap-2">
         <a href="{{ url_for('statistiques') }}" class="btn btn-outline-dark">📊 Statistiques</a>
-        <a href="{{ url_for('envoyer_message') }}" class="btn btn-outline-dark">✉️ Message clients</a>
+        <a href="{{ url_for('envoyer_message') }}" class="btn btn-outline-secondary btn-sm" title="Envoyer un message aux clients" style="font-size:1.1rem;padding:6px 10px">✉️</a>
         <a href="{{ url_for('parametres') }}" class="btn btn-outline-secondary">⚙️ Paramètres</a>
         <a href="{{ url_for('qrcode_page') }}" class="btn btn-warning">📱 Mon QR code</a>
     </div>
