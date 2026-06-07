@@ -133,18 +133,21 @@ def logout():
 @app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
-        email = request.form['email'].strip()
-        resto = Restaurant.query.filter_by(email=email).first()
-        if resto:
-            token = secrets.token_urlsafe(32)
-            resto.reset_token = token
-            resto.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
-            db.session.commit()
-            reset_url = url_for('reset_password', token=token, _external=True)
-            try:
-                msg = Message('Réinitialisation de votre mot de passe — hera.',
-                              recipients=[email])
-                msg.body = f"""Bonjour,
+        try:
+            email = request.form['email'].strip()
+            resto = Restaurant.query.filter_by(email=email).first()
+            if resto:
+                token = secrets.token_urlsafe(32)
+                resto.reset_token = token
+                resto.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+                db.session.commit()
+                reset_url = url_for('reset_password', token=token, _external=True)
+                try:
+                    msg = Message(
+                        subject='Réinitialisation de votre mot de passe — hera.',
+                        recipients=[email],
+                        sender=app.config.get('MAIL_USERNAME'),
+                        body=f"""Bonjour,
 
 Vous avez demandé à réinitialiser votre mot de passe sur hera.
 
@@ -154,9 +157,12 @@ Cliquez sur ce lien (valable 1 heure) :
 Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
 
 — L'équipe hera."""
-                mail.send(msg)
-            except Exception:
-                pass
+                    )
+                    mail.send(msg)
+                except Exception:
+                    pass
+        except Exception:
+            db.session.rollback()
         flash('Si cet email est enregistré, un lien de réinitialisation a été envoyé.', 'info')
         return redirect(url_for('forgot_password'))
     return render_template('auth/forgot.html')
