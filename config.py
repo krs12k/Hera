@@ -6,8 +6,11 @@ class Config:
     database_url = os.environ.get('DATABASE_URL') or 'sqlite:///fidelite.db'
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    if database_url.startswith('postgresql://') and 'sslmode' not in database_url:
+        database_url += '?sslmode=require'
     SQLALCHEMY_DATABASE_URI = database_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {'pool_pre_ping': True}
 
     MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
     MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
