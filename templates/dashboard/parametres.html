@@ -18,8 +18,10 @@
         <!-- Infos du restaurant -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
-                <form method="POST">
+                <form method="POST" id="formParametres">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="point_mode" id="inputPointMode" value="{{ current_user.point_mode or 'simple' }}">
+
                     <h5 class="mb-3 fw-bold">Infos du restaurant</h5>
                     <div class="mb-3">
                         <label class="form-label">Nom du restaurant</label>
@@ -28,7 +30,7 @@
                     <div class="mb-3">
                         <label class="form-label">Email du compte</label>
                         <input type="email" name="email" class="form-control" value="{{ current_user.email }}">
-                        <small class="text-muted">Modifiez cet email avec précaution — il sert à vous connecter.</small>
+                        <small class="text-muted">Modifiez avec précaution — il sert à vous connecter.</small>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -44,59 +46,71 @@
                     <hr class="my-4">
                     <h5 class="mb-3 fw-bold">Programme de fidélité</h5>
 
-                    <!-- Toggle mode -->
-                    <div class="mb-4">
+                    <!-- Choix du mode en bulles -->
+                    <div class="mb-3">
                         <label class="form-label fw-bold">Comment attribuer les points ?</label>
-                        <div class="btn-group w-100" role="group">
-                            <input type="radio" class="btn-check" name="point_mode" id="mode_simple" value="simple"
-                                   {{ 'checked' if (current_user.point_mode or 'simple') == 'simple' else '' }}>
-                            <label class="btn btn-outline-secondary text-start p-3" for="mode_simple">
-                                <strong>Visites simples</strong><br>
-                                <small class="text-muted">Points fixes à chaque visite</small>
-                            </label>
-                            <input type="radio" class="btn-check" name="point_mode" id="mode_categories" value="categories"
-                                   {{ 'checked' if current_user.point_mode == 'categories' else '' }}>
-                            <label class="btn btn-outline-secondary text-start p-3" for="mode_categories">
-                                <strong>Par produit</strong><br>
-                                <small class="text-muted">Points selon la commande</small>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Section mode simple -->
-                    <div id="section-simple">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Points accordés par visite</label>
-                                <input type="number" name="points_per_visit" min="1"
-                                       class="form-control" value="{{ current_user.points_per_visit }}" required>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="mode-bubble {{ 'active' if (current_user.point_mode or 'simple') == 'simple' else '' }}"
+                                     id="bubble-simple" onclick="selectMode('simple')">
+                                    <div class="bubble-radio"></div>
+                                    <div class="fs-2 mb-1">🎯</div>
+                                    <div class="fw-bold">Visites simples</div>
+                                    <div class="text-muted" style="font-size:0.82rem">Points fixes à chaque visite</div>
+                                    <div class="bubble-arrow">▼</div>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Montant minimum (€)</label>
-                                <input type="number" name="minimum_amount" step="0.01" min="0"
-                                       class="form-control" value="{{ '%.2f'|format(current_user.minimum_amount) }}">
-                                <small class="text-muted">0 = pas de minimum</small>
+                            <div class="col-6">
+                                <div class="mode-bubble {{ 'active' if current_user.point_mode == 'categories' else '' }}"
+                                     id="bubble-categories" onclick="selectMode('categories')">
+                                    <div class="bubble-radio"></div>
+                                    <div class="fs-2 mb-1">🍽️</div>
+                                    <div class="fw-bold">Par produit</div>
+                                    <div class="text-muted" style="font-size:0.82rem">Points selon la commande</div>
+                                    <div class="bubble-arrow">▼</div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Section mode catégories -->
-                    <div id="section-categories" class="d-none">
-                        <div class="alert alert-light border mb-3" style="font-size:0.9rem">
-                            Le client sélectionne ce qu'il a commandé depuis son téléphone. Les points sont calculés automatiquement selon vos règles.
-                            <br>Si rien n'est sélectionné, <strong>{{ current_user.points_per_visit }} pts</strong> sont attribués par défaut.
+                    <!-- Panneau mode simple -->
+                    <div id="panel-simple" class="mode-panel mb-3 {{ '' if (current_user.point_mode or 'simple') == 'simple' else 'd-none' }}">
+                        <div class="panel-inner p-3 rounded">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Points par visite</label>
+                                    <input type="number" name="points_per_visit" id="ppv-simple" min="1"
+                                           class="form-control" value="{{ current_user.points_per_visit }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Montant minimum (€)</label>
+                                    <input type="number" name="minimum_amount" step="0.01" min="0"
+                                           class="form-control" value="{{ '%.2f'|format(current_user.minimum_amount) }}">
+                                    <small class="text-muted">0 = pas de minimum</small>
+                                </div>
+                            </div>
                         </div>
-                        <input type="hidden" name="minimum_amount" value="{{ '%.2f'|format(current_user.minimum_amount) }}">
-                        <input type="hidden" name="points_per_visit" value="{{ current_user.points_per_visit }}" id="hidden-ppv">
+                    </div>
+
+                    <!-- Panneau mode catégories -->
+                    <div id="panel-categories" class="mode-panel mb-3 {{ '' if current_user.point_mode == 'categories' else 'd-none' }}">
+                        <div class="panel-inner p-3 rounded">
+                            <p class="text-muted mb-2" style="font-size:0.88rem">
+                                Le client sélectionne ses produits depuis son téléphone. Si rien n'est sélectionné,
+                                <strong>{{ current_user.points_per_visit }} pts</strong> sont attribués par défaut.
+                            </p>
+                            <input type="hidden" name="minimum_amount" value="{{ '%.2f'|format(current_user.minimum_amount) }}">
+                            <input type="hidden" name="points_per_visit" value="{{ current_user.points_per_visit }}">
+                        </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Points nécessaires pour la récompense</label>
+                            <label class="form-label">Points pour la récompense</label>
                             <input type="number" name="reward_threshold" min="1"
                                    class="form-control" value="{{ current_user.reward_threshold }}" required>
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Description de la récompense</label>
                             <input type="text" name="reward_description" class="form-control"
                                    value="{{ current_user.reward_description }}" required
@@ -109,12 +123,12 @@
             </div>
         </div>
 
-        <!-- Règles de points (mode catégories) -->
-        <div id="card-rules" class="card border-0 shadow-sm {{ 'd-none' if (current_user.point_mode or 'simple') != 'categories' else '' }}">
+        <!-- Carte produits (mode catégories uniquement) -->
+        <div id="card-rules" class="card border-0 shadow-sm mb-4 {{ 'd-none' if (current_user.point_mode or 'simple') != 'categories' else '' }}">
             <div class="card-body p-4">
                 <h5 class="fw-bold mb-1">Produits et points</h5>
                 <p class="text-muted mb-3" style="font-size:0.9rem">
-                    Chaque produit que le client peut sélectionner depuis son téléphone.
+                    Ces produits apparaîtront sur le téléphone du client quand il scanne le QR code.
                 </p>
 
                 {% if rules %}
@@ -141,7 +155,7 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="flex-grow-1">
                         <label class="form-label mb-1" style="font-size:0.85rem">Nom du produit</label>
-                        <input type="text" name="label" class="form-control" placeholder="Ex: Boisson, Menu midi, Dessert…" required>
+                        <input type="text" name="label" class="form-control" placeholder="Ex: Boisson, Menu midi…" required>
                     </div>
                     <div style="width:110px">
                         <label class="form-label mb-1" style="font-size:0.85rem">Points</label>
@@ -155,15 +169,74 @@
     </div>
 </div>
 
-<script>
-function updateMode() {
-    const mode = document.querySelector('input[name="point_mode"]:checked').value
-    const isSimple = mode === 'simple'
-    document.getElementById('section-simple').classList.toggle('d-none', !isSimple)
-    document.getElementById('section-categories').classList.toggle('d-none', isSimple)
-    document.getElementById('card-rules').classList.toggle('d-none', isSimple)
+<style>
+.mode-bubble {
+    border: 2px solid #dee2e6;
+    border-radius: 14px;
+    padding: 1.2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    background: #fff;
+    user-select: none;
 }
-document.querySelectorAll('input[name="point_mode"]').forEach(r => r.addEventListener('change', updateMode))
-updateMode()
+.mode-bubble:hover {
+    border-color: var(--turquoise);
+    background: #f0fffe;
+}
+.mode-bubble.active {
+    border-color: var(--turquoise);
+    background: #e8f8f7;
+}
+.bubble-radio {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #adb5bd;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #fff;
+    transition: all 0.2s;
+}
+.mode-bubble.active .bubble-radio {
+    border-color: var(--turquoise);
+    background: var(--turquoise);
+    box-shadow: inset 0 0 0 3px #fff;
+}
+.bubble-arrow {
+    font-size: 0.7rem;
+    color: #adb5bd;
+    margin-top: 6px;
+    transition: all 0.2s;
+}
+.mode-bubble.active .bubble-arrow {
+    color: var(--turquoise);
+}
+.mode-panel {
+    animation: slideDown 0.25s ease;
+}
+.panel-inner {
+    background: #f8f9fa;
+    border-left: 3px solid var(--turquoise);
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+function selectMode(mode) {
+    document.getElementById('inputPointMode').value = mode
+
+    document.getElementById('bubble-simple').classList.toggle('active', mode === 'simple')
+    document.getElementById('bubble-categories').classList.toggle('active', mode === 'categories')
+
+    document.getElementById('panel-simple').classList.toggle('d-none', mode !== 'simple')
+    document.getElementById('panel-categories').classList.toggle('d-none', mode !== 'categories')
+    document.getElementById('card-rules').classList.toggle('d-none', mode !== 'categories')
+}
 </script>
 {% endblock %}
