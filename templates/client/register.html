@@ -13,6 +13,7 @@
                     <strong>{{ resto.reward_threshold }} points</strong> = {{ resto.reward_description }}
                 </div>
                 <form method="POST" class="text-start mt-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label">Prénom *</label>
                         <input type="text" name="first_name" class="form-control form-control-lg" required>

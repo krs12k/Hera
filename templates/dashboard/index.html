@@ -103,6 +103,7 @@
                             <form method="POST" action="{{ url_for('reinitialiser_points', client_id=client.id) }}"
                                   class="d-inline"
                                   onsubmit="return confirm('Remettre les points à zéro pour {{ client.first_name }} ?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button class="btn btn-sm btn-outline-secondary">Récompense utilisée</button>
                             </form>
                         </td>
@@ -176,6 +177,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form method="POST" id="formVisite">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
                     <h5 class="modal-title">Valider une visite</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

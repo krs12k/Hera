@@ -12,7 +12,7 @@
         <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
                 <form method="POST">
-
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <h5 class="mb-3 text-muted">Infos du restaurant</h5>
                     <div class="mb-3">
                         <label class="form-label">Nom du restaurant</label>
@@ -92,6 +92,7 @@
                         </span>
                         <form method="POST" action="{{ url_for('supprimer_regle', rule_id=rule.id) }}"
                               onsubmit="return confirm('Supprimer cette règle ?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button class="btn btn-sm btn-outline-danger">✕</button>
                         </form>
                     </div>
@@ -103,6 +104,7 @@
 
                 <!-- Ajouter une règle -->
                 <form method="POST" action="{{ url_for('ajouter_regle') }}" class="d-flex gap-2 align-items-end">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="flex-grow-1">
                         <label class="form-label mb-1" style="font-size:0.85rem">Nom du produit</label>
                         <input type="text" name="label" class="form-control" placeholder="Ex: Boisson, Repas midi, Dessert…" required>

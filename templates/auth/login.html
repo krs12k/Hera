@@ -8,6 +8,7 @@
             <div class="card-body p-4">
                 <h2 class="mb-4 text-center">Connexion</h2>
                 <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label">Email</label>
                         <input type="email" name="email" class="form-control" required>

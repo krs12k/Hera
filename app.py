@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
+from flask_wtf.csrf import CSRFProtect
 from models import db, Restaurant, Client, Visit, PointRule
 from config import Config
 import qrcode
@@ -12,6 +13,7 @@ app.config.from_object(Config)
 
 db.init_app(app)
 mail = Mail(app)
+csrf = CSRFProtect(app)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -211,9 +213,11 @@ def envoyer_message():
 
         try:
             destinataires = [c.email for c in clients]
+            # BCC : chaque client ne voit pas les autres emails
             msg = Message(
                 subject=f'[{current_user.name}] {sujet}',
-                recipients=destinataires,
+                recipients=[current_user.email],
+                bcc=destinataires,
                 body=f'{contenu}\n\n— {current_user.name}'
             )
             mail.send(msg)

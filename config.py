@@ -1,7 +1,7 @@
 import os
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-prod'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'local-dev-only-not-for-production'
 
     # Render fournit DATABASE_URL pour PostgreSQL, sinon SQLite en local
     database_url = os.environ.get('DATABASE_URL') or 'sqlite:///fidelite.db'
