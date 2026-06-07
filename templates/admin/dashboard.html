@@ -2,12 +2,22 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>hera admin — Dashboard</title>
+    <title>hera admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --turquoise: #1BBFB2; }
+        body { background: #f4f6f9; }
+        .navbar-brand span { color: var(--turquoise); }
+        .stat-card { border-left: 4px solid var(--turquoise); }
+        .badge-gratuit { background: #198754; }
+        .badge-actif { background: #0d6efd; }
+        .badge-essai { background: #ffc107; color: #000; }
+        .badge-expire { background: #dc3545; }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 <nav class="navbar navbar-dark bg-dark px-4 mb-4">
-    <span class="navbar-brand fw-bold">hera admin</span>
+    <span class="navbar-brand fw-bold">hera<span>.</span> admin</span>
     <div class="d-flex gap-2">
         <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAdminPw">
             🔑 Mot de passe
@@ -23,54 +33,103 @@
         {% endfor %}
     {% endwith %}
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0">Tous les restaurants ({{ restaurants|length }})</h5>
+    <!-- Chiffres clés -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm stat-card p-3 text-center">
+                <div class="fs-2 fw-bold">{{ stats.total }}</div>
+                <div class="text-muted" style="font-size:0.82rem">Restaurants</div>
             </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 text-center" style="border-left:4px solid #0d6efd">
+                <div class="fs-2 fw-bold text-primary">{{ stats.actifs }}</div>
+                <div class="text-muted" style="font-size:0.82rem">Abonnés actifs</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 text-center" style="border-left:4px solid #ffc107">
+                <div class="fs-2 fw-bold text-warning">{{ stats.essai }}</div>
+                <div class="text-muted" style="font-size:0.82rem">En essai</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 text-center" style="border-left:4px solid #dc3545">
+                <div class="fs-2 fw-bold text-danger">{{ stats.expires }}</div>
+                <div class="text-muted" style="font-size:0.82rem">Expirés</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table restaurants -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">Restaurants ({{ restaurants|length }})</h5>
             <div class="table-responsive">
-                <table class="table align-middle">
+                <table class="table align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Restaurant</th>
                             <th>Email</th>
                             <th>Statut</th>
-                            <th>Essai</th>
+                            <th>Clients</th>
+                            <th>Visites</th>
                             <th>Inscrit le</th>
-                            <th>Gratuit</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for r in restaurants %}
                         <tr>
                             <td><strong>{{ r.name }}</strong></td>
-                            <td class="text-muted">{{ r.email }}</td>
+                            <td class="text-muted" style="font-size:0.85rem">{{ r.email }}</td>
                             <td>
                                 {% if r.is_free %}
-                                    <span class="badge bg-success">Gratuit</span>
+                                    <span class="badge badge-gratuit">Gratuit</span>
                                 {% elif r.subscription_status == 'active' %}
-                                    <span class="badge bg-primary">Abonné</span>
+                                    <span class="badge badge-actif">Abonné</span>
                                 {% elif r.subscription_status == 'trial' and r.trial_ends_at and r.trial_ends_at > now %}
-                                    <span class="badge bg-warning text-dark">Essai</span>
+                                    <span class="badge badge-essai">Essai</span>
+                                    <small class="text-muted d-block" style="font-size:0.75rem">
+                                        jusqu'au {{ r.trial_ends_at.strftime('%d/%m') }}
+                                    </small>
                                 {% else %}
-                                    <span class="badge bg-danger">Expiré</span>
+                                    <span class="badge badge-expire">Expiré</span>
                                 {% endif %}
                             </td>
-                            <td class="text-muted" style="font-size:0.85rem">
-                                {% if r.trial_ends_at %}
-                                    {{ r.trial_ends_at.strftime('%d/%m/%Y') }}
-                                {% else %}—{% endif %}
-                            </td>
+                            <td class="text-center">{{ r.nb_clients }}</td>
+                            <td class="text-center">{{ r.nb_visits }}</td>
                             <td class="text-muted" style="font-size:0.85rem">
                                 {{ r.created_at.strftime('%d/%m/%Y') }}
                             </td>
                             <td>
-                                <form method="POST" action="{{ url_for('admin_toggle_free', resto_id=r.id) }}">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button class="btn btn-sm {{ 'btn-success' if r.is_free else 'btn-outline-secondary' }}">
-                                        {{ '✓ Gratuit' if r.is_free else 'Rendre gratuit' }}
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <!-- Toggle gratuit -->
+                                    <form method="POST" action="{{ url_for('admin_toggle_free', resto_id=r.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button class="btn btn-sm {{ 'btn-success' if r.is_free else 'btn-outline-success' }}" title="{{ 'Retirer le gratuit' if r.is_free else 'Rendre gratuit' }}">
+                                            {{ '✓' if r.is_free else '🎁' }}
+                                        </button>
+                                    </form>
+                                    <!-- Prolonger essai -->
+                                    <button class="btn btn-sm btn-outline-warning"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalProlonger"
+                                            data-resto-id="{{ r.id }}"
+                                            data-resto-name="{{ r.name }}"
+                                            title="Prolonger l'essai">
+                                        ⏳
                                     </button>
-                                </form>
+                                    <!-- Supprimer -->
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalSupprimer"
+                                            data-resto-id="{{ r.id }}"
+                                            data-resto-name="{{ r.name }}"
+                                            title="Supprimer ce restaurant">
+                                        🗑
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -80,7 +139,61 @@
         </div>
     </div>
 </div>
-<!-- Modal changement mot de passe admin -->
+
+<!-- Modal prolonger essai -->
+<div class="modal fade" id="modalProlonger" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" id="formProlonger">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Prolonger l'essai</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Restaurant : <strong id="prolongerNom"></strong></p>
+                    <label class="form-label">Nombre de jours à ajouter</label>
+                    <select name="jours" class="form-select">
+                        <option value="7">7 jours</option>
+                        <option value="14" selected>14 jours</option>
+                        <option value="30">30 jours</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning fw-bold">Prolonger</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal supprimer -->
+<div class="modal fade" id="modalSupprimer" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" id="formSupprimer">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-danger">Supprimer le restaurant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        ⚠️ Cette action est <strong>irréversible</strong>. Tous les clients, visites et points seront supprimés.
+                    </div>
+                    <p>Supprimer définitivement : <strong id="supprimerNom"></strong> ?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger fw-bold">Supprimer définitivement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal mot de passe admin -->
 <div class="modal fade" id="modalAdminPw" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -92,7 +205,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning" style="font-size:0.85rem">
-                        ⚠️ Ce changement est temporaire. Mettez aussi à jour <strong>ADMIN_PASSWORD</strong> sur Render pour qu'il soit permanent.
+                        ⚠️ Ce changement est temporaire. Mettez aussi à jour <strong>ADMIN_PASSWORD</strong> sur Render.
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Mot de passe actuel</label>
@@ -117,5 +230,17 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.getElementById('modalProlonger').addEventListener('show.bs.modal', e => {
+    const btn = e.relatedTarget
+    document.getElementById('prolongerNom').textContent = btn.dataset.restoName
+    document.getElementById('formProlonger').action = '/hera-admin/prolonger/' + btn.dataset.restoId
+})
+document.getElementById('modalSupprimer').addEventListener('show.bs.modal', e => {
+    const btn = e.relatedTarget
+    document.getElementById('supprimerNom').textContent = btn.dataset.restoName
+    document.getElementById('formSupprimer').action = '/hera-admin/supprimer/' + btn.dataset.restoId
+})
+</script>
 </body>
 </html>

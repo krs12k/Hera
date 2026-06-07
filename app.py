@@ -698,7 +698,18 @@ def admin_change_password():
 @admin_required
 def admin_dashboard():
     restaurants = Restaurant.query.order_by(Restaurant.created_at.desc()).all()
-    return render_template('admin/dashboard.html', restaurants=restaurants, now=datetime.utcnow())
+    now = datetime.utcnow()
+    stats = {
+        'total': len(restaurants),
+        'actifs': sum(1 for r in restaurants if r.subscription_status == 'active'),
+        'essai': sum(1 for r in restaurants if r.subscription_status == 'trial' and r.trial_ends_at and r.trial_ends_at > now),
+        'gratuits': sum(1 for r in restaurants if r.is_free),
+        'expires': sum(1 for r in restaurants if not r.is_free and r.subscription_status != 'active' and not (r.subscription_status == 'trial' and r.trial_ends_at and r.trial_ends_at > now)),
+    }
+    for r in restaurants:
+        r.nb_clients = Client.query.filter_by(restaurant_id=r.id).count()
+        r.nb_visits = Visit.query.filter_by(restaurant_id=r.id).count()
+    return render_template('admin/dashboard.html', restaurants=restaurants, now=now, stats=stats)
 
 
 # ── Admin — Toggle gratuit ───────────────────────────────────────
@@ -709,6 +720,37 @@ def admin_toggle_free(resto_id):
     resto.is_free = not resto.is_free
     db.session.commit()
     flash(f'{"Gratuit activé" if resto.is_free else "Gratuit désactivé"} pour {resto.name}.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+# ── Admin — Prolonger l'essai ────────────────────────────────────
+@app.route('/hera-admin/prolonger/<int:resto_id>', methods=['POST'])
+@admin_required
+def admin_prolonger(resto_id):
+    resto = Restaurant.query.get_or_404(resto_id)
+    jours = int(request.form.get('jours', 14))
+    if resto.trial_ends_at and resto.trial_ends_at > datetime.utcnow():
+        resto.trial_ends_at = resto.trial_ends_at + timedelta(days=jours)
+    else:
+        resto.trial_ends_at = datetime.utcnow() + timedelta(days=jours)
+    resto.subscription_status = 'trial'
+    db.session.commit()
+    flash(f'Essai prolongé de {jours} jours pour {resto.name}.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+# ── Admin — Supprimer un restaurant ─────────────────────────────
+@app.route('/hera-admin/supprimer/<int:resto_id>', methods=['POST'])
+@admin_required
+def admin_supprimer(resto_id):
+    resto = Restaurant.query.get_or_404(resto_id)
+    nom = resto.name
+    Client.query.filter_by(restaurant_id=resto_id).delete()
+    Visit.query.filter_by(restaurant_id=resto_id).delete()
+    PointRule.query.filter_by(restaurant_id=resto_id).delete()
+    db.session.delete(resto)
+    db.session.commit()
+    flash(f'Restaurant "{nom}" supprimé définitivement.', 'success')
     return redirect(url_for('admin_dashboard'))
 
 
