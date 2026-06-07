@@ -64,7 +64,13 @@
     <!-- Table restaurants -->
     <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
-            <h5 class="fw-bold mb-3">Restaurants ({{ restaurants|length }})</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">Restaurants ({{ restaurants|length }})</h5>
+                <button class="btn btn-sm fw-bold" style="background:var(--turquoise);color:#fff"
+                        data-bs-toggle="modal" data-bs-target="#modalAjouter">
+                    + Ajouter un restaurant
+                </button>
+            </div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead class="table-light">
@@ -136,6 +142,47 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal ajouter restaurant -->
+<div class="modal fade" id="modalAjouter" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin_ajouter') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Ajouter un restaurant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom du restaurant</label>
+                        <input type="text" name="name" class="form-control" required placeholder="Ex: Le Petit Bistro">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email (identifiant de connexion)</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe temporaire</label>
+                        <input type="text" name="password" class="form-control" required placeholder="À communiquer au restaurateur">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type d'accès</label>
+                        <select name="acces" class="form-select">
+                            <option value="trial">Essai 14 jours</option>
+                            <option value="gratuit">Gratuit (illimité)</option>
+                            <option value="actif">Abonné actif</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn fw-bold" style="background:var(--turquoise);color:#fff">Créer le restaurant</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

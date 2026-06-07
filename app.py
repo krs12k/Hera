@@ -739,6 +739,43 @@ def admin_prolonger(resto_id):
     return redirect(url_for('admin_dashboard'))
 
 
+# ── Admin — Ajouter un restaurant ───────────────────────────────
+@app.route('/hera-admin/ajouter', methods=['POST'])
+@admin_required
+def admin_ajouter():
+    name = request.form.get('name', '').strip()
+    email = request.form.get('email', '').strip()
+    password = request.form.get('password', '').strip()
+    acces = request.form.get('acces', 'trial')
+
+    if not name or not email or not password:
+        flash('Tous les champs sont obligatoires.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
+    if Restaurant.query.filter_by(email=email).first():
+        flash('Cet email est déjà utilisé.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
+    resto = Restaurant(name=name, email=email)
+    resto.set_password(password)
+
+    if acces == 'gratuit':
+        resto.is_free = True
+        resto.subscription_status = 'trial'
+        resto.trial_ends_at = datetime.utcnow() + timedelta(days=14)
+    elif acces == 'actif':
+        resto.subscription_status = 'active'
+        resto.trial_ends_at = datetime.utcnow() + timedelta(days=14)
+    else:
+        resto.subscription_status = 'trial'
+        resto.trial_ends_at = datetime.utcnow() + timedelta(days=14)
+
+    db.session.add(resto)
+    db.session.commit()
+    flash(f'Restaurant "{name}" créé avec succès.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
 # ── Admin — Supprimer un restaurant ─────────────────────────────
 @app.route('/hera-admin/supprimer/<int:resto_id>', methods=['POST'])
 @admin_required
