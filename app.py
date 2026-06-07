@@ -29,12 +29,17 @@ def load_user(user_id):
 
 with app.app_context():
     db.create_all()
-    try:
-        with db.engine.connect() as conn:
-            conn.execute(text("ALTER TABLE restaurants ADD COLUMN point_mode VARCHAR(20) DEFAULT 'simple'"))
-            conn.commit()
-    except Exception:
-        pass
+    for sql in [
+        "ALTER TABLE restaurants ADD COLUMN point_mode VARCHAR(20) DEFAULT 'simple'",
+        "ALTER TABLE restaurants ADD COLUMN reset_token VARCHAR(100)",
+        "ALTER TABLE restaurants ADD COLUMN reset_token_expires TIMESTAMP",
+    ]:
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(text(sql))
+                conn.commit()
+        except Exception:
+            pass
 
 stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
 
@@ -122,6 +127,64 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('home'))
+
+
+# ── Mot de passe oublié ──────────────────────────────────────────
+@app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email'].strip()
+        resto = Restaurant.query.filter_by(email=email).first()
+        if resto:
+            token = secrets.token_urlsafe(32)
+            resto.reset_token = token
+            resto.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+            db.session.commit()
+            reset_url = url_for('reset_password', token=token, _external=True)
+            try:
+                msg = Message('Réinitialisation de votre mot de passe — hera.',
+                              recipients=[email])
+                msg.body = f"""Bonjour,
+
+Vous avez demandé à réinitialiser votre mot de passe sur hera.
+
+Cliquez sur ce lien (valable 1 heure) :
+{reset_url}
+
+Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
+
+— L'équipe hera."""
+                mail.send(msg)
+            except Exception:
+                pass
+        flash('Si cet email est enregistré, un lien de réinitialisation a été envoyé.', 'info')
+        return redirect(url_for('forgot_password'))
+    return render_template('auth/forgot.html')
+
+
+# ── Réinitialisation du mot de passe ────────────────────────────
+@app.route('/reinitialiser-mdp/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    resto = Restaurant.query.filter_by(reset_token=token).first()
+    if not resto or not resto.reset_token_expires or resto.reset_token_expires < datetime.utcnow():
+        flash('Ce lien est invalide ou expiré.', 'danger')
+        return redirect(url_for('forgot_password'))
+    if request.method == 'POST':
+        password = request.form['password']
+        confirm = request.form['confirm']
+        if password != confirm:
+            flash('Les mots de passe ne correspondent pas.', 'danger')
+            return redirect(url_for('reset_password', token=token))
+        if len(password) < 6:
+            flash('Le mot de passe doit faire au moins 6 caractères.', 'danger')
+            return redirect(url_for('reset_password', token=token))
+        resto.set_password(password)
+        resto.reset_token = None
+        resto.reset_token_expires = None
+        db.session.commit()
+        flash('Mot de passe mis à jour ! Vous pouvez vous connecter.', 'success')
+        return redirect(url_for('login'))
+    return render_template('auth/reset.html', token=token)
 
 
 # ── Dashboard restaurateur ──────────────────────────────────────
@@ -556,6 +619,25 @@ def admin_login():
 def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('admin_login'))
+
+
+@app.route('/hera-admin/changer-mot-de-passe', methods=['POST'])
+def admin_change_password():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    current = request.form.get('current_password', '')
+    new_pw = request.form.get('new_password', '')
+    confirm = request.form.get('confirm_password', '')
+    if current != app.config.get('ADMIN_PASSWORD'):
+        flash('Mot de passe actuel incorrect.', 'danger')
+    elif new_pw != confirm:
+        flash('Les nouveaux mots de passe ne correspondent pas.', 'danger')
+    elif len(new_pw) < 6:
+        flash('Le nouveau mot de passe doit faire au moins 6 caractères.', 'danger')
+    else:
+        app.config['ADMIN_PASSWORD'] = new_pw
+        flash('Mot de passe changé pour cette session. Pensez à mettre à jour la variable ADMIN_PASSWORD sur Render.', 'warning')
+    return redirect(url_for('admin_dashboard'))
 
 
 # ── Admin — Dashboard ────────────────────────────────────────────

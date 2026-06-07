@@ -22,7 +22,11 @@ class Restaurant(UserMixin, db.Model):
     minimum_amount = db.Column(db.Float, default=0.0)
 
     # Mode fidélité
-    point_mode = db.Column(db.String(20), default='simple')  # simple ou categories
+    point_mode = db.Column(db.String(20), default='simple')
+
+    # Reset mot de passe
+    reset_token = db.Column(db.String(100), nullable=True)
+    reset_token_expires = db.Column(db.DateTime, nullable=True)
 
     # Abonnement
     subscription_status = db.Column(db.String(20), default='trial')  # trial, active, inactive

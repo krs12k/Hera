@@ -19,7 +19,10 @@
                     </div>
                     <button type="submit" class="btn btn-dark w-100">Se connecter</button>
                 </form>
-                <p class="text-center mt-3 text-muted">
+                <p class="text-center mt-3 mb-1 text-muted">
+                    <a href="{{ url_for('forgot_password') }}" style="font-size:0.9rem">Mot de passe oublié ?</a>
+                </p>
+                <p class="text-center text-muted">
                     Pas encore de compte ? <a href="{{ url_for('register') }}">S'inscrire</a>
                 </p>
             </div>

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Nouveau mot de passe — Hera{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h2 class="mb-1 text-center">Nouveau mot de passe</h2>
+                <p class="text-muted text-center mb-4" style="font-size:0.9rem">
+                    Choisissez un nouveau mot de passe pour votre compte.
+                </p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endwith %}
+
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Nouveau mot de passe</label>
+                        <input type="password" name="password" class="form-control form-control-lg"
+                               required minlength="6" autofocus placeholder="6 caractères minimum">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Confirmer le mot de passe</label>
+                        <input type="password" name="confirm" class="form-control form-control-lg"
+                               required minlength="6">
+                    </div>
+                    <button type="submit" class="btn hera-btn-gold w-100 fw-bold btn-lg">
+                        Enregistrer le mot de passe
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
