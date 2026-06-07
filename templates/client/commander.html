@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Ma commande — {{ resto.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <div class="fs-1">🧾</div>
+                    <h2 class="mt-2">{{ resto.name }}</h2>
+                    <p class="text-muted">Bonjour <strong>{{ client.first_name }}</strong> ! Qu'est-ce que tu as commandé ?</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endwith %}
+
+                {% if cooldown %}
+                <div class="text-center py-4">
+                    <div class="fs-1">⏳</div>
+                    <p class="fw-bold mt-2">Tu as déjà validé une visite récemment.</p>
+                    <p class="text-muted">Reviens dans <strong>{{ cooldown }}</strong> pour gagner de nouveaux points.</p>
+                    <a href="{{ url_for('client_profil', token=resto.qr_token, email=email) }}" class="btn btn-outline-dark mt-2">
+                        Voir mes points
+                    </a>
+                </div>
+                {% else %}
+
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="email" value="{{ email }}">
+
+                    {% if rules %}
+                    <div class="mb-4">
+                        {% for rule in rules %}
+                        <div class="d-flex align-items-center justify-content-between p-3 mb-2 rounded" style="background:#f8f9fa">
+                            <span class="fw-bold">{{ rule.label }}</span>
+                            <div class="d-flex align-items-center gap-3">
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm qty-btn"
+                                        style="width:36px;height:36px;border-radius:50%;font-size:1.2rem;line-height:1"
+                                        data-action="minus" data-rule="{{ rule.id }}">−</button>
+                                <span class="fw-bold fs-5" id="qty-display-{{ rule.id }}">0</span>
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm qty-btn"
+                                        style="width:36px;height:36px;border-radius:50%;font-size:1.2rem;line-height:1"
+                                        data-action="plus" data-rule="{{ rule.id }}">+</button>
+                                <input type="hidden" name="qty_{{ rule.id }}" id="qty-input-{{ rule.id }}" value="0" data-points="{{ rule.points }}">
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <div class="text-center mt-3 p-2 rounded" style="background:#e8f8f7">
+                            <span class="text-muted">Points gagnés : </span>
+                            <strong id="totalPoints" style="color:var(--turquoise);font-size:1.2rem">0</strong>
+                            <span class="text-muted"> pts</span>
+                            <small class="text-muted d-block" style="font-size:0.78rem">
+                                Si rien sélectionné : {{ resto.points_per_visit }} pts par défaut
+                            </small>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center mb-4 p-3 rounded" style="background:#e8f8f7">
+                        <p class="mb-0">Tu vas gagner <strong style="color:var(--turquoise)">{{ resto.points_per_visit }} points</strong> pour cette visite.</p>
+                    </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
+                        Valider ma visite ✓
+                    </button>
+                </form>
+
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.qty-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const ruleId = btn.dataset.rule
+        const display = document.getElementById('qty-display-' + ruleId)
+        const input = document.getElementById('qty-input-' + ruleId)
+        let qty = parseInt(input.value)
+
+        if (btn.dataset.action === 'plus') qty++
+        else if (btn.dataset.action === 'minus' && qty > 0) qty--
+
+        display.textContent = qty
+        input.value = qty
+
+        let total = 0
+        document.querySelectorAll('input[id^="qty-input-"]').forEach(inp => {
+            total += parseInt(inp.value) * parseInt(inp.dataset.points)
+        })
+        document.getElementById('totalPoints').textContent = total
+    })
+})
+</script>
+{% endblock %}

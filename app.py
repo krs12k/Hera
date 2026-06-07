@@ -4,7 +4,7 @@ from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
 from models import db, Restaurant, Client, Visit, PointRule
 from config import Config
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 import qrcode
 import io
@@ -309,31 +309,96 @@ def generate_qr():
     return send_file(buf, mimetype='image/png')
 
 
-# ── Page client (via QR code) ───────────────────────────────────
+# ── Page client (via QR code) — étape 1 : identification ────────
 @app.route('/rejoindre/<token>', methods=['GET', 'POST'])
 def client_register(token):
     resto = Restaurant.query.filter_by(qr_token=token).first_or_404()
 
     if request.method == 'POST':
-        first_name = request.form['first_name']
-        email = request.form['email']
+        email = request.form['email'].strip()
+        client = Client.query.filter_by(restaurant_id=resto.id, email=email).first()
+        if client:
+            return redirect(url_for('client_commander', token=token, email=email))
+        else:
+            return redirect(url_for('client_nouveau', token=token, email=email))
 
+    return render_template('client/register.html', resto=resto)
+
+
+# ── Inscription nouveau client ───────────────────────────────────
+@app.route('/rejoindre/<token>/nouveau', methods=['GET', 'POST'])
+def client_nouveau(token):
+    resto = Restaurant.query.filter_by(qr_token=token).first_or_404()
+    email = request.args.get('email') or request.form.get('email', '')
+
+    if request.method == 'POST':
+        first_name = request.form['first_name'].strip()
+        email = request.form['email'].strip()
         consent = request.form.get('consent') == 'on'
+
+        if not consent:
+            flash('Tu dois accepter les conditions pour t\'inscrire.', 'danger')
+            return redirect(url_for('client_nouveau', token=token, email=email))
+
         client = Client.query.filter_by(restaurant_id=resto.id, email=email).first()
         if not client:
-            if not consent:
-                flash('Tu dois accepter les conditions pour t\'inscrire.', 'danger')
-                return redirect(url_for('client_register', token=token))
             client = Client(restaurant_id=resto.id, first_name=first_name, email=email, rgpd_consent=True)
             db.session.add(client)
             db.session.commit()
-            flash('Bienvenue ! Tu es maintenant inscrit au programme de fidélité.', 'success')
-        else:
-            flash(f'Content de te revoir, {client.first_name} ! Tu as {client.total_points} points.', 'info')
 
+        return redirect(url_for('client_commander', token=token, email=email))
+
+    return render_template('client/nouveau.html', resto=resto, email=email)
+
+
+# ── Commander et gagner des points ───────────────────────────────
+@app.route('/rejoindre/<token>/commander', methods=['GET', 'POST'])
+def client_commander(token):
+    resto = Restaurant.query.filter_by(qr_token=token).first_or_404()
+    email = request.args.get('email') or request.form.get('email', '')
+    client = Client.query.filter_by(restaurant_id=resto.id, email=email).first_or_404()
+    rules = PointRule.query.filter_by(restaurant_id=resto.id).all()
+
+    six_hours_ago = datetime.utcnow() - timedelta(hours=6)
+    last_visit = Visit.query.filter_by(
+        client_id=client.id, restaurant_id=resto.id
+    ).filter(Visit.created_at > six_hours_ago).order_by(Visit.created_at.desc()).first()
+
+    cooldown = None
+    if last_visit:
+        next_allowed = last_visit.created_at + timedelta(hours=6)
+        remaining = next_allowed - datetime.utcnow()
+        h = int(remaining.total_seconds() // 3600)
+        m = int((remaining.total_seconds() % 3600) // 60)
+        cooldown = f"{h}h {m:02d}min"
+
+    if request.method == 'POST':
+        if cooldown:
+            flash(f'Tu as déjà validé une visite récemment. Reviens dans {cooldown}.', 'warning')
+            return redirect(url_for('client_commander', token=token, email=email))
+
+        points = 0
+        note_parts = []
+        if rules:
+            for rule in rules:
+                qty = int(request.form.get(f'qty_{rule.id}', 0) or 0)
+                if qty > 0:
+                    points += rule.points * qty
+                    note_parts.append(f"{qty}x {rule.label}")
+
+        if points == 0:
+            points = resto.points_per_visit
+
+        note = ', '.join(note_parts) if note_parts else None
+        visit = Visit(client_id=client.id, restaurant_id=resto.id, points_earned=points, note=note)
+        client.total_points += points
+        db.session.add(visit)
+        db.session.commit()
+
+        flash(f'🎉 +{points} points ajoutés ! Tu as maintenant {client.total_points} points.', 'success')
         return redirect(url_for('client_profil', token=token, email=email))
 
-    return render_template('client/register.html', resto=resto)
+    return render_template('client/commander.html', resto=resto, client=client, rules=rules, email=email, cooldown=cooldown)
 
 
 # ── Profil client ───────────────────────────────────────────────
