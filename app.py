@@ -573,6 +573,24 @@ def client_profil(token):
     return render_template('client/profil.html', client=client, resto=resto, progression=progression)
 
 
+# ── Portail Client Stripe (gérer / résilier) ────────────────────
+@app.route('/abonnement/gerer')
+@login_required
+def gerer_abonnement():
+    if not current_user.stripe_customer_id:
+        flash("Aucun abonnement Stripe trouvé. Contactez-nous si besoin.", 'warning')
+        return redirect(url_for('parametres'))
+    try:
+        portal = stripe.billing_portal.Session.create(
+            customer=current_user.stripe_customer_id,
+            return_url=url_for('parametres', _external=True),
+        )
+        return redirect(portal.url)
+    except Exception as e:
+        flash(f"Impossible d'ouvrir le portail Stripe : {str(e)}", 'danger')
+        return redirect(url_for('parametres'))
+
+
 # ── Page abonnement ─────────────────────────────────────────────
 @app.route('/abonnement')
 @login_required

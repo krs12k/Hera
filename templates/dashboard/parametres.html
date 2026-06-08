@@ -169,6 +169,61 @@
     </div>
 </div>
 
+<!-- Abonnement -->
+{% if not current_user.is_free %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3">Mon abonnement</h5>
+                {% if current_user.subscription_status == 'active' %}
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div>
+                        <span class="badge bg-success me-2">Actif</span>
+                        <span class="text-muted" style="font-size:0.9rem">7,90 €/mois — renouvellement automatique</span>
+                    </div>
+                    <a href="{{ url_for('gerer_abonnement') }}" class="btn btn-outline-danger btn-sm">
+                        Gérer / Résilier
+                    </a>
+                </div>
+                <p class="text-muted mt-2 mb-0" style="font-size:0.8rem">
+                    En cliquant sur "Gérer / Résilier", vous accédez au portail sécurisé Stripe pour annuler votre abonnement, changer votre carte ou consulter vos factures.
+                </p>
+                {% elif current_user.subscription_status == 'trial' %}
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div>
+                        <span class="badge bg-warning text-dark me-2">Essai</span>
+                        <span class="text-muted" style="font-size:0.9rem">
+                            {% if current_user.trial_days_left > 0 %}
+                                {{ current_user.trial_days_left }} jour(s) restant(s) — 7,90 €/mois démarrera automatiquement
+                            {% else %}
+                                Essai terminé
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if current_user.stripe_customer_id %}
+                    <a href="{{ url_for('gerer_abonnement') }}" class="btn btn-outline-secondary btn-sm">
+                        Gérer / Annuler l'essai
+                    </a>
+                    {% endif %}
+                </div>
+                <p class="text-muted mt-2 mb-0" style="font-size:0.8rem">
+                    Vous pouvez annuler avant la fin de l'essai — aucun prélèvement ne sera effectué.
+                </p>
+                {% else %}
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <span class="badge bg-danger">Inactif</span>
+                    <a href="{{ url_for('abonnement') }}" class="btn hera-btn-gold btn-sm fw-bold">
+                        Réactiver — 7,90 €/mois
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <style>
 .mode-bubble {
     border: 2px solid #dee2e6;
