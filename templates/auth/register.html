@@ -2,14 +2,67 @@
 {% block title %}Inscription — hera.{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-4">
-                <h2 class="mb-1 text-center fw-bold">Créer mon compte restaurant</h2>
-                <p class="text-center text-muted mb-4" style="font-size:0.9rem">
-                    Dès 7,27 €/mois · Sans commission · Résiliable à tout moment
-                </p>
+<div class="row g-0 justify-content-center" style="min-height:80vh;align-items:center">
+
+    <!-- Colonne gauche : valeur -->
+    <div class="col-md-5 d-none d-md-flex flex-column justify-content-center pe-5">
+        <div class="mb-4">
+            <span class="badge px-3 py-2 fw-normal mb-3" style="background:#e8f8f7;color:var(--turquoise);font-size:0.85rem;border-radius:20px">
+                🇧🇪 Pour les restaurants belges
+            </span>
+            <h2 class="fw-bold mb-3" style="font-size:1.9rem;letter-spacing:-0.5px;line-height:1.2">
+                Fidélisez vos clients.<br>Sans commission.
+            </h2>
+            <p class="text-muted" style="font-size:0.95rem;line-height:1.7">
+                Un QR code à la caisse, un tableau de bord simple, et vos habitués reviennent. Conçu pour les restaurateurs de quartier.
+            </p>
+        </div>
+
+        <div class="d-flex flex-column gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:36px;height:36px;background:var(--turquoise-light)">
+                    <span style="color:var(--turquoise);font-size:1rem">✓</span>
+                </div>
+                <span style="font-size:0.9rem">QR code imprimable en A4 en 2 minutes</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:36px;height:36px;background:var(--turquoise-light)">
+                    <span style="color:var(--turquoise);font-size:1rem">✓</span>
+                </div>
+                <span style="font-size:0.9rem">Clients illimités, zéro commission</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:36px;height:36px;background:var(--turquoise-light)">
+                    <span style="color:var(--turquoise);font-size:1rem">✓</span>
+                </div>
+                <span style="font-size:0.9rem">Statistiques et historique des visites</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:36px;height:36px;background:var(--turquoise-light)">
+                    <span style="color:var(--turquoise);font-size:1rem">✓</span>
+                </div>
+                <span style="font-size:0.9rem">Résiliable à tout moment, sans engagement</span>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-top">
+            <div class="fw-bold" style="font-size:1.4rem;letter-spacing:-0.5px">
+                Dès <span style="color:var(--turquoise)">7,27 €</span>/mois
+            </div>
+            <div class="text-muted" style="font-size:0.82rem">14 jours d'essai inclus · Premier débit après l'essai</div>
+        </div>
+    </div>
+
+    <!-- Colonne droite : formulaire -->
+    <div class="col-md-5 col-12">
+        <div class="card shadow border-0 rounded-4">
+            <div class="card-body p-4 p-md-5">
+                <h4 class="fw-bold mb-1">Créer mon compte</h4>
+                <p class="text-muted mb-4" style="font-size:0.88rem">Quelques informations pour démarrer.</p>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% for category, message in messages %}
@@ -19,45 +72,50 @@
 
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <div class="mb-3">
-                        <label class="form-label">Nom du restaurant *</label>
-                        <input type="text" name="name" class="form-control" placeholder="Ex: Chez Marie" required>
+                        <label class="form-label fw-semibold" style="font-size:0.88rem">Nom du restaurant *</label>
+                        <input type="text" name="name" class="form-control" placeholder="Ex : Chez Marie" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Email *</label>
-                        <input type="email" name="email" class="form-control" required>
+                        <label class="form-label fw-semibold" style="font-size:0.88rem">Email *</label>
+                        <input type="email" name="email" class="form-control" placeholder="contact@monrestaurant.be" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Mot de passe *</label>
-                        <input type="password" name="password" class="form-control" minlength="6" required>
+                        <label class="form-label fw-semibold" style="font-size:0.88rem">Mot de passe *</label>
+                        <input type="password" name="password" class="form-control" minlength="6" placeholder="6 caractères minimum" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Adresse</label>
-                        <input type="text" name="address" class="form-control" placeholder="Rue, ville">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Téléphone</label>
-                        <input type="tel" name="phone" class="form-control">
+                    <div class="row">
+                        <div class="col-md-7 mb-3">
+                            <label class="form-label fw-semibold" style="font-size:0.88rem">Adresse</label>
+                            <input type="text" name="address" class="form-control" placeholder="Rue, ville">
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label class="form-label fw-semibold" style="font-size:0.88rem">Téléphone</label>
+                            <input type="tel" name="phone" class="form-control" placeholder="04…">
+                        </div>
                     </div>
 
-                    <!-- Notice carte -->
-                    <div class="alert alert-light border mb-3 d-flex gap-2 align-items-start" style="font-size:0.85rem">
-                        <span style="font-size:1.1rem">🔒</span>
-                        <span>
-                            L'étape suivante vous demande votre carte bancaire via Stripe.
-                            Votre abonnement démarre après <strong>14 jours d'essai offerts</strong> — résiliable avant sans frais.
+                    <div class="rounded-3 p-3 mb-4 d-flex gap-2 align-items-start" style="background:#f8f9fa;font-size:0.82rem">
+                        <span>🔒</span>
+                        <span class="text-muted">
+                            L'étape suivante vous demande votre carte via Stripe.
+                            <strong>Aucun prélèvement pendant 14 jours.</strong>
+                            Résiliable avant sans frais.
                         </span>
                     </div>
 
                     <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
-                        Créer mon compte →
+                        Continuer →
                     </button>
                 </form>
-                <p class="text-center mt-3 text-muted" style="font-size:0.85rem">
-                    Déjà un compte ? <a href="{{ url_for('login') }}">Se connecter</a>
+
+                <p class="text-center mt-3 text-muted" style="font-size:0.83rem">
+                    Déjà un compte ? <a href="{{ url_for('login') }}" style="color:var(--turquoise)">Se connecter</a>
                 </p>
             </div>
         </div>
     </div>
+
 </div>
 {% endblock %}
