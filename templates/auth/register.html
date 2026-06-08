@@ -8,7 +8,7 @@
             <div class="card-body p-4">
                 <h2 class="mb-1 text-center fw-bold">Créer mon compte restaurant</h2>
                 <p class="text-center text-muted mb-4" style="font-size:0.9rem">
-                    14 jours gratuits, puis 7,90 €/mois — résiliable à tout moment
+                    Dès 7,27 €/mois · Sans commission · Résiliable à tout moment
                 </p>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -44,15 +44,13 @@
                     <div class="alert alert-light border mb-3 d-flex gap-2 align-items-start" style="font-size:0.85rem">
                         <span style="font-size:1.1rem">🔒</span>
                         <span>
-                            L'étape suivante vous demande votre carte bancaire.
-                            <strong>Aucun prélèvement pendant 14 jours.</strong>
-                            L'abonnement de 7,90 €/mois démarre automatiquement à la fin de l'essai.
-                            Résiliable à tout moment avant.
+                            L'étape suivante vous demande votre carte bancaire via Stripe.
+                            Votre abonnement démarre après <strong>14 jours d'essai offerts</strong> — résiliable avant sans frais.
                         </span>
                     </div>
 
                     <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
-                        Créer mon compte et démarrer l'essai →
+                        Créer mon compte →
                     </button>
                 </form>
                 <p class="text-center mt-3 text-muted" style="font-size:0.85rem">
