@@ -16,6 +16,13 @@
                     {% endfor %}
                 {% endwith %}
 
+                {% if device_blocked %}
+                <div class="alert alert-warning text-start">
+                    <strong>Inscription temporairement limitée.</strong><br>
+                    Un compte a déjà été créé depuis cet appareil chez {{ resto.name }} récemment.
+                    Réessaie dans quelques heures ou contacte {{ resto.name }} directement.
+                </div>
+                {% else %}
                 <form method="POST" class="text-start mt-3">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="email" value="{{ email }}">
@@ -41,6 +48,7 @@
                         Je m'inscris !
                     </button>
                 </form>
+                {% endif %}
             </div>
         </div>
     </div>

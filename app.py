@@ -11,6 +11,8 @@ from functools import wraps
 import qrcode
 import io
 import base64
+import time
+import secrets
 import stripe
 
 app = Flask(__name__)
@@ -472,7 +474,23 @@ def client_nouveau(token):
     resto = Restaurant.query.filter_by(qr_token=token).first_or_404()
     email = request.args.get('email') or request.form.get('email', '')
 
+    # Anti-abus : bloquer si cet appareil a déjà créé un compte ici dans les 6h
+    reg_cookie_key = f'hera_reg_{token}'
+    reg_ts = request.cookies.get(reg_cookie_key)
+    device_blocked = False
+    if reg_ts:
+        try:
+            last_reg = datetime.utcfromtimestamp(float(reg_ts))
+            if last_reg > datetime.utcnow() - timedelta(hours=6):
+                device_blocked = True
+        except Exception:
+            pass
+
     if request.method == 'POST':
+        if device_blocked:
+            flash('Un compte a déjà été créé depuis cet appareil récemment. Réessaie dans quelques heures.', 'warning')
+            return redirect(url_for('client_nouveau', token=token, email=email))
+
         first_name = request.form['first_name'].strip()
         email = request.form['email'].strip()
         consent = request.form.get('consent') == 'on'
@@ -489,9 +507,10 @@ def client_nouveau(token):
 
         resp = make_response(redirect(url_for('client_commander', token=token, email=email)))
         resp.set_cookie(f'hera_client_{token}', email, max_age=30*24*3600)
+        resp.set_cookie(reg_cookie_key, str(time.time()), max_age=6*3600)
         return resp
 
-    return render_template('client/nouveau.html', resto=resto, email=email)
+    return render_template('client/nouveau.html', resto=resto, email=email, device_blocked=device_blocked)
 
 
 # ── Commander et gagner des points ───────────────────────────────

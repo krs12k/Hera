@@ -1,43 +1,142 @@
 {% extends 'base.html' %}
-{% block title %}hera — Fidélité locale{% endblock %}
+{% block title %}hera. — Fidélité locale pour restaurants{% endblock %}
 
 {% block content %}
-<div class="hero-section">
+
+<!-- Hero -->
+<div class="hero-section text-center py-5">
+    <div class="mb-3">
+        <span class="badge px-3 py-2 fw-normal" style="background:#e8f8f7;color:var(--turquoise);font-size:0.85rem;border-radius:20px">
+            🇧🇪 Conçu pour les restaurants de quartier en Belgique
+        </span>
+    </div>
     <h1 class="hero-title">
         Fidélisez vos clients<br><span>sans commission</span>
     </h1>
-    <span class="hero-underline"></span>
-    <p class="hero-sub">
+    <p class="hero-sub mt-3">
         Un QR code, un tableau de bord simple, et vos habitués reviennent.<br>
-        Conçu pour les restaurateurs de quartier en Belgique.
+        Pas d'app à télécharger. Pas de matériel. Juste votre téléphone.
     </p>
-    <div class="mt-4 d-flex gap-3 justify-content-center">
-        <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-lg px-4">Créer mon compte</a>
-        <a href="{{ url_for('login') }}" class="btn btn-outline-dark btn-lg px-4">Me connecter</a>
+    <div class="mt-4 d-flex gap-3 justify-content-center flex-wrap">
+        <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-lg px-5 fw-bold">Essayer gratuitement — 14 jours</a>
+        <a href="{{ url_for('comment_ca_marche') }}" class="btn btn-outline-dark btn-lg px-4">Voir comment ça marche</a>
+    </div>
+    <p class="text-muted mt-3" style="font-size:0.82rem">Aucune carte de crédit requise · Annulation à tout moment</p>
+</div>
+
+<!-- Chiffres -->
+<div class="row g-3 text-center mb-5">
+    <div class="col-4">
+        <div class="p-3">
+            <div class="fw-bold fs-3" style="color:var(--turquoise)">10 sec</div>
+            <div class="text-muted" style="font-size:0.85rem">pour s'inscrire</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="p-3">
+            <div class="fw-bold fs-3" style="color:var(--turquoise)">0 €</div>
+            <div class="text-muted" style="font-size:0.85rem">de commission</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="p-3">
+            <div class="fw-bold fs-3" style="color:var(--turquoise)">7,90 €</div>
+            <div class="text-muted" style="font-size:0.85rem">par mois</div>
+        </div>
     </div>
 </div>
 
-<div class="row g-4 text-center mt-2">
+<!-- Pourquoi hera -->
+<div class="text-center mb-4">
+    <h2 class="fw-bold">Pourquoi choisir hera. ?</h2>
+    <p class="text-muted">Tout ce qu'il faut, rien de superflu.</p>
+</div>
+<div class="row g-4 mb-5">
     <div class="col-md-4">
-        <div class="card feature-card h-100">
+        <div class="card feature-card h-100 text-center">
             <div class="feature-icon">📱</div>
-            <h5>QR Code unique</h5>
-            <p class="text-muted">Affichez votre QR code à la caisse. Le client scanne et s'inscrit en 10 secondes.</p>
+            <h5 class="fw-bold">Zéro friction</h5>
+            <p class="text-muted">Le client scanne, sélectionne sa commande et gagne ses points. Pas d'app à télécharger, ça marche sur tous les téléphones.</p>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card feature-card h-100">
-            <div class="feature-icon">⭐</div>
-            <h5>Système de points</h5>
-            <p class="text-muted">Chaque visite rapporte des points. Vous décidez la récompense et le seuil.</p>
+        <div class="card feature-card h-100 text-center">
+            <div class="feature-icon">🎯</div>
+            <h5 class="fw-bold">Vous contrôlez tout</h5>
+            <p class="text-muted">Points par produit, montant minimum, récompense personnalisée. Vous configurez en 2 minutes et changez quand vous voulez.</p>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card feature-card h-100">
+        <div class="card feature-card h-100 text-center">
             <div class="feature-icon">📊</div>
-            <h5>Tableau de bord</h5>
-            <p class="text-muted">Voyez qui sont vos clients fidèles et suivez leurs visites en temps réel.</p>
+            <h5 class="fw-bold">Vos données, chez vous</h5>
+            <p class="text-muted">Historique des visites, clients les plus fidèles, statistiques mensuelles. Vous connaissez vos habitués mieux que jamais.</p>
         </div>
     </div>
 </div>
+
+<!-- Comment ça marche résumé -->
+<div class="rounded-4 p-5 mb-5 text-center" style="background:var(--turquoise-light)">
+    <h2 class="fw-bold mb-4">En 3 étapes simples</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="step-circle mx-auto">1</div>
+            <h6 class="fw-bold mt-3">Créez votre compte</h6>
+            <p class="text-muted mb-0" style="font-size:0.9rem">Inscrivez-vous, configurez vos points et votre récompense.</p>
+        </div>
+        <div class="col-md-4">
+            <div class="step-circle mx-auto">2</div>
+            <h6 class="fw-bold mt-3">Affichez votre QR code</h6>
+            <p class="text-muted mb-0" style="font-size:0.9rem">Imprimez-le ou posez votre tablette à la caisse.</p>
+        </div>
+        <div class="col-md-4">
+            <div class="step-circle mx-auto">3</div>
+            <h6 class="fw-bold mt-3">Vos clients reviennent</h6>
+            <p class="text-muted mb-0" style="font-size:0.9rem">Ils scannent, accumulent des points et réclament leur récompense.</p>
+        </div>
+    </div>
+    <div class="mt-4">
+        <a href="{{ url_for('comment_ca_marche') }}" class="btn btn-outline-dark px-4">Voir le détail →</a>
+    </div>
+</div>
+
+<!-- VS carte papier -->
+<div class="text-center mb-4">
+    <h2 class="fw-bold">Fini les cartes papier perdues</h2>
+    <p class="text-muted">hera. remplace la carte tampon de manière digitale, simple et sans friction.</p>
+</div>
+<div class="row g-3 mb-5">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-4 h-100" style="opacity:0.6">
+            <h6 class="fw-bold text-muted mb-3">❌ Carte papier</h6>
+            <ul class="text-muted list-unstyled" style="font-size:0.9rem">
+                <li class="mb-2">📄 Client perd sa carte</li>
+                <li class="mb-2">🖨️ Impression à répéter</li>
+                <li class="mb-2">❓ Aucune donnée client</li>
+                <li class="mb-2">🚫 Impossible de contacter vos fidèles</li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-left:4px solid var(--turquoise) !important">
+            <h6 class="fw-bold mb-3" style="color:var(--turquoise)">✅ hera.</h6>
+            <ul class="list-unstyled" style="font-size:0.9rem">
+                <li class="mb-2">📱 Toujours sur le téléphone du client</li>
+                <li class="mb-2">🖨️ QR code imprimable en PDF</li>
+                <li class="mb-2">📊 Historique complet des visites</li>
+                <li class="mb-2">✉️ Envoyez un message à tous vos clients</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- CTA final -->
+<div class="text-center rounded-4 p-5 mb-4" style="background:linear-gradient(135deg,#1BBFB2,#13998E);color:#fff">
+    <h2 class="fw-bold">Prêt à fidéliser vos clients ?</h2>
+    <p class="mt-2 mb-4" style="opacity:0.9">14 jours gratuits · Sans carte bancaire · Annulation libre</p>
+    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-5 fw-bold" style="color:var(--turquoise)">
+        Créer mon compte gratuitement
+    </a>
+</div>
+
 {% endblock %}
