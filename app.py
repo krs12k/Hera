@@ -101,8 +101,8 @@ def register():
         db.session.add(resto)
         db.session.commit()
         login_user(resto)
-        flash('Compte créé avec succès !', 'success')
-        return redirect(url_for('dashboard'))
+        # Redirige vers Stripe pour saisir la carte (essai 14j puis 7,90€/mois)
+        return redirect(url_for('checkout'))
 
     return render_template('auth/register.html')
 
@@ -604,11 +604,17 @@ def checkout():
         current_user.stripe_customer_id = customer.id
         db.session.commit()
 
+        # Essai 14 jours si c'est la première fois (pas encore abonné)
+        subscription_data = {}
+        if current_user.subscription_status in ('trial', None) and not current_user.stripe_subscription_id:
+            subscription_data = {'trial_period_days': 14}
+
         checkout_session = stripe.checkout.Session.create(
             customer=customer.id,
             payment_method_types=['card'],
             line_items=[{'price': price_id, 'quantity': 1}],
             mode='subscription',
+            subscription_data=subscription_data,
             success_url=url_for('abonnement_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
             cancel_url=url_for('abonnement', _external=True),
         )
@@ -631,7 +637,7 @@ def abonnement_success():
             db.session.commit()
         except Exception:
             pass
-    flash('Abonnement activé ! Bienvenue sur hera Pro.', 'success')
+    flash('Essai démarré ! Votre carte ne sera débitée que dans 14 jours. Bienvenue sur hera. 🎉', 'success')
     return redirect(url_for('dashboard'))
 
 

@@ -1,12 +1,22 @@
 {% extends 'base.html' %}
-{% block title %}Inscription — Hera{% endblock %}
+{% block title %}Inscription — hera.{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
-                <h2 class="mb-4 text-center">Créer mon compte restaurant</h2>
+                <h2 class="mb-1 text-center fw-bold">Créer mon compte restaurant</h2>
+                <p class="text-center text-muted mb-4" style="font-size:0.9rem">
+                    14 jours gratuits, puis 7,90 €/mois — résiliable à tout moment
+                </p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endwith %}
+
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
@@ -29,9 +39,23 @@
                         <label class="form-label">Téléphone</label>
                         <input type="tel" name="phone" class="form-control">
                     </div>
-                    <button type="submit" class="btn btn-warning w-100 fw-bold">Créer mon compte</button>
+
+                    <!-- Notice carte -->
+                    <div class="alert alert-light border mb-3 d-flex gap-2 align-items-start" style="font-size:0.85rem">
+                        <span style="font-size:1.1rem">🔒</span>
+                        <span>
+                            L'étape suivante vous demande votre carte bancaire.
+                            <strong>Aucun prélèvement pendant 14 jours.</strong>
+                            L'abonnement de 7,90 €/mois démarre automatiquement à la fin de l'essai.
+                            Résiliable à tout moment avant.
+                        </span>
+                    </div>
+
+                    <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
+                        Créer mon compte et démarrer l'essai →
+                    </button>
                 </form>
-                <p class="text-center mt-3 text-muted">
+                <p class="text-center mt-3 text-muted" style="font-size:0.85rem">
                     Déjà un compte ? <a href="{{ url_for('login') }}">Se connecter</a>
                 </p>
             </div>

@@ -4,7 +4,7 @@
 {% block content %}
 <div class="text-center py-5">
     <h1 class="fw-bold" style="letter-spacing:-1px">Un tarif simple, sans surprise</h1>
-    <p class="text-muted mt-2">14 jours gratuits pour tester, puis 7,90 € par mois. Rien de plus.</p>
+    <p class="text-muted mt-2">Saisissez votre carte, 0 € prélevé pendant 14 jours, puis 7,90 €/mois. Résiliable avant.</p>
 </div>
 
 <div class="row g-4 justify-content-center mb-5">
@@ -18,7 +18,7 @@
             <div class="fw-bold mb-1" style="font-size:3rem;letter-spacing:-2px">
                 7,90 €<span class="fs-5 text-muted fw-normal"> / mois</span>
             </div>
-            <p class="text-muted mb-4" style="font-size:0.9rem">Après 14 jours d'essai gratuit · Annulation à tout moment</p>
+            <p class="text-muted mb-4" style="font-size:0.9rem">Carte requise · 0 € pendant 14 jours · puis débit automatique · Annulation à tout moment</p>
             <hr>
             <ul class="text-start mt-3 mb-4" style="line-height:2.4;padding-left:1.4rem">
                 <li><strong>Clients illimités</strong></li>
@@ -31,9 +31,11 @@
                 <li>Zéro commission sur vos récompenses</li>
             </ul>
             <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-lg w-100 fw-bold">
-                Essayer gratuitement — 14 jours
+                Démarrer mon essai gratuit — 14 jours
             </a>
-            <p class="text-muted mt-3 mb-0" style="font-size:0.8rem">Aucune carte de crédit requise pour l'essai</p>
+            <p class="text-muted mt-3 mb-0" style="font-size:0.8rem">
+                🔒 Paiement sécurisé par Stripe · Résiliable avant la fin de l'essai
+            </p>
         </div>
     </div>
 
@@ -82,7 +84,7 @@
                 </h2>
                 <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faq">
                     <div class="accordion-body text-muted">
-                        Vous avez accès à toutes les fonctionnalités pendant <strong>14 jours sans carte de crédit</strong>. À la fin de l'essai, vous choisissez de vous abonner (7,90 €/mois) ou non. Si vous ne faites rien, l'accès est suspendu — aucun prélèvement automatique.
+                        Lors de l'inscription, vous saisissez votre carte bancaire via Stripe (paiement sécurisé). <strong>Aucun prélèvement n'est effectué pendant 14 jours.</strong> Au terme de l'essai, l'abonnement de 7,90 €/mois démarre automatiquement. Si vous résiliez avant cette date, vous ne payez rien.
                     </div>
                 </div>
             </div>
