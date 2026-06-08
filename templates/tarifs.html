@@ -3,39 +3,60 @@
 
 {% block content %}
 <div class="text-center py-5">
-    <h1 class="fw-bold" style="letter-spacing:-1px">Un tarif simple, sans surprise</h1>
-    <p class="text-muted mt-2">Saisissez votre carte, 0 € prélevé pendant 14 jours, puis 7,90 €/mois. Résiliable avant.</p>
+    <h1 class="fw-bold" style="letter-spacing:-1px">Des tarifs simples, sans surprise</h1>
+    <p class="text-muted mt-2">14 jours gratuits inclus · Carte requise · Résiliable à tout moment</p>
 </div>
 
 <div class="row g-4 justify-content-center mb-5">
 
-    <!-- Plan unique -->
-    <div class="col-md-5">
-        <div class="card border-0 shadow p-5 h-100 text-center" style="border: 2px solid var(--turquoise) !important;">
+    <!-- Plan mensuel -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 h-100 text-center">
             <div class="mb-3">
-                <span class="badge px-3 py-2" style="background:var(--turquoise);color:#fff;font-size:0.9rem">hera. Pro</span>
+                <span class="badge px-3 py-2" style="background:var(--turquoise-light);color:var(--turquoise-dark);font-size:0.85rem">Mensuel</span>
             </div>
-            <div class="fw-bold mb-1" style="font-size:3rem;letter-spacing:-2px">
-                7,90 €<span class="fs-5 text-muted fw-normal"> / mois</span>
+            <div class="fw-bold mb-1" style="font-size:2.6rem;letter-spacing:-2px">
+                7,90 €<span class="fs-6 text-muted fw-normal"> / mois</span>
             </div>
-            <p class="text-muted mb-4" style="font-size:0.9rem">Carte requise · 0 € pendant 14 jours · puis débit automatique · Annulation à tout moment</p>
+            <p class="text-muted mb-4" style="font-size:0.85rem">Facturation mensuelle · Sans engagement</p>
             <hr>
-            <ul class="text-start mt-3 mb-4" style="line-height:2.4;padding-left:1.4rem">
-                <li><strong>Clients illimités</strong></li>
-                <li>QR code unique imprimable en PDF</li>
+            <ul class="text-start mt-3 mb-4 text-muted" style="line-height:2.2;padding-left:1.2rem;font-size:0.9rem">
+                <li>Clients illimités</li>
+                <li>QR code imprimable en PDF</li>
                 <li>Tableau de bord complet</li>
-                <li>Système de points configurable (par visite ou par produit)</li>
-                <li>Historique des visites</li>
-                <li>Statistiques mensuelles</li>
-                <li>Envoi de messages à vos clients</li>
-                <li>Zéro commission sur vos récompenses</li>
+                <li>Points par visite ou par produit</li>
+                <li>Statistiques & messages clients</li>
+                <li>Zéro commission</li>
             </ul>
-            <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-lg w-100 fw-bold">
-                Démarrer mon essai gratuit — 14 jours
+            <a href="{{ url_for('register') }}" class="btn btn-outline-dark btn-lg w-100 fw-bold mt-auto">
+                Essayer — Mensuel
             </a>
-            <p class="text-muted mt-3 mb-0" style="font-size:0.8rem">
-                🔒 Paiement sécurisé par Stripe · Résiliable avant la fin de l'essai
-            </p>
+        </div>
+    </div>
+
+    <!-- Plan annuel -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow p-4 h-100 text-center position-relative" style="border: 2px solid var(--turquoise) !important;">
+            <div class="position-absolute top-0 start-50 translate-middle">
+                <span class="badge px-3 py-2 fw-bold" style="background:var(--turquoise);color:#fff">Économisez 8 %</span>
+            </div>
+            <div class="mb-3 mt-2">
+                <span class="badge px-3 py-2" style="background:var(--turquoise);color:#fff;font-size:0.85rem">Annuel ⭐</span>
+            </div>
+            <div class="fw-bold mb-0" style="font-size:2.6rem;letter-spacing:-2px">
+                87,22 €<span class="fs-6 text-muted fw-normal"> / an</span>
+            </div>
+            <div class="mb-1" style="font-size:0.9rem">soit <strong style="color:var(--turquoise)">7,27 €/mois</strong></div>
+            <p class="text-muted mb-4" style="font-size:0.82rem"><s>94,80 €</s> → <strong>économisez 7,58 €</strong></p>
+            <hr>
+            <ul class="text-start mt-3 mb-4 text-muted" style="line-height:2.2;padding-left:1.2rem;font-size:0.9rem">
+                <li>Tout du plan mensuel</li>
+                <li>Facturation annuelle unique</li>
+                <li>✅ <strong>8 % de réduction</strong></li>
+            </ul>
+            <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-lg w-100 fw-bold mt-auto">
+                Essayer — Annuel
+            </a>
         </div>
     </div>
 

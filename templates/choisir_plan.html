@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Choisir mon plan — hera.{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-8">
+
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Choisissez votre formule</h2>
+            <p class="text-muted">14 jours gratuits inclus · Votre carte ne sera pas débitée avant la fin de l'essai</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <div class="row g-4 justify-content-center">
+
+            <!-- Plan mensuel -->
+            <div class="col-md-5">
+                <div class="card border-0 shadow-sm h-100 p-4 text-center position-relative">
+                    <div class="mb-3">
+                        <span class="badge px-3 py-2" style="background:var(--turquoise-light);color:var(--turquoise-dark)">Mensuel</span>
+                    </div>
+                    <div class="fw-bold mb-1" style="font-size:2.8rem;letter-spacing:-2px">
+                        7,90 €<span class="fs-6 text-muted fw-normal"> / mois</span>
+                    </div>
+                    <p class="text-muted mb-4" style="font-size:0.85rem">Facturation mensuelle · Sans engagement</p>
+                    <ul class="text-start text-muted mb-4" style="font-size:0.9rem;line-height:2.2;padding-left:1.2rem">
+                        <li>Clients illimités</li>
+                        <li>QR code imprimable</li>
+                        <li>Tableau de bord & statistiques</li>
+                        <li>Envoi de messages clients</li>
+                        <li>Zéro commission</li>
+                    </ul>
+                    <div class="mt-auto">
+                        <form method="POST" action="{{ url_for('checkout') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="plan" value="monthly">
+                            <button type="submit" class="btn btn-outline-dark btn-lg w-100 fw-bold">
+                                Démarrer l'essai — Mensuel
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plan annuel -->
+            <div class="col-md-5">
+                <div class="card border-0 shadow h-100 p-4 text-center position-relative" style="border: 2px solid var(--turquoise) !important;">
+                    <!-- Badge économie -->
+                    <div class="position-absolute top-0 start-50 translate-middle">
+                        <span class="badge px-3 py-2 fw-bold" style="background:var(--turquoise);color:#fff;font-size:0.8rem">
+                            Économisez 8 %
+                        </span>
+                    </div>
+                    <div class="mb-3 mt-2">
+                        <span class="badge px-3 py-2" style="background:var(--turquoise);color:#fff">Annuel</span>
+                    </div>
+                    <div class="fw-bold mb-0" style="font-size:2.8rem;letter-spacing:-2px">
+                        87,22 €<span class="fs-6 text-muted fw-normal"> / an</span>
+                    </div>
+                    <div class="text-muted mb-1" style="font-size:0.85rem">soit <strong style="color:var(--turquoise)">7,27 €/mois</strong></div>
+                    <div class="text-muted mb-4" style="font-size:0.8rem">
+                        <s class="me-1">94,80 €</s> → vous économisez <strong>7,58 €</strong>
+                    </div>
+                    <ul class="text-start text-muted mb-4" style="font-size:0.9rem;line-height:2.2;padding-left:1.2rem">
+                        <li>Tout du plan mensuel</li>
+                        <li>Facturation annuelle unique</li>
+                        <li>✅ <strong>8 % de réduction</strong></li>
+                    </ul>
+                    <div class="mt-auto">
+                        <form method="POST" action="{{ url_for('checkout') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="plan" value="annual">
+                            <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
+                                Démarrer l'essai — Annuel
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <p class="text-center text-muted mt-4" style="font-size:0.8rem">
+            🔒 Paiement sécurisé par Stripe · Résiliable à tout moment depuis vos paramètres
+        </p>
+
+    </div>
+</div>
+{% endblock %}

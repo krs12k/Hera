@@ -101,8 +101,7 @@ def register():
         db.session.add(resto)
         db.session.commit()
         login_user(resto)
-        # Redirige vers Stripe pour saisir la carte (essai 14j puis 7,90€/mois)
-        return redirect(url_for('checkout'))
+        return redirect(url_for('choisir_plan'))
 
     return render_template('auth/register.html')
 
@@ -573,6 +572,13 @@ def client_profil(token):
     return render_template('client/profil.html', client=client, resto=resto, progression=progression)
 
 
+# ── Choix du plan après inscription ─────────────────────────────
+@app.route('/abonnement/choisir-plan')
+@login_required
+def choisir_plan():
+    return render_template('choisir_plan.html')
+
+
 # ── Portail Client Stripe (gérer / résilier) ────────────────────
 @app.route('/abonnement/gerer')
 @login_required
@@ -603,17 +609,15 @@ def abonnement():
 @login_required
 def checkout():
     try:
-        price_id = app.config.get('STRIPE_PRICE')
+        plan = request.form.get('plan', 'monthly')
+        if plan == 'annual':
+            price_id = app.config.get('STRIPE_PRICE_ANNUAL') or app.config.get('STRIPE_PRICE')
+        else:
+            price_id = app.config.get('STRIPE_PRICE')
+
         if not price_id:
-            # Crée le prix dynamiquement si pas encore configuré
-            product = stripe.Product.create(name='hera Pro')
-            price = stripe.Price.create(
-                product=product.id,
-                unit_amount=790,
-                currency='eur',
-                recurring={'interval': 'month'},
-            )
-            price_id = price.id
+            flash('Tarif Stripe non configuré. Contactez l\'administrateur.', 'danger')
+            return redirect(url_for('choisir_plan'))
 
         customer = stripe.Customer.create(
             email=current_user.email,
@@ -622,7 +626,7 @@ def checkout():
         current_user.stripe_customer_id = customer.id
         db.session.commit()
 
-        # Essai 14 jours si c'est la première fois (pas encore abonné)
+        # Essai 14 jours pour les nouveaux abonnés
         subscription_data = {}
         if current_user.subscription_status in ('trial', None) and not current_user.stripe_subscription_id:
             subscription_data = {'trial_period_days': 14}
@@ -634,12 +638,12 @@ def checkout():
             mode='subscription',
             subscription_data=subscription_data,
             success_url=url_for('abonnement_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=url_for('abonnement', _external=True),
+            cancel_url=url_for('choisir_plan', _external=True),
         )
         return redirect(checkout_session.url)
     except Exception as e:
         flash(f'Erreur Stripe : {str(e)}', 'danger')
-        return redirect(url_for('abonnement'))
+        return redirect(url_for('choisir_plan'))
 
 
 # ── Succès paiement ──────────────────────────────────────────────

@@ -3,38 +3,63 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6 text-center py-5">
+    <div class="col-md-8 py-4">
 
-        <div class="alert alert-danger mb-4">
-            ⚠️ Votre essai gratuit est terminé. Abonnez-vous pour continuer à utiliser hera.
+        <div class="alert alert-danger mb-4 text-center">
+            ⚠️ Votre essai gratuit est terminé. Choisissez une formule pour continuer.
         </div>
 
-        <div class="card border-0 shadow p-5" style="border: 2px solid var(--turquoise) !important;">
-            <div class="badge mb-3 mx-auto" style="background:var(--turquoise);color:#fff;width:fit-content;padding:6px 16px">hera. Pro</div>
-            <div class="fw-bold mb-1" style="font-size:3rem;letter-spacing:-2px">7,90 €</div>
-            <div class="text-muted mb-4">par mois · sans engagement</div>
+        <div class="row g-4 justify-content-center">
 
-            <ul class="text-start text-muted mb-4" style="line-height:2.2">
-                <li>Clients illimités</li>
-                <li>QR code unique imprimable en PDF</li>
-                <li>Tableau de bord complet</li>
-                <li>Règles de points par produit</li>
-                <li>Historique des visites</li>
-                <li>Statistiques mensuelles</li>
-                <li>Envoi de messages aux clients</li>
-                <li>Zéro commission</li>
-            </ul>
+            <!-- Mensuel -->
+            <div class="col-md-5">
+                <div class="card border-0 shadow-sm h-100 p-4 text-center">
+                    <div class="mb-3">
+                        <span class="badge px-3 py-2" style="background:var(--turquoise-light);color:var(--turquoise-dark)">Mensuel</span>
+                    </div>
+                    <div class="fw-bold mb-1" style="font-size:2.6rem;letter-spacing:-2px">
+                        7,90 €<span class="fs-6 text-muted fw-normal"> / mois</span>
+                    </div>
+                    <p class="text-muted mb-4" style="font-size:0.85rem">Sans engagement · Résiliable à tout moment</p>
+                    <form method="POST" action="{{ url_for('checkout') }}" class="mt-auto">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="plan" value="monthly">
+                        <button type="submit" class="btn btn-outline-dark btn-lg w-100 fw-bold">
+                            S'abonner — Mensuel
+                        </button>
+                    </form>
+                </div>
+            </div>
 
-            <form method="POST" action="{{ url_for('checkout') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
-                    S'abonner pour 7,90 €/mois
-                </button>
-            </form>
-            <p class="text-muted mt-3" style="font-size:0.8rem">
-                🔒 Paiement sécurisé par Stripe. Résiliable à tout moment.
-            </p>
+            <!-- Annuel -->
+            <div class="col-md-5">
+                <div class="card border-0 shadow h-100 p-4 text-center position-relative" style="border: 2px solid var(--turquoise) !important;">
+                    <div class="position-absolute top-0 start-50 translate-middle">
+                        <span class="badge px-3 py-2 fw-bold" style="background:var(--turquoise);color:#fff">Économisez 8 %</span>
+                    </div>
+                    <div class="mb-3 mt-2">
+                        <span class="badge px-3 py-2" style="background:var(--turquoise);color:#fff">Annuel ⭐</span>
+                    </div>
+                    <div class="fw-bold mb-0" style="font-size:2.6rem;letter-spacing:-2px">
+                        87,22 €<span class="fs-6 text-muted fw-normal"> / an</span>
+                    </div>
+                    <div class="mb-1" style="font-size:0.9rem">soit <strong style="color:var(--turquoise)">7,27 €/mois</strong></div>
+                    <p class="text-muted mb-4" style="font-size:0.82rem"><s>94,80 €</s> → économisez <strong>7,58 €</strong></p>
+                    <form method="POST" action="{{ url_for('checkout') }}" class="mt-auto">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="plan" value="annual">
+                        <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
+                            S'abonner — Annuel
+                        </button>
+                    </form>
+                </div>
+            </div>
+
         </div>
+
+        <p class="text-center text-muted mt-4" style="font-size:0.8rem">
+            🔒 Paiement sécurisé par Stripe · Résiliable depuis vos paramètres
+        </p>
 
     </div>
 </div>

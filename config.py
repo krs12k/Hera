@@ -24,5 +24,6 @@ class Config:
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
     STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
     STRIPE_PRICE = os.environ.get('STRIPE_PRICE')
+    STRIPE_PRICE_ANNUAL = os.environ.get('STRIPE_PRICE_ANNUAL')
 
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'hera-admin-local'
