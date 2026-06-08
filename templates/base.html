@@ -15,6 +15,16 @@
                 <span class="logo-text">hera</span><span class="logo-dot">.</span>
             </a>
 
+            <!-- Boutons toujours visibles sur mobile -->
+            <div class="d-flex gap-2 align-items-center d-lg-none me-2">
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light btn-sm">Dashboard</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-sm">Connexion</a>
+                    <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-sm">S'inscrire</a>
+                {% endif %}
+            </div>
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -32,7 +42,8 @@
                     </li>
                 </ul>
 
-                <div class="d-flex align-items-center gap-2">
+                <!-- Boutons visibles sur desktop uniquement -->
+                <div class="d-none d-lg-flex align-items-center gap-2">
                     {% if current_user.is_authenticated %}
                         <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light btn-sm">Mon dashboard</a>
                         <span class="nav-username">{{ current_user.name }}</span>
@@ -68,13 +79,15 @@
                     <span class="logo-text" style="font-size:1.1rem;color:var(--dark)">hera</span><span class="logo-dot" style="font-size:1.3rem">.</span>
                     <p class="text-muted mt-1 mb-0" style="font-size:0.8rem">Fidélité locale pour restaurateurs belges</p>
                 </div>
-                <div class="col-md-4 text-center">
-                    <a href="{{ url_for('comment_ca_marche') }}" class="footer-link">Comment ça marche</a>
-                    <a href="{{ url_for('tarifs') }}" class="footer-link ms-3">Tarifs</a>
-                    <a href="{{ url_for('pour_restaurateurs') }}" class="footer-link ms-3">Restaurateurs</a>
-                    <a href="{{ url_for('confidentialite') }}" class="footer-link ms-3">Confidentialité</a>
+                <div class="col-md-4 text-center mt-3 mt-md-0">
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <a href="{{ url_for('comment_ca_marche') }}" class="footer-link">Comment ça marche</a>
+                        <a href="{{ url_for('tarifs') }}" class="footer-link">Tarifs</a>
+                        <a href="{{ url_for('pour_restaurateurs') }}" class="footer-link">Restaurateurs</a>
+                        <a href="{{ url_for('confidentialite') }}" class="footer-link">Confidentialité</a>
+                    </div>
                 </div>
-                <div class="col-md-4 text-end">
+                <div class="col-md-4 text-md-end text-center mt-2 mt-md-0">
                     <span class="text-muted" style="font-size:0.8rem">© 2025 hera. Belgique</span>
                 </div>
             </div>

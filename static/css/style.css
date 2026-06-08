@@ -218,3 +218,85 @@ body {
 .history-panel table td {
     font-size: 0.85rem;
 }
+
+/* ── Responsive mobile ──────────────────────────────────────── */
+@media (max-width: 767px) {
+
+    /* Titre hero */
+    .hero-title {
+        font-size: 2rem;
+        letter-spacing: -1px;
+    }
+
+    .hero-sub {
+        font-size: 1rem;
+    }
+
+    /* Conteneur principal */
+    .container {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    /* Cards : éviter overflow */
+    .card {
+        word-break: break-word;
+    }
+
+    /* Tables : scroll horizontal */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Boutons qui débordent */
+    .btn-lg {
+        font-size: 0.92rem;
+        padding: 10px 18px;
+    }
+
+    /* Strip atmosphérique */
+    .strip-text {
+        font-size: 1rem !important;
+    }
+
+    /* Footer */
+    .hera-footer .col-md-4:first-child {
+        text-align: center;
+    }
+
+    /* Dashboard boutons */
+    .d-flex.gap-2.flex-wrap {
+        justify-content: center;
+    }
+
+    /* Step circles sur mobile : éviter overflow */
+    .step-circle {
+        width: 48px;
+        height: 48px;
+        font-size: 1.1rem;
+    }
+
+    /* Accordion : pas de débordement */
+    .accordion-button {
+        font-size: 0.9rem;
+    }
+
+    /* Alertes */
+    .alert {
+        font-size: 0.88rem;
+        word-break: break-word;
+    }
+
+    /* Mode bubbles paramètres */
+    .mode-bubble {
+        padding: 0.8rem 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    /* Navbar toggler : ne pas rétrécir les boutons mobiles */
+    .navbar .btn-sm {
+        font-size: 0.78rem;
+        padding: 4px 8px;
+    }
+}
