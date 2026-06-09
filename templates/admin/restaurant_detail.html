@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ resto.name }} — hera admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --turquoise: #1BBFB2; }
+        body { background: #f4f6f9; }
+        .navbar-brand span { color: var(--turquoise); }
+        .stat-card { border-left: 4px solid var(--turquoise); }
+        .badge-gratuit { background: #198754; }
+        .badge-actif { background: #0d6efd; }
+        .badge-essai { background: #ffc107; color: #000; }
+        .badge-expire { background: #dc3545; }
+        .badge-bloque { background: #6f42c1; }
+        .section-title {
+            font-size: 0.75rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark px-4 mb-4">
+    <span class="navbar-brand fw-bold">hera<span>.</span> admin</span>
+    <div class="d-flex gap-2 align-items-center">
+        <span class="text-muted" style="font-size:0.8rem">{{ admin_username }}</span>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light btn-sm">← Dashboard</a>
+        <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-light btn-sm">Déconnexion</a>
+    </div>
+</nav>
+
+<div class="container pb-5">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <!-- En-tête restaurant -->
+    <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+        <div>
+            <h2 class="fw-bold mb-1">{{ resto.name }}</h2>
+            <div class="text-muted" style="font-size:0.9rem">{{ resto.email }}</div>
+        </div>
+        <div class="ms-md-auto d-flex gap-2 flex-wrap">
+            {% if resto.subscription_status == 'blocked' %}
+                <span class="badge badge-bloque fs-6 px-3 py-2">🚫 Suspendu</span>
+            {% elif resto.is_free %}
+                <span class="badge badge-gratuit fs-6 px-3 py-2">Gratuit</span>
+            {% elif resto.subscription_status == 'active' %}
+                <span class="badge badge-actif fs-6 px-3 py-2">Abonné</span>
+            {% elif resto.subscription_status == 'trial' and resto.trial_ends_at and resto.trial_ends_at > now %}
+                <span class="badge badge-essai fs-6 px-3 py-2">Essai — jusqu'au {{ resto.trial_ends_at.strftime('%d/%m/%Y') }}</span>
+            {% else %}
+                <span class="badge badge-expire fs-6 px-3 py-2">Expiré</span>
+            {% endif %}
+            <!-- Actions rapides -->
+            <form method="POST" action="{{ url_for('admin_toggle_block', resto_id=resto.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm {{ 'btn-outline-success' if resto.subscription_status == 'blocked' else 'btn-outline-danger' }}">
+                    {{ '🔓 Débloquer' if resto.subscription_status == 'blocked' else '🚫 Suspendre' }}
+                </button>
+            </form>
+            <form method="POST" action="{{ url_for('admin_toggle_free', resto_id=resto.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm {{ 'btn-success' if resto.is_free else 'btn-outline-success' }}">
+                    {{ '✓ Gratuit activé' if resto.is_free else '🎁 Rendre gratuit' }}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stats clés -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm stat-card p-3 text-center">
+                <div class="fs-2 fw-bold" style="color:var(--turquoise)">{{ clients|length }}</div>
+                <div class="text-muted" style="font-size:0.82rem">Clients</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 text-center" style="border-left:4px solid #0d6efd">
+                <div class="fs-2 fw-bold text-primary">{{ visits|length }}</div>
+                <div class="text-muted" style="font-size:0.82rem">Visites récentes</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 text-center" style="border-left:4px solid #ffc107">
+                <div class="fs-2 fw-bold text-warning">{{ total_points }}</div>
+                <div class="text-muted" style="font-size:0.82rem">Points distribués</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm p-3 text-center" style="border-left:4px solid #198754">
+                <div class="fs-2 fw-bold text-success">
+                    {% set eligible = clients|selectattr('total_points', 'ge', resto.reward_threshold)|list %}
+                    {{ eligible|length }}
+                </div>
+                <div class="text-muted" style="font-size:0.82rem">Récompenses dispo</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Colonne gauche -->
+        <div class="col-md-4">
+            <!-- Infos de base -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="section-title">Informations</div>
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <td class="text-muted ps-0" style="width:40%">Nom</td>
+                            <td class="fw-semibold">{{ resto.name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted ps-0">Email</td>
+                            <td>{{ resto.email }}</td>
+                        </tr>
+                        {% if resto.phone %}
+                        <tr>
+                            <td class="text-muted ps-0">Téléphone</td>
+                            <td>{{ resto.phone }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if resto.address %}
+                        <tr>
+                            <td class="text-muted ps-0">Adresse</td>
+                            <td>{{ resto.address }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td class="text-muted ps-0">Inscrit le</td>
+                            <td>{{ resto.created_at.strftime('%d/%m/%Y') }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Paramètres fidélité -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="section-title">Programme de fidélité</div>
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <td class="text-muted ps-0">Mode</td>
+                            <td class="fw-semibold">{{ 'Par produits' if resto.point_mode == 'products' else 'Simple' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted ps-0">Pts/visite</td>
+                            <td>{{ resto.points_per_visit }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted ps-0">Seuil</td>
+                            <td>{{ resto.reward_threshold }} pts</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted ps-0">Récompense</td>
+                            <td>{{ resto.reward_description }}</td>
+                        </tr>
+                        {% if resto.minimum_amount > 0 %}
+                        <tr>
+                            <td class="text-muted ps-0">Minimum</td>
+                            <td>{{ "%.2f"|format(resto.minimum_amount) }} €</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Abonnement -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="section-title">Abonnement</div>
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <td class="text-muted ps-0">Statut</td>
+                            <td class="fw-semibold">{{ resto.subscription_status }}</td>
+                        </tr>
+                        {% if resto.trial_ends_at %}
+                        <tr>
+                            <td class="text-muted ps-0">Fin essai</td>
+                            <td>{{ resto.trial_ends_at.strftime('%d/%m/%Y') }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if resto.stripe_customer_id %}
+                        <tr>
+                            <td class="text-muted ps-0">Stripe ID</td>
+                            <td style="font-size:0.78rem;word-break:break-all">{{ resto.stripe_customer_id }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if resto.stripe_subscription_id %}
+                        <tr>
+                            <td class="text-muted ps-0">Sub. ID</td>
+                            <td style="font-size:0.78rem;word-break:break-all">{{ resto.stripe_subscription_id }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                    <!-- Prolonger essai -->
+                    <button class="btn btn-sm btn-outline-warning mt-3 w-100"
+                            data-bs-toggle="modal" data-bs-target="#modalProlonger">
+                        ⏳ Prolonger l'essai
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne droite -->
+        <div class="col-md-8">
+            <!-- Clients -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="section-title">Clients ({{ clients|length }})</div>
+                    {% if clients %}
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Prénom</th>
+                                    <th>Email</th>
+                                    <th>Points</th>
+                                    <th>Progression</th>
+                                    <th>Inscrit le</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for client in clients %}
+                                {% set progression = [((client.total_points / resto.reward_threshold) * 100)|int, 100]|min %}
+                                <tr>
+                                    <td><strong>{{ client.first_name }}</strong></td>
+                                    <td class="text-muted" style="font-size:0.82rem">{{ client.email }}</td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark">{{ client.total_points }} pts</span>
+                                        {% if client.total_points >= resto.reward_threshold %}
+                                            <span class="badge bg-success ms-1">🎁</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="min-width:90px">
+                                        <div class="progress" style="height:6px">
+                                            <div class="progress-bar bg-warning" style="width:{{ progression }}%"></div>
+                                        </div>
+                                        <small class="text-muted">{{ progression }}%</small>
+                                    </td>
+                                    <td class="text-muted" style="font-size:0.82rem">{{ client.created_at.strftime('%d/%m/%y') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">Aucun client inscrit.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 20 dernières visites -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="section-title">20 dernières visites</div>
+                    {% if visits %}
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Client</th>
+                                    <th>Points</th>
+                                    <th>Montant</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for visit in visits %}
+                                {% set client = visit.client %}
+                                <tr>
+                                    <td class="text-muted" style="white-space:nowrap;font-size:0.82rem">{{ visit.created_at.strftime('%d/%m/%y %H:%M') }}</td>
+                                    <td>{{ client.first_name if client else '—' }}</td>
+                                    <td><span class="badge bg-warning text-dark">+{{ visit.points_earned }}</span></td>
+                                    <td class="text-muted" style="font-size:0.82rem">
+                                        {% if visit.amount_spent %}{{ "%.2f"|format(visit.amount_spent) }} €{% else %}—{% endif %}
+                                    </td>
+                                    <td class="text-muted" style="font-size:0.82rem">{{ visit.note or '—' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">Aucune visite enregistrée.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal prolonger essai -->
+<div class="modal fade" id="modalProlonger" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin_prolonger', resto_id=resto.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Prolonger l'essai</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Restaurant : <strong>{{ resto.name }}</strong></p>
+                    <label class="form-label">Nombre de jours à ajouter</label>
+                    <select name="jours" class="form-select">
+                        <option value="7">7 jours</option>
+                        <option value="14" selected>14 jours</option>
+                        <option value="30">30 jours</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning fw-bold">Prolonger</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

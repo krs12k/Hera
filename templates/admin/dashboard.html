@@ -91,7 +91,12 @@
                     <tbody>
                         {% for r in restaurants %}
                         <tr>
-                            <td><strong>{{ r.name }}</strong></td>
+                            <td>
+                                <a href="{{ url_for('admin_restaurant_detail', resto_id=r.id) }}"
+                                   class="fw-bold text-decoration-none text-dark">
+                                    {{ r.name }}
+                                </a>
+                            </td>
                             <td class="text-muted" style="font-size:0.85rem">{{ r.email }}</td>
                             <td>
                                 {% if r.subscription_status == 'blocked' %}

@@ -934,6 +934,22 @@ def admin_reset_mdp_collaborateur(user_id):
     return redirect(url_for('admin_dashboard'))
 
 
+# ── Admin — Fiche restaurant ─────────────────────────────────────
+@app.route('/hera-admin/restaurant/<int:resto_id>')
+@admin_required
+def admin_restaurant_detail(resto_id):
+    resto = Restaurant.query.get_or_404(resto_id)
+    clients = Client.query.filter_by(restaurant_id=resto_id).order_by(Client.total_points.desc()).all()
+    visits = Visit.query.filter_by(restaurant_id=resto_id).order_by(Visit.created_at.desc()).limit(20).all()
+    now = datetime.utcnow()
+    total_points = sum(c.total_points for c in clients)
+    return render_template('admin/restaurant_detail.html',
+                           resto=resto, clients=clients, visits=visits, now=now,
+                           total_points=total_points,
+                           is_super=session.get('admin_is_super', False),
+                           admin_username=session.get('admin_username', 'admin'))
+
+
 # ── Admin — Supprimer un restaurant ─────────────────────────────
 @app.route('/hera-admin/supprimer/<int:resto_id>', methods=['POST'])
 @admin_required
