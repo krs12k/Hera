@@ -46,6 +46,13 @@ with app.app_context():
 
 stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
 
+def _send_async(app_ctx, msg):
+    with app_ctx:
+        try:
+            mail.send(msg)
+        except Exception:
+            pass
+
 def send_email(subject, recipients, body_text, body_html=None):
     if not app.config.get('MAIL_USERNAME'):
         return
@@ -53,7 +60,10 @@ def send_email(subject, recipients, body_text, body_html=None):
         msg = Message(subject=subject, recipients=recipients,
                       sender=app.config.get('MAIL_DEFAULT_SENDER') or app.config.get('MAIL_USERNAME'),
                       body=body_text, html=body_html)
-        mail.send(msg)
+        import threading
+        t = threading.Thread(target=_send_async, args=(app.app_context(), msg))
+        t.daemon = True
+        t.start()
     except Exception:
         pass
 
@@ -184,12 +194,10 @@ def forgot_password():
                 resto.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
                 db.session.commit()
                 reset_url = url_for('reset_password', token=token, _external=True)
-                try:
-                    msg = Message(
-                        subject='Réinitialisation de votre mot de passe — hera.',
-                        recipients=[email],
-                        sender=app.config.get('MAIL_USERNAME'),
-                        body=f"""Bonjour,
+                send_email(
+                    subject='Réinitialisation de votre mot de passe — hera.',
+                    recipients=[email],
+                    body_text=f"""Bonjour,
 
 Vous avez demandé à réinitialiser votre mot de passe sur hera.
 
@@ -199,10 +207,7 @@ Cliquez sur ce lien (valable 1 heure) :
 Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
 
 — L'équipe hera."""
-                    )
-                    mail.send(msg)
-                except Exception:
-                    pass
+                )
         except Exception:
             db.session.rollback()
         flash('Si cet email est enregistré, un lien de réinitialisation a été envoyé.', 'info')
