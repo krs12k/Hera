@@ -2,23 +2,40 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>hera admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --turquoise: #1BBFB2; }
+        body { background: #1A1A2E; }
+    </style>
 </head>
-<body class="bg-dark d-flex align-items-center justify-content-center" style="min-height:100vh">
-    <div class="card border-0 shadow p-4" style="width:340px">
-        <h4 class="text-center mb-4 fw-bold">hera admin</h4>
+<body class="d-flex align-items-center justify-content-center" style="min-height:100vh">
+    <div class="card border-0 shadow-lg p-4 p-md-5" style="width:360px;border-radius:16px">
+        <div class="text-center mb-4">
+            <span style="font-size:1.6rem;font-weight:700;letter-spacing:-1px">hera</span><span style="color:var(--turquoise);font-size:1.9rem;font-weight:700">.</span>
+            <div class="text-muted mt-1" style="font-size:0.82rem;letter-spacing:2px;text-transform:uppercase">Administration</div>
+        </div>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
+                <div class="alert alert-{{ category }} py-2" style="font-size:0.88rem">{{ message }}</div>
             {% endfor %}
         {% endwith %}
+
         <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-3">
-                <input type="password" name="password" class="form-control" placeholder="Mot de passe admin" required autofocus>
+                <label class="form-label fw-semibold" style="font-size:0.88rem">Nom d'utilisateur</label>
+                <input type="text" name="username" class="form-control" placeholder="admin" required autofocus autocomplete="username">
             </div>
-            <button type="submit" class="btn btn-dark w-100">Entrer</button>
+            <div class="mb-4">
+                <label class="form-label fw-semibold" style="font-size:0.88rem">Mot de passe</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn w-100 fw-bold" style="background:var(--turquoise);color:#fff">
+                Se connecter
+            </button>
         </form>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

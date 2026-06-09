@@ -4,7 +4,7 @@ from collections import defaultdict
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
-from models import db, Restaurant, Client, Visit, PointRule
+from models import db, Restaurant, Client, Visit, PointRule, AdminUser
 from config import Config
 from datetime import datetime, timedelta
 from functools import wraps
@@ -60,6 +60,17 @@ def admin_required(f):
     def decorated(*args, **kwargs):
         if not session.get('admin_logged_in'):
             return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated
+
+def super_admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            return redirect(url_for('admin_login'))
+        if not session.get('admin_is_super'):
+            flash('Accès réservé au super administrateur.', 'danger')
+            return redirect(url_for('admin_dashboard'))
         return f(*args, **kwargs)
     return decorated
 
@@ -707,17 +718,33 @@ def stripe_webhook():
 @app.route('/hera-admin', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        password = request.form.get('password')
-        if password == app.config.get('ADMIN_PASSWORD'):
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+
+        # Super admin via variables d'environnement
+        if username == 'admin' and password == app.config.get('ADMIN_PASSWORD'):
             session['admin_logged_in'] = True
+            session['admin_is_super'] = True
+            session['admin_username'] = 'admin'
             return redirect(url_for('admin_dashboard'))
-        flash('Mot de passe incorrect.', 'danger')
+
+        # Collaborateur en base
+        user = AdminUser.query.filter_by(username=username).first()
+        if user and user.is_active and user.check_password(password):
+            session['admin_logged_in'] = True
+            session['admin_is_super'] = False
+            session['admin_username'] = user.username
+            return redirect(url_for('admin_dashboard'))
+
+        flash('Identifiants incorrects.', 'danger')
     return render_template('admin/login.html')
 
 
 @app.route('/hera-admin/logout')
 def admin_logout():
     session.pop('admin_logged_in', None)
+    session.pop('admin_is_super', None)
+    session.pop('admin_username', None)
     return redirect(url_for('admin_login'))
 
 
@@ -756,7 +783,11 @@ def admin_dashboard():
     for r in restaurants:
         r.nb_clients = Client.query.filter_by(restaurant_id=r.id).count()
         r.nb_visits = Visit.query.filter_by(restaurant_id=r.id).count()
-    return render_template('admin/dashboard.html', restaurants=restaurants, now=now, stats=stats)
+    collaborateurs = AdminUser.query.order_by(AdminUser.created_at.desc()).all() if session.get('admin_is_super') else []
+    return render_template('admin/dashboard.html', restaurants=restaurants, now=now, stats=stats,
+                           collaborateurs=collaborateurs,
+                           is_super=session.get('admin_is_super', False),
+                           admin_username=session.get('admin_username', 'admin'))
 
 
 # ── Admin — Toggle gratuit ───────────────────────────────────────
@@ -820,6 +851,68 @@ def admin_ajouter():
     db.session.add(resto)
     db.session.commit()
     flash(f'Restaurant "{name}" créé avec succès.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+# ── Admin — Collaborateurs ───────────────────────────────────────
+@app.route('/hera-admin/collaborateurs/creer', methods=['POST'])
+@super_admin_required
+def admin_creer_collaborateur():
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '').strip()
+    if not username or not password:
+        flash('Nom d\'utilisateur et mot de passe requis.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    if len(password) < 6:
+        flash('Le mot de passe doit faire au moins 6 caractères.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    if username == 'admin':
+        flash('Le nom "admin" est réservé au super administrateur.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    if AdminUser.query.filter_by(username=username).first():
+        flash(f'Le nom d\'utilisateur "{username}" est déjà pris.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    user = AdminUser(username=username)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+    flash(f'Collaborateur "{username}" créé avec succès.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/hera-admin/collaborateurs/toggle/<int:user_id>', methods=['POST'])
+@super_admin_required
+def admin_toggle_collaborateur(user_id):
+    user = AdminUser.query.get_or_404(user_id)
+    user.is_active = not user.is_active
+    db.session.commit()
+    état = 'activé' if user.is_active else 'désactivé'
+    flash(f'Compte de {user.username} {état}.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/hera-admin/collaborateurs/supprimer/<int:user_id>', methods=['POST'])
+@super_admin_required
+def admin_supprimer_collaborateur(user_id):
+    user = AdminUser.query.get_or_404(user_id)
+    nom = user.username
+    db.session.delete(user)
+    db.session.commit()
+    flash(f'Collaborateur "{nom}" supprimé.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/hera-admin/collaborateurs/reset-mdp/<int:user_id>', methods=['POST'])
+@super_admin_required
+def admin_reset_mdp_collaborateur(user_id):
+    user = AdminUser.query.get_or_404(user_id)
+    new_pw = request.form.get('new_password', '').strip()
+    if len(new_pw) < 6:
+        flash('Le mot de passe doit faire au moins 6 caractères.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    user.set_password(new_pw)
+    db.session.commit()
+    flash(f'Mot de passe de {user.username} mis à jour.', 'success')
     return redirect(url_for('admin_dashboard'))
 
 

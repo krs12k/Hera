@@ -18,10 +18,13 @@
 <body>
 <nav class="navbar navbar-dark bg-dark px-4 mb-4">
     <span class="navbar-brand fw-bold">hera<span>.</span> admin</span>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 align-items-center">
+        <span class="text-muted" style="font-size:0.8rem">{{ admin_username }}</span>
+        {% if is_super %}
         <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAdminPw">
             🔑 Mot de passe
         </button>
+        {% endif %}
         <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-light btn-sm">Déconnexion</a>
     </div>
 </nav>
@@ -142,6 +145,130 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <!-- Section collaborateurs (super admin seulement) -->
+    {% if is_super %}
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">👥 Collaborateurs</h5>
+                <button class="btn btn-sm fw-bold" style="background:var(--turquoise);color:#fff"
+                        data-bs-toggle="modal" data-bs-target="#modalCreerCollab">
+                    + Ajouter un collaborateur
+                </button>
+            </div>
+            {% if collaborateurs %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom d'utilisateur</th>
+                            <th>Statut</th>
+                            <th>Créé le</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for collab in collaborateurs %}
+                        <tr>
+                            <td><strong>{{ collab.username }}</strong></td>
+                            <td>
+                                {% if collab.is_active %}
+                                    <span class="badge bg-success">Actif</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Désactivé</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted" style="font-size:0.85rem">{{ collab.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalResetMdp"
+                                            data-collab-id="{{ collab.id }}"
+                                            data-collab-name="{{ collab.username }}"
+                                            title="Changer le mot de passe">🔑</button>
+                                    <form method="POST" action="{{ url_for('admin_toggle_collaborateur', user_id=collab.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button class="btn btn-sm {{ 'btn-warning' if collab.is_active else 'btn-outline-success' }}"
+                                                title="{{ 'Désactiver' if collab.is_active else 'Activer' }}">
+                                            {{ '⏸' if collab.is_active else '▶' }}
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin_supprimer_collaborateur', user_id=collab.id) }}"
+                                          onsubmit="return confirm('Supprimer le compte de {{ collab.username }} ?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button class="btn btn-sm btn-outline-danger" title="Supprimer">🗑</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0" style="font-size:0.9rem">Aucun collaborateur pour l'instant.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal créer collaborateur -->
+<div class="modal fade" id="modalCreerCollab" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin_creer_collaborateur') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Ajouter un collaborateur</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom d'utilisateur</label>
+                        <input type="text" name="username" class="form-control" required placeholder="Ex: marie">
+                        <small class="text-muted">Utilisé pour se connecter à /hera-admin</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="text" name="password" class="form-control" required minlength="6" placeholder="6 caractères minimum">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn fw-bold" style="background:var(--turquoise);color:#fff">Créer le compte</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal reset mot de passe collaborateur -->
+<div class="modal fade" id="modalResetMdp" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" id="formResetMdp">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Changer le mot de passe</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Collaborateur : <strong id="resetMdpNom"></strong></p>
+                    <div class="mb-3">
+                        <label class="form-label">Nouveau mot de passe</label>
+                        <input type="text" name="new_password" class="form-control" required minlength="6" placeholder="6 caractères minimum">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-dark fw-bold">Mettre à jour</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -288,6 +415,14 @@ document.getElementById('modalSupprimer').addEventListener('show.bs.modal', e =>
     document.getElementById('supprimerNom').textContent = btn.dataset.restoName
     document.getElementById('formSupprimer').action = '/hera-admin/supprimer/' + btn.dataset.restoId
 })
+const modalResetMdp = document.getElementById('modalResetMdp')
+if (modalResetMdp) {
+    modalResetMdp.addEventListener('show.bs.modal', e => {
+        const btn = e.relatedTarget
+        document.getElementById('resetMdpNom').textContent = btn.dataset.collabName
+        document.getElementById('formResetMdp').action = '/hera-admin/collaborateurs/reset-mdp/' + btn.dataset.collabId
+    })
+}
 </script>
 </body>
 </html>
