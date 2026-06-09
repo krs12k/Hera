@@ -46,6 +46,17 @@ with app.app_context():
 
 stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
 
+def send_email(subject, recipients, body_text, body_html=None):
+    if not app.config.get('MAIL_USERNAME'):
+        return
+    try:
+        msg = Message(subject=subject, recipients=recipients,
+                      sender=app.config.get('MAIL_DEFAULT_SENDER') or app.config.get('MAIL_USERNAME'),
+                      body=body_text, html=body_html)
+        mail.send(msg)
+    except Exception:
+        pass
+
 def subscription_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -115,6 +126,21 @@ def register():
         db.session.add(resto)
         db.session.commit()
         login_user(resto)
+        send_email(
+            subject='Bienvenue sur hera. 🎉',
+            recipients=[email],
+            body_text=f"Bonjour {name},\n\nVotre compte hera a bien été créé.\nVous pouvez maintenant choisir votre abonnement et commencer à fidéliser vos clients.\n\nÀ bientôt,\nL'équipe hera.",
+            body_html=f"""
+            <div style="font-family:Inter,sans-serif;max-width:520px;margin:auto;padding:32px 24px;color:#1a1a2e">
+                <div style="font-size:1.5rem;font-weight:700;margin-bottom:24px">hera<span style="color:#1BBFB2">.</span></div>
+                <h2 style="font-size:1.2rem;margin-bottom:8px">Bienvenue, {name} 👋</h2>
+                <p style="color:#555;line-height:1.6">Votre compte a bien été créé. Choisissez votre abonnement pour commencer à fidéliser vos clients dès aujourd'hui.</p>
+                <p style="color:#555;line-height:1.6">Votre essai de 14 jours démarre dès que vous renseignez votre carte — aucun prélèvement avant la fin de la période.</p>
+                <a href="https://herafidelity.onrender.com/connexion" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#1BBFB2;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">Accéder à mon compte</a>
+                <hr style="margin:32px 0;border:none;border-top:1px solid #eee">
+                <p style="font-size:0.8rem;color:#999">hera. — Programme de fidélité pour restaurateurs</p>
+            </div>"""
+        )
         return redirect(url_for('choisir_plan'))
 
     return render_template('auth/register.html')
@@ -513,10 +539,30 @@ def client_nouveau(token):
             return redirect(url_for('client_nouveau', token=token, email=email))
 
         client = Client.query.filter_by(restaurant_id=resto.id, email=email).first()
+        is_new = not client
         if not client:
             client = Client(restaurant_id=resto.id, first_name=first_name, email=email, rgpd_consent=True)
             db.session.add(client)
             db.session.commit()
+        if is_new:
+            send_email(
+                subject=f'Bienvenue chez {resto.name} 🎉',
+                recipients=[email],
+                body_text=f"Bonjour {first_name},\n\nTu es inscrit(e) au programme de fidélité de {resto.name}.\nGagne {resto.points_per_visit} points à chaque visite et obtiens {resto.reward_description} dès {resto.reward_threshold} points.\n\nÀ bientôt !",
+                body_html=f"""
+                <div style="font-family:Inter,sans-serif;max-width:520px;margin:auto;padding:32px 24px;color:#1a1a2e">
+                    <div style="font-size:1.5rem;font-weight:700;margin-bottom:24px">hera<span style="color:#1BBFB2">.</span></div>
+                    <h2 style="font-size:1.2rem;margin-bottom:8px">Bienvenue, {first_name} 👋</h2>
+                    <p style="color:#555;line-height:1.6">Tu es inscrit(e) au programme de fidélité de <strong>{resto.name}</strong>.</p>
+                    <div style="background:#f8f9fa;border-radius:10px;padding:20px;margin:20px 0">
+                        <div style="margin-bottom:8px">🎯 <strong>{resto.points_per_visit} points</strong> à chaque visite validée</div>
+                        <div>🎁 <strong>{resto.reward_description}</strong> dès <strong>{resto.reward_threshold} points</strong></div>
+                    </div>
+                    <p style="color:#555;line-height:1.6">Présente simplement ton email à la caisse pour valider tes visites.</p>
+                    <hr style="margin:32px 0;border:none;border-top:1px solid #eee">
+                    <p style="font-size:0.8rem;color:#999">hera. — Programme de fidélité pour {resto.name}</p>
+                </div>"""
+            )
 
         resp = make_response(redirect(url_for('client_commander', token=token, email=email)))
         resp.set_cookie(f'hera_client_{token}', email, max_age=30*24*3600)
