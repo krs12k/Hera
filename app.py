@@ -49,6 +49,9 @@ stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
 def subscription_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        if current_user.subscription_status == 'blocked':
+            flash('Votre compte a été suspendu. Contactez-nous pour régulariser votre situation.', 'danger')
+            return redirect(url_for('abonnement'))
         if not current_user.can_access:
             flash('Ton essai gratuit est terminé. Abonne-toi pour continuer.', 'warning')
             return redirect(url_for('abonnement'))
@@ -798,6 +801,21 @@ def admin_toggle_free(resto_id):
     resto.is_free = not resto.is_free
     db.session.commit()
     flash(f'{"Gratuit activé" if resto.is_free else "Gratuit désactivé"} pour {resto.name}.', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+# ── Admin — Bloquer / débloquer un restaurant ───────────────────
+@app.route('/hera-admin/toggle-block/<int:resto_id>', methods=['POST'])
+@admin_required
+def admin_toggle_block(resto_id):
+    resto = Restaurant.query.get_or_404(resto_id)
+    if resto.subscription_status == 'blocked':
+        resto.subscription_status = 'inactive'
+        flash(f'Compte de {resto.name} débloqué.', 'success')
+    else:
+        resto.subscription_status = 'blocked'
+        flash(f'Compte de {resto.name} suspendu.', 'warning')
+    db.session.commit()
     return redirect(url_for('admin_dashboard'))
 
 

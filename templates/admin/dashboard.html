@@ -13,6 +13,7 @@
         .badge-actif { background: #0d6efd; }
         .badge-essai { background: #ffc107; color: #000; }
         .badge-expire { background: #dc3545; }
+        .badge-bloque { background: #6f42c1; }
     </style>
 </head>
 <body>
@@ -93,7 +94,9 @@
                             <td><strong>{{ r.name }}</strong></td>
                             <td class="text-muted" style="font-size:0.85rem">{{ r.email }}</td>
                             <td>
-                                {% if r.is_free %}
+                                {% if r.subscription_status == 'blocked' %}
+                                    <span class="badge badge-bloque">Suspendu</span>
+                                {% elif r.is_free %}
                                     <span class="badge badge-gratuit">Gratuit</span>
                                 {% elif r.subscription_status == 'active' %}
                                     <span class="badge badge-actif">Abonné</span>
@@ -118,6 +121,15 @@
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button class="btn btn-sm {{ 'btn-success' if r.is_free else 'btn-outline-success' }}" title="{{ 'Retirer le gratuit' if r.is_free else 'Rendre gratuit' }}">
                                             {{ '✓' if r.is_free else '🎁' }}
+                                        </button>
+                                    </form>
+                                    <!-- Bloquer / Débloquer -->
+                                    <form method="POST" action="{{ url_for('admin_toggle_block', resto_id=r.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button class="btn btn-sm {{ 'btn-purple' if r.subscription_status == 'blocked' else 'btn-outline-secondary' }}"
+                                                style="{{ 'background:#6f42c1;color:#fff;border-color:#6f42c1' if r.subscription_status == 'blocked' else '' }}"
+                                                title="{{ 'Débloquer ce restaurant' if r.subscription_status == 'blocked' else 'Suspendre ce restaurant' }}">
+                                            {{ '🔓' if r.subscription_status == 'blocked' else '🚫' }}
                                         </button>
                                     </form>
                                     <!-- Prolonger essai -->

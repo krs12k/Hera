@@ -48,6 +48,8 @@ class Restaurant(UserMixin, db.Model):
 
     @property
     def can_access(self):
+        if self.subscription_status == 'blocked':
+            return False
         if self.is_free:
             return True
         if self.subscription_status == 'active':

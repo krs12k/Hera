@@ -2,7 +2,11 @@
 {% block title %}Dashboard — {{ current_user.name }}{% endblock %}
 
 {% block content %}
-{% if current_user.is_free %}
+{% if current_user.subscription_status == 'blocked' %}
+<div class="alert alert-danger d-flex align-items-center gap-2">
+    <span>🚫 <strong>Compte suspendu.</strong> Veuillez nous contacter pour régulariser votre situation.</span>
+</div>
+{% elif current_user.is_free %}
 <div class="alert alert-success d-flex align-items-center gap-2">
     <span>✅ Compte gratuit — accès offert par hera.</span>
 </div>
