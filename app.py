@@ -3,6 +3,7 @@ from sqlalchemy import text, func
 from collections import defaultdict
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
+import resend
 from flask_wtf.csrf import CSRFProtect
 from models import db, Restaurant, Client, Visit, PointRule, AdminUser
 from config import Config
@@ -45,25 +46,19 @@ with app.app_context():
             pass
 
 stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
-
-def _send_async(app_ctx, msg):
-    with app_ctx:
-        try:
-            mail.send(msg)
-        except Exception:
-            pass
+resend.api_key = os.environ.get('RESEND_API_KEY', '')
 
 def send_email(subject, recipients, body_text, body_html=None):
-    if not app.config.get('MAIL_USERNAME'):
+    if not resend.api_key:
         return
     try:
-        msg = Message(subject=subject, recipients=recipients,
-                      sender=app.config.get('MAIL_DEFAULT_SENDER') or app.config.get('MAIL_USERNAME'),
-                      body=body_text, html=body_html)
-        import threading
-        t = threading.Thread(target=_send_async, args=(app.app_context(), msg))
-        t.daemon = True
-        t.start()
+        resend.Emails.send({
+            "from": os.environ.get('MAIL_DEFAULT_SENDER', 'hera <onboarding@resend.dev>'),
+            "to": recipients if isinstance(recipients, list) else [recipients],
+            "subject": subject,
+            "text": body_text,
+            **({"html": body_html} if body_html else {}),
+        })
     except Exception:
         pass
 

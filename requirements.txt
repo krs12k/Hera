@@ -9,3 +9,4 @@ pillow
 gunicorn
 psycopg2-binary
 stripe
+resend
