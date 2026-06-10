@@ -48,6 +48,36 @@ with app.app_context():
 
 stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
 
+def hera_email(content_html):
+    return f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:Inter,Arial,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:32px 16px">
+    <tr><td align="center">
+      <table width="100%" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
+        <!-- Bannière noire -->
+        <tr>
+          <td style="background:#1A1A2E;padding:24px 32px;text-align:center">
+            <span style="font-size:1.6rem;font-weight:700;color:#ffffff;letter-spacing:-1px">hera</span><span style="color:#1BBFB2;font-size:1.8rem;font-weight:700">.</span>
+          </td>
+        </tr>
+        <!-- Contenu -->
+        <tr>
+          <td style="padding:32px;color:#1a1a2e">
+            {content_html}
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8f9fa;padding:16px 32px;text-align:center;border-top:1px solid #eee">
+            <p style="margin:0;font-size:0.78rem;color:#999">hera. — Programme de fidélité pour restaurateurs belges</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>"""
+
 def send_email(subject, recipients, body_text, body_html=None):
     api_key = os.environ.get('BREVO_API_KEY') or os.environ.get('MAIL_PASSWORD')
     sender = os.environ.get('MAIL_DEFAULT_SENDER') or os.environ.get('MAIL_USERNAME')
@@ -154,16 +184,12 @@ def register():
             subject='Bienvenue sur hera. 🎉',
             recipients=[email],
             body_text=f"Bonjour {name},\n\nVotre compte hera a bien été créé.\nVous pouvez maintenant choisir votre abonnement et commencer à fidéliser vos clients.\n\nÀ bientôt,\nL'équipe hera.",
-            body_html=f"""
-            <div style="font-family:Inter,sans-serif;max-width:520px;margin:auto;padding:32px 24px;color:#1a1a2e">
-                <div style="font-size:1.5rem;font-weight:700;margin-bottom:24px">hera<span style="color:#1BBFB2">.</span></div>
+            body_html=hera_email(f"""
                 <h2 style="font-size:1.2rem;margin-bottom:8px">Bienvenue, {name} 👋</h2>
                 <p style="color:#555;line-height:1.6">Votre compte a bien été créé. Choisissez votre abonnement pour commencer à fidéliser vos clients dès aujourd'hui.</p>
                 <p style="color:#555;line-height:1.6">Votre essai de 14 jours démarre dès que vous renseignez votre carte — aucun prélèvement avant la fin de la période.</p>
                 <a href="https://herafidelity.onrender.com/connexion" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#1BBFB2;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">Accéder à mon compte</a>
-                <hr style="margin:32px 0;border:none;border-top:1px solid #eee">
-                <p style="font-size:0.8rem;color:#999">hera. — Programme de fidélité pour restaurateurs</p>
-            </div>"""
+            """)
         )
         return redirect(url_for('choisir_plan'))
 
@@ -211,16 +237,13 @@ def forgot_password():
                 send_email(
                     subject='Réinitialisation de votre mot de passe — hera.',
                     recipients=[email],
-                    body_text=f"""Bonjour,
-
-Vous avez demandé à réinitialiser votre mot de passe sur hera.
-
-Cliquez sur ce lien (valable 1 heure) :
-{reset_url}
-
-Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
-
-— L'équipe hera."""
+                    body_text=f"Bonjour,\n\nCliquez sur ce lien pour réinitialiser votre mot de passe (valable 1 heure) :\n{reset_url}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\n— L'équipe hera.",
+                    body_html=hera_email(f"""
+                        <h2 style="font-size:1.1rem;margin-bottom:16px">Réinitialisation de mot de passe</h2>
+                        <p style="color:#555;line-height:1.6">Vous avez demandé à réinitialiser votre mot de passe sur hera.</p>
+                        <a href="{reset_url}" style="display:inline-block;margin:20px 0;padding:12px 24px;background:#1BBFB2;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">Réinitialiser mon mot de passe</a>
+                        <p style="color:#999;font-size:0.85rem">Ce lien est valable 1 heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
+                    """)
                 )
         except Exception:
             db.session.rollback()
@@ -623,9 +646,8 @@ def client_nouveau(token):
                 subject=f'Bienvenue chez {resto.name} 🎉',
                 recipients=[email],
                 body_text=f"Bonjour {first_name},\n\nTu es inscrit(e) au programme de fidélité de {resto.name}.\nGagne {resto.points_per_visit} points à chaque visite et obtiens {resto.reward_description} dès {resto.reward_threshold} points.\n\nÀ bientôt !",
-                body_html=f"""
-                <div style="font-family:Inter,sans-serif;max-width:520px;margin:auto;padding:32px 24px;color:#1a1a2e">
-                    <div style="text-align:center;margin-bottom:24px">{logo_html}</div>
+                body_html=hera_email(f"""
+                    {f'<div style="text-align:center;margin-bottom:20px">{logo_html}</div>' if resto.logo_data else ''}
                     <h2 style="font-size:1.2rem;margin-bottom:8px">Bienvenue, {first_name} 👋</h2>
                     <p style="color:#555;line-height:1.6">Tu es inscrit(e) au programme de fidélité de <strong>{resto.name}</strong>.</p>
                     <div style="background:#f8f9fa;border-radius:10px;padding:20px;margin:20px 0">
@@ -633,9 +655,7 @@ def client_nouveau(token):
                         <div>🎁 <strong>{resto.reward_description}</strong> dès <strong>{resto.reward_threshold} points</strong></div>
                     </div>
                     <p style="color:#555;line-height:1.6">Présente simplement ton email à la caisse pour valider tes visites.</p>
-                    <hr style="margin:32px 0;border:none;border-top:1px solid #eee">
-                    <p style="font-size:0.8rem;color:#999">hera. — Programme de fidélité pour {resto.name}</p>
-                </div>"""
+                """)
             )
 
         resp = make_response(redirect(url_for('client_commander', token=token, email=email)))
