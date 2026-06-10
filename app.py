@@ -457,16 +457,26 @@ def envoyer_message():
         destinataires = [c.email for c in clients]
         resto_email = current_user.email
         resto_name = current_user.name
+        resto_logo = current_user.logo_data
+
+        logo_html = f'<img src="{resto_logo}" alt="{resto_name}" style="height:48px;object-fit:contain;margin-bottom:16px">' if resto_logo else f'<strong>{resto_name}</strong>'
 
         def _envoyer():
             try:
                 import requests as req
+                html = f"""<div style="font-family:Inter,sans-serif;max-width:520px;margin:auto;padding:32px 24px;color:#1a1a2e">
+                    <div style="text-align:center;margin-bottom:24px">{logo_html}</div>
+                    <p style="line-height:1.7;white-space:pre-line">{contenu}</p>
+                    <hr style="margin:24px 0;border:none;border-top:1px solid #eee">
+                    <p style="font-size:0.85rem;color:#999">— {resto_name}</p>
+                </div>"""
                 payload = {
                     "sender": {"email": sender},
                     "to": [{"email": resto_email}],
                     "bcc": [{"email": e} for e in destinataires],
                     "subject": f'[{resto_name}] {sujet}',
                     "textContent": f'{contenu}\n\n— {resto_name}',
+                    "htmlContent": html,
                 }
                 resp = req.post(
                     "https://api.brevo.com/v3/smtp/email",
@@ -608,13 +618,14 @@ def client_nouveau(token):
             db.session.add(client)
             db.session.commit()
         if is_new:
+            logo_html = f'<img src="{resto.logo_data}" alt="{resto.name}" style="height:56px;object-fit:contain;margin-bottom:16px">' if resto.logo_data else f'<div style="font-size:1.4rem;font-weight:700;margin-bottom:16px">{resto.name}</div>'
             send_email(
                 subject=f'Bienvenue chez {resto.name} 🎉',
                 recipients=[email],
                 body_text=f"Bonjour {first_name},\n\nTu es inscrit(e) au programme de fidélité de {resto.name}.\nGagne {resto.points_per_visit} points à chaque visite et obtiens {resto.reward_description} dès {resto.reward_threshold} points.\n\nÀ bientôt !",
                 body_html=f"""
                 <div style="font-family:Inter,sans-serif;max-width:520px;margin:auto;padding:32px 24px;color:#1a1a2e">
-                    <div style="font-size:1.5rem;font-weight:700;margin-bottom:24px">hera<span style="color:#1BBFB2">.</span></div>
+                    <div style="text-align:center;margin-bottom:24px">{logo_html}</div>
                     <h2 style="font-size:1.2rem;margin-bottom:8px">Bienvenue, {first_name} 👋</h2>
                     <p style="color:#555;line-height:1.6">Tu es inscrit(e) au programme de fidélité de <strong>{resto.name}</strong>.</p>
                     <div style="background:#f8f9fa;border-radius:10px;padding:20px;margin:20px 0">
