@@ -47,32 +47,33 @@ with app.app_context():
 
 stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
 
-def _send_async(app_ctx, msg):
-    with app_ctx:
-        try:
-            mail.send(msg)
-            app.logger.info(f"Email envoyé à {msg.recipients}")
-        except Exception as e:
-            app.logger.error(f"Erreur envoi email : {e}")
-
 def send_email(subject, recipients, body_text, body_html=None):
-    if not app.config.get('MAIL_USERNAME'):
-        app.logger.warning("MAIL_USERNAME non défini — email non envoyé")
+    api_key = os.environ.get('BREVO_API_KEY') or os.environ.get('MAIL_PASSWORD')
+    sender = os.environ.get('MAIL_DEFAULT_SENDER') or os.environ.get('MAIL_USERNAME')
+    if not api_key or not sender:
+        app.logger.warning("Brevo API key ou sender manquant — email non envoyé")
         return
+    to_list = recipients if isinstance(recipients, list) else [recipients]
+    payload = {
+        "sender": {"email": sender},
+        "to": [{"email": r} for r in to_list],
+        "subject": subject,
+        "textContent": body_text,
+    }
+    if body_html:
+        payload["htmlContent"] = body_html
     try:
-        msg = Message(
-            subject=subject,
-            recipients=recipients if isinstance(recipients, list) else [recipients],
-            sender=app.config.get('MAIL_DEFAULT_SENDER') or app.config.get('MAIL_USERNAME'),
-            body=body_text,
-            html=body_html
+        import requests as req
+        resp = req.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={"api-key": api_key, "Content-Type": "application/json"},
+            json=payload,
+            timeout=10
         )
-        import threading
-        t = threading.Thread(target=_send_async, args=(app.app_context(), msg))
-        t.daemon = True
-        t.start()
+        resp.raise_for_status()
+        app.logger.info(f"Email envoyé via Brevo API : {resp.status_code}")
     except Exception as e:
-        app.logger.error(f"Erreur préparation email : {e}")
+        app.logger.error(f"Erreur Brevo API : {e}")
 
 def subscription_required(f):
     @wraps(f)
