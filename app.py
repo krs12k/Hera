@@ -188,7 +188,7 @@ def register():
                 <h2 style="font-size:1.2rem;margin-bottom:8px">Bienvenue, {name} 👋</h2>
                 <p style="color:#555;line-height:1.6">Votre compte a bien été créé. Choisissez votre abonnement pour commencer à fidéliser vos clients dès aujourd'hui.</p>
                 <p style="color:#555;line-height:1.6">Votre essai de 14 jours démarre dès que vous renseignez votre carte — aucun prélèvement avant la fin de la période.</p>
-                <a href="https://herafidelity.onrender.com/connexion" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#1BBFB2;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">Accéder à mon compte</a>
+                <a href="{url_for('login', _external=True)}" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#1BBFB2;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">Accéder à mon compte</a>
             """)
         )
         return redirect(url_for('choisir_plan'))
