@@ -37,6 +37,7 @@ with app.app_context():
         "ALTER TABLE restaurants ADD COLUMN point_mode VARCHAR(20) DEFAULT 'simple'",
         "ALTER TABLE restaurants ADD COLUMN reset_token VARCHAR(100)",
         "ALTER TABLE restaurants ADD COLUMN reset_token_expires TIMESTAMP",
+        "ALTER TABLE restaurants ADD COLUMN logo_data TEXT",
     ]:
         try:
             with db.engine.connect() as conn:
@@ -401,6 +402,36 @@ def parametres():
 
     rules = PointRule.query.filter_by(restaurant_id=current_user.id).all()
     return render_template('dashboard/parametres.html', rules=rules)
+
+
+@app.route('/dashboard/logo', methods=['POST'])
+@login_required
+def upload_logo():
+    f = request.files.get('logo')
+    if not f or f.filename == '':
+        flash('Aucun fichier sélectionné.', 'danger')
+        return redirect(url_for('parametres'))
+    if not f.content_type.startswith('image/'):
+        flash('Le fichier doit être une image (JPG, PNG, etc.).', 'danger')
+        return redirect(url_for('parametres'))
+    data = f.read()
+    if len(data) > 1 * 1024 * 1024:
+        flash('Le logo ne doit pas dépasser 1 Mo.', 'danger')
+        return redirect(url_for('parametres'))
+    import base64
+    current_user.logo_data = f'data:{f.content_type};base64,{base64.b64encode(data).decode()}'
+    db.session.commit()
+    flash('Logo mis à jour !', 'success')
+    return redirect(url_for('parametres'))
+
+
+@app.route('/dashboard/logo/supprimer', methods=['POST'])
+@login_required
+def supprimer_logo():
+    current_user.logo_data = None
+    db.session.commit()
+    flash('Logo supprimé.', 'success')
+    return redirect(url_for('parametres'))
 
 
 # ── Envoyer un message aux clients ─────────────────────────────

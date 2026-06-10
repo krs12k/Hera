@@ -15,6 +15,32 @@
             {% endfor %}
         {% endwith %}
 
+        <!-- Logo -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="mb-3 fw-bold">Logo du restaurant</h5>
+                {% if current_user.logo_data %}
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <img src="{{ current_user.logo_data }}" alt="Logo" style="height:64px;object-fit:contain;border-radius:8px;border:1px solid #eee;padding:4px">
+                    <form method="POST" action="{{ url_for('supprimer_logo') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-sm btn-outline-danger">Supprimer</button>
+                    </form>
+                </div>
+                {% endif %}
+                <form method="POST" action="{{ url_for('upload_logo') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="file" name="logo" class="form-control" accept="image/*" required>
+                        <button type="submit" class="btn fw-bold text-nowrap" style="background:var(--turquoise);color:#fff">
+                            {{ 'Changer' if current_user.logo_data else 'Télécharger' }}
+                        </button>
+                    </div>
+                    <small class="text-muted">JPG, PNG — max 1 Mo</small>
+                </form>
+            </div>
+        </div>
+
         <!-- Infos du restaurant -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">

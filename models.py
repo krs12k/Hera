@@ -21,6 +21,9 @@ class Restaurant(UserMixin, db.Model):
     reward_description = db.Column(db.String(200), default='1 repas offert')
     minimum_amount = db.Column(db.Float, default=0.0)
 
+    # Logo
+    logo_data = db.Column(db.Text, nullable=True)
+
     # Mode fidélité
     point_mode = db.Column(db.String(20), default='simple')
 
