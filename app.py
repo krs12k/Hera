@@ -51,17 +51,21 @@ resend.api_key = os.environ.get('RESEND_API_KEY', '')
 
 def send_email(subject, recipients, body_text, body_html=None):
     if not resend.api_key:
+        app.logger.warning("RESEND_API_KEY non défini — email non envoyé")
         return
     try:
-        resend.Emails.send({
-            "from": os.environ.get('MAIL_DEFAULT_SENDER', 'hera <onboarding@resend.dev>'),
+        params = {
+            "from": "hera <onboarding@resend.dev>",
             "to": recipients if isinstance(recipients, list) else [recipients],
             "subject": subject,
             "text": body_text,
-            **({"html": body_html} if body_html else {}),
-        })
-    except Exception:
-        pass
+        }
+        if body_html:
+            params["html"] = body_html
+        result = resend.Emails.send(params)
+        app.logger.info(f"Email envoyé : {result}")
+    except Exception as e:
+        app.logger.error(f"Erreur envoi email : {e}")
 
 def subscription_required(f):
     @wraps(f)
