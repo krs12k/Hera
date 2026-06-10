@@ -62,18 +62,23 @@ def send_email(subject, recipients, body_text, body_html=None):
     }
     if body_html:
         payload["htmlContent"] = body_html
-    try:
-        import requests as req
-        resp = req.post(
-            "https://api.brevo.com/v3/smtp/email",
-            headers={"api-key": api_key, "Content-Type": "application/json"},
-            json=payload,
-            timeout=10
-        )
-        resp.raise_for_status()
-        app.logger.info(f"Email envoyé via Brevo API : {resp.status_code}")
-    except Exception as e:
-        app.logger.error(f"Erreur Brevo API : {e}")
+
+    def _send():
+        try:
+            import requests as req
+            resp = req.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={"api-key": api_key, "Content-Type": "application/json"},
+                json=payload,
+                timeout=15
+            )
+            resp.raise_for_status()
+            app.logger.info(f"Email envoyé via Brevo API : {resp.status_code}")
+        except Exception as e:
+            app.logger.error(f"Erreur Brevo API : {e}")
+
+    import threading
+    threading.Thread(target=_send, daemon=True).start()
 
 def subscription_required(f):
     @wraps(f)
@@ -418,26 +423,31 @@ def envoyer_message():
             flash('Email non configuré. Vérifie BREVO_API_KEY sur Render.', 'danger')
             return redirect(url_for('envoyer_message'))
 
-        try:
-            import requests as req
-            destinataires = [c.email for c in clients]
-            payload = {
-                "sender": {"email": sender},
-                "to": [{"email": current_user.email}],
-                "bcc": [{"email": e} for e in destinataires],
-                "subject": f'[{current_user.name}] {sujet}',
-                "textContent": f'{contenu}\n\n— {current_user.name}',
-            }
-            resp = req.post(
-                "https://api.brevo.com/v3/smtp/email",
-                headers={"api-key": api_key, "Content-Type": "application/json"},
-                json=payload,
-                timeout=10
-            )
-            resp.raise_for_status()
-            flash(f'Message envoyé à {len(destinataires)} client(s) !', 'success')
-        except Exception as e:
-            flash(f'Erreur lors de l\'envoi : {str(e)}', 'danger')
+        destinataires = [c.email for c in clients]
+
+        def _envoyer():
+            try:
+                import requests as req
+                payload = {
+                    "sender": {"email": sender},
+                    "to": [{"email": current_user.email}],
+                    "bcc": [{"email": e} for e in destinataires],
+                    "subject": f'[{current_user.name}] {sujet}',
+                    "textContent": f'{contenu}\n\n— {current_user.name}',
+                }
+                resp = req.post(
+                    "https://api.brevo.com/v3/smtp/email",
+                    headers={"api-key": api_key, "Content-Type": "application/json"},
+                    json=payload,
+                    timeout=15
+                )
+                app.logger.info(f"Message envoyé à {len(destinataires)} clients : {resp.status_code}")
+            except Exception as e:
+                app.logger.error(f"Erreur envoi message clients : {e}")
+
+        import threading
+        threading.Thread(target=_envoyer, daemon=True).start()
+        flash(f'Message en cours d\'envoi à {len(destinataires)} client(s) !', 'success')
 
         return redirect(url_for('envoyer_message'))
 
