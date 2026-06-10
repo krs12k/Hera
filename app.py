@@ -412,23 +412,29 @@ def envoyer_message():
             flash('Aucun client inscrit pour le moment.', 'warning')
             return redirect(url_for('envoyer_message'))
 
-        if not app.config.get('MAIL_USERNAME'):
-            flash(
-                'Email non configuré. Renseigne MAIL_USERNAME et MAIL_PASSWORD dans les variables d\'environnement.',
-                'danger'
-            )
+        api_key = os.environ.get('BREVO_API_KEY') or os.environ.get('MAIL_PASSWORD')
+        sender = os.environ.get('MAIL_DEFAULT_SENDER') or os.environ.get('MAIL_USERNAME')
+        if not api_key or not sender:
+            flash('Email non configuré. Vérifie BREVO_API_KEY sur Render.', 'danger')
             return redirect(url_for('envoyer_message'))
 
         try:
+            import requests as req
             destinataires = [c.email for c in clients]
-            # BCC : chaque client ne voit pas les autres emails
-            msg = Message(
-                subject=f'[{current_user.name}] {sujet}',
-                recipients=[current_user.email],
-                bcc=destinataires,
-                body=f'{contenu}\n\n— {current_user.name}'
+            payload = {
+                "sender": {"email": sender},
+                "to": [{"email": current_user.email}],
+                "bcc": [{"email": e} for e in destinataires],
+                "subject": f'[{current_user.name}] {sujet}',
+                "textContent": f'{contenu}\n\n— {current_user.name}',
+            }
+            resp = req.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={"api-key": api_key, "Content-Type": "application/json"},
+                json=payload,
+                timeout=10
             )
-            mail.send(msg)
+            resp.raise_for_status()
             flash(f'Message envoyé à {len(destinataires)} client(s) !', 'success')
         except Exception as e:
             flash(f'Erreur lors de l\'envoi : {str(e)}', 'danger')
