@@ -424,16 +424,18 @@ def envoyer_message():
             return redirect(url_for('envoyer_message'))
 
         destinataires = [c.email for c in clients]
+        resto_email = current_user.email
+        resto_name = current_user.name
 
         def _envoyer():
             try:
                 import requests as req
                 payload = {
                     "sender": {"email": sender},
-                    "to": [{"email": current_user.email}],
+                    "to": [{"email": resto_email}],
                     "bcc": [{"email": e} for e in destinataires],
-                    "subject": f'[{current_user.name}] {sujet}',
-                    "textContent": f'{contenu}\n\n— {current_user.name}',
+                    "subject": f'[{resto_name}] {sujet}',
+                    "textContent": f'{contenu}\n\n— {resto_name}',
                 }
                 resp = req.post(
                     "https://api.brevo.com/v3/smtp/email",
@@ -441,6 +443,7 @@ def envoyer_message():
                     json=payload,
                     timeout=15
                 )
+                resp.raise_for_status()
                 app.logger.info(f"Message envoyé à {len(destinataires)} clients : {resp.status_code}")
             except Exception as e:
                 app.logger.error(f"Erreur envoi message clients : {e}")
