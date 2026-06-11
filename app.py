@@ -570,6 +570,20 @@ def signaler():
         report = Report(type=type_, message=message, email=email)
         db.session.add(report)
         db.session.commit()
+        admin_email = os.environ.get('MAIL_DEFAULT_SENDER') or os.environ.get('MAIL_USERNAME')
+        if admin_email:
+            type_label = {'bug': 'Bug', 'suggestion': 'Suggestion', 'autre': 'Autre'}.get(type_, type_)
+            send_email(
+                subject=f'[hera.] Nouveau signalement — {type_label}',
+                recipients=[admin_email],
+                body_text=f"Nouveau signalement reçu.\n\nType : {type_label}\nEmail : {email or 'non renseigné'}\nMessage :\n{message}",
+                body_html=hera_email(f"""
+                    <h2 style="font-size:1.1rem;margin-bottom:16px">Nouveau signalement — {type_label}</h2>
+                    <p style="color:#555"><strong>Email :</strong> {email or 'non renseigné'}</p>
+                    <div style="background:#f8f9fa;border-radius:8px;padding:16px;margin-top:12px;white-space:pre-wrap;font-size:0.92rem;color:#333">{message}</div>
+                    <a href="https://hera-ximw.onrender.com/hera-admin/dashboard" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#1BBFB2;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">Voir dans l'admin</a>
+                """)
+            )
         flash('Merci, votre signalement a bien été envoyé.', 'success')
         return redirect(url_for('signaler'))
     return render_template('signaler.html')
