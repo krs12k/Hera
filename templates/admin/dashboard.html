@@ -165,6 +165,68 @@
         </div>
     </div>
 
+    <!-- Section signalements -->
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">
+                Signalements
+                {% if unread_count > 0 %}
+                    <span class="badge bg-danger ms-2">{{ unread_count }} nouveau{{ 'x' if unread_count > 1 }}</span>
+                {% endif %}
+            </h5>
+            {% if reports %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Type</th>
+                            <th>Message</th>
+                            <th>Email</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reports %}
+                        <tr class="{{ 'fw-semibold' if not r.is_read else 'text-muted' }}">
+                            <td>
+                                {% if r.type == 'bug' %}
+                                    <span class="badge bg-danger">Bug</span>
+                                {% elif r.type == 'suggestion' %}
+                                    <span class="badge bg-primary">Suggestion</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Autre</span>
+                                {% endif %}
+                            </td>
+                            <td style="max-width:300px;white-space:pre-wrap;font-size:0.88rem">{{ r.message }}</td>
+                            <td style="font-size:0.85rem">{{ r.email or '—' }}</td>
+                            <td style="font-size:0.82rem">{{ r.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    {% if not r.is_read %}
+                                    <form method="POST" action="{{ url_for('admin_lire_signalement', report_id=r.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button class="btn btn-sm btn-outline-success" title="Marquer comme lu">✓</button>
+                                    </form>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('admin_supprimer_signalement', report_id=r.id) }}"
+                                          onsubmit="return confirm('Supprimer ce signalement ?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button class="btn btn-sm btn-outline-danger" title="Supprimer">🗑</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0" style="font-size:0.9rem">Aucun signalement pour l'instant.</p>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Section collaborateurs (super admin seulement) -->
     {% if is_super %}
     <div class="card border-0 shadow-sm mt-4">

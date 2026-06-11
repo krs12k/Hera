@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Signaler un problème — hera.{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <h1 class="fw-bold mb-1" style="font-size:1.6rem">Signaler un problème</h1>
+        <p class="text-muted mb-4" style="font-size:0.95rem">Un bug, une suggestion ou autre chose ? Dites-nous tout.</p>
+
+        <div class="card border-0 shadow-sm p-4">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Type de signalement</label>
+                    <select name="type" class="form-select">
+                        <option value="bug">Bug / Erreur technique</option>
+                        <option value="suggestion">Suggestion d'amélioration</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Votre message <span class="text-danger">*</span></label>
+                    <textarea name="message" class="form-control" rows="5" required
+                        placeholder="Décrivez le problème ou votre suggestion..."></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Votre email <span class="text-muted fw-normal">(optionnel, pour qu'on puisse vous répondre)</span></label>
+                    <input type="email" name="email" class="form-control" placeholder="votre@email.com">
+                </div>
+                <button type="submit" class="btn w-100 fw-bold" style="background:#1BBFB2;color:#fff;padding:12px">
+                    Envoyer le signalement
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -5,7 +5,7 @@ from collections import defaultdict
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
-from models import db, Restaurant, Client, Visit, PointRule, AdminUser
+from models import db, Restaurant, Client, Visit, PointRule, AdminUser, Report
 from config import Config
 from datetime import datetime, timedelta
 from functools import wraps
@@ -557,6 +557,24 @@ def confidentialite():
     return render_template('confidentialite.html')
 
 
+# ── Signaler un problème ─────────────────────────────────────────
+@app.route('/signaler', methods=['GET', 'POST'])
+def signaler():
+    if request.method == 'POST':
+        type_ = request.form.get('type', 'bug')
+        message = request.form.get('message', '').strip()
+        email = request.form.get('email', '').strip() or None
+        if not message:
+            flash('Le message ne peut pas être vide.', 'danger')
+            return redirect(url_for('signaler'))
+        report = Report(type=type_, message=message, email=email)
+        db.session.add(report)
+        db.session.commit()
+        flash('Merci, votre signalement a bien été envoyé.', 'success')
+        return redirect(url_for('signaler'))
+    return render_template('signaler.html')
+
+
 # ── Page QR code ────────────────────────────────────────────────
 @app.route('/dashboard/qrcode')
 @login_required
@@ -919,6 +937,8 @@ def admin_change_password():
 @admin_required
 def admin_dashboard():
     restaurants = Restaurant.query.order_by(Restaurant.created_at.desc()).all()
+    reports = Report.query.order_by(Report.created_at.desc()).all()
+    unread_count = Report.query.filter_by(is_read=False).count()
     now = datetime.utcnow()
     stats = {
         'total': len(restaurants),
@@ -933,8 +953,28 @@ def admin_dashboard():
     collaborateurs = AdminUser.query.order_by(AdminUser.created_at.desc()).all() if session.get('admin_is_super') else []
     return render_template('admin/dashboard.html', restaurants=restaurants, now=now, stats=stats,
                            collaborateurs=collaborateurs,
+                           reports=reports, unread_count=unread_count,
                            is_super=session.get('admin_is_super', False),
                            admin_username=session.get('admin_username', 'admin'))
+
+
+# ── Admin — Marquer signalement comme lu ───────────────────────
+@app.route('/hera-admin/signalement/<int:report_id>/lire', methods=['POST'])
+@admin_required
+def admin_lire_signalement(report_id):
+    report = Report.query.get_or_404(report_id)
+    report.is_read = True
+    db.session.commit()
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/hera-admin/signalement/<int:report_id>/supprimer', methods=['POST'])
+@admin_required
+def admin_supprimer_signalement(report_id):
+    report = Report.query.get_or_404(report_id)
+    db.session.delete(report)
+    db.session.commit()
+    return redirect(url_for('admin_dashboard'))
 
 
 # ── Admin — Toggle gratuit ───────────────────────────────────────
