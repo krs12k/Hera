@@ -869,6 +869,7 @@ def checkout():
             line_items=[{'price': price_id, 'quantity': 1}],
             mode='subscription',
             subscription_data=subscription_data,
+            allow_promotion_codes=True,
             success_url=url_for('abonnement_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
             cancel_url=url_for('choisir_plan', _external=True),
         )
