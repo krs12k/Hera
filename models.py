@@ -108,6 +108,18 @@ class PointRule(db.Model):
     points = db.Column(db.Integer, nullable=False)
 
 
+class DiscountCode(db.Model):
+    __tablename__ = 'discount_codes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'), nullable=False)
+    code = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(200), nullable=False)
+    min_points = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class Report(db.Model):
     __tablename__ = 'reports'
 

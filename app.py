@@ -5,7 +5,7 @@ from collections import defaultdict
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
-from models import db, Restaurant, Client, Visit, PointRule, AdminUser, Report
+from models import db, Restaurant, Client, Visit, PointRule, AdminUser, Report, DiscountCode
 from config import Config
 from datetime import datetime, timedelta
 from functools import wraps
@@ -428,7 +428,8 @@ def parametres():
         return redirect(url_for('parametres'))
 
     rules = PointRule.query.filter_by(restaurant_id=current_user.id).all()
-    return render_template('dashboard/parametres.html', rules=rules)
+    codes = DiscountCode.query.filter_by(restaurant_id=current_user.id).all()
+    return render_template('dashboard/parametres.html', rules=rules, codes=codes)
 
 
 @app.route('/dashboard/logo', methods=['POST'])
@@ -555,6 +556,46 @@ def supprimer_regle(rule_id):
 @app.route('/confidentialite')
 def confidentialite():
     return render_template('confidentialite.html')
+
+
+# ── Codes de réduction ──────────────────────────────────────────
+@app.route('/dashboard/codes/ajouter', methods=['POST'])
+@login_required
+def ajouter_code():
+    code = request.form.get('code', '').strip().upper()
+    description = request.form.get('description', '').strip()
+    min_points_str = request.form.get('min_points', '0').strip()
+    if not code or not description:
+        flash('Code et description requis.', 'danger')
+        return redirect(url_for('parametres'))
+    try:
+        min_points = int(min_points_str)
+    except ValueError:
+        min_points = 0
+    dc = DiscountCode(restaurant_id=current_user.id, code=code, description=description, min_points=min_points)
+    db.session.add(dc)
+    db.session.commit()
+    flash(f'Code "{code}" ajouté.', 'success')
+    return redirect(url_for('parametres'))
+
+
+@app.route('/dashboard/codes/supprimer/<int:code_id>', methods=['POST'])
+@login_required
+def supprimer_code(code_id):
+    dc = DiscountCode.query.filter_by(id=code_id, restaurant_id=current_user.id).first_or_404()
+    db.session.delete(dc)
+    db.session.commit()
+    flash('Code supprimé.', 'info')
+    return redirect(url_for('parametres'))
+
+
+@app.route('/dashboard/codes/toggle/<int:code_id>', methods=['POST'])
+@login_required
+def toggle_code(code_id):
+    dc = DiscountCode.query.filter_by(id=code_id, restaurant_id=current_user.id).first_or_404()
+    dc.is_active = not dc.is_active
+    db.session.commit()
+    return redirect(url_for('parametres'))
 
 
 # ── Signaler un problème ─────────────────────────────────────────
@@ -759,7 +800,8 @@ def client_profil(token):
     email = request.args.get('email')
     client = Client.query.filter_by(restaurant_id=resto.id, email=email).first_or_404()
     progression = min(int((client.total_points / resto.reward_threshold) * 100), 100)
-    return render_template('client/profil.html', client=client, resto=resto, progression=progression)
+    codes = DiscountCode.query.filter_by(restaurant_id=resto.id, is_active=True).all()
+    return render_template('client/profil.html', client=client, resto=resto, progression=progression, codes=codes)
 
 
 # ── Choix du plan après inscription ─────────────────────────────

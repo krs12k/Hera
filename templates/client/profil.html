@@ -45,6 +45,26 @@
                 </p>
                 {% endif %}
 
+                {% if codes %}
+                <div class="mt-4 text-start">
+                    <h6 class="fw-bold mb-2">Codes de réduction disponibles</h6>
+                    {% for code in codes %}
+                        {% if client.total_points >= code.min_points %}
+                        <div class="p-3 mb-2 rounded text-center" style="background:#e8f8f7;border:2px dashed #1BBFB2">
+                            <div class="fw-bold font-monospace fs-5" style="color:#1BBFB2;letter-spacing:2px">{{ code.code }}</div>
+                            <div class="text-muted" style="font-size:0.88rem">{{ code.description }}</div>
+                        </div>
+                        {% else %}
+                        <div class="p-3 mb-2 rounded text-center" style="background:#f8f9fa;border:2px dashed #dee2e6;opacity:0.7">
+                            <div class="fw-bold font-monospace fs-5 text-muted">🔒 {{ code.code }}</div>
+                            <div class="text-muted" style="font-size:0.85rem">{{ code.description }}</div>
+                            <div style="font-size:0.78rem;color:#aaa">Débloqué à {{ code.min_points }} points (il vous en manque {{ code.min_points - client.total_points }})</div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 <a href="{{ url_for('client_register', token=resto.qr_token) }}"
                    class="btn btn-outline-dark btn-sm mt-2">Retour</a>
             </div>

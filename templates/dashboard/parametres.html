@@ -195,6 +195,78 @@
     </div>
 </div>
 
+<!-- Codes de réduction -->
+<div class="row justify-content-center mt-0">
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-1">Codes de réduction</h5>
+                <p class="text-muted mb-3" style="font-size:0.9rem">
+                    Les codes apparaissent sur le profil du client dès qu'il atteint le nombre de points requis.
+                </p>
+
+                {% if codes %}
+                <div class="mb-3">
+                    {% for code in codes %}
+                    <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded" style="background:#f8f9fa">
+                        <div>
+                            <span class="fw-bold font-monospace" style="font-size:1rem;color:var(--turquoise)">{{ code.code }}</span>
+                            <span class="text-muted ms-2" style="font-size:0.88rem">— {{ code.description }}</span>
+                            <span class="badge ms-2 {{ 'bg-success' if code.is_active else 'bg-secondary' }}" style="font-size:0.72rem">
+                                {{ 'Actif' if code.is_active else 'Inactif' }}
+                            </span>
+                            {% if code.min_points > 0 %}
+                            <span class="badge bg-light text-dark border ms-1" style="font-size:0.72rem">≥ {{ code.min_points }} pts</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex gap-1">
+                            <form method="POST" action="{{ url_for('toggle_code', code_id=code.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm {{ 'btn-outline-secondary' if code.is_active else 'btn-outline-success' }}"
+                                        title="{{ 'Désactiver' if code.is_active else 'Activer' }}">
+                                    {{ '⏸' if code.is_active else '▶' }}
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('supprimer_code', code_id=code.id) }}"
+                                  onsubmit="return confirm('Supprimer ce code ?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm btn-outline-danger">✕</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-3" style="font-size:0.85rem">Aucun code créé pour l'instant.</p>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('ajouter_code') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label mb-1" style="font-size:0.85rem">Code</label>
+                            <input type="text" name="code" class="form-control font-monospace text-uppercase"
+                                   placeholder="EX: MERCI10" required maxlength="20">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label mb-1" style="font-size:0.85rem">Description</label>
+                            <input type="text" name="description" class="form-control"
+                                   placeholder="Ex: 10% sur votre prochain repas" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label mb-1" style="font-size:0.85rem">Points min.</label>
+                            <input type="number" name="min_points" class="form-control" placeholder="0" min="0" value="0">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn hera-btn-gold w-100">Ajouter</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Abonnement -->
 {% if not current_user.is_free %}
 <div class="row justify-content-center mt-4">
