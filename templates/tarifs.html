@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-{% block title %}hera — Tarifs{% endblock %}
+{% block title %}hera — {% if lang == 'nl' %}Prijzen{% else %}Tarifs{% endif %}{% endblock %}
 
 {% block content %}
 <div class="text-center py-5">
-    <h1 class="fw-bold" style="letter-spacing:-1px">Des tarifs simples, sans surprise</h1>
-    <p class="text-muted mt-2">Sans commission · Résiliable à tout moment · Paiement sécurisé par Stripe</p>
+    <h1 class="fw-bold" style="letter-spacing:-1px">{{ t.tarifs_title }}</h1>
+    <p class="text-muted mt-2">{{ t.tarifs_sub }}</p>
 </div>
 
 <div class="row g-4 justify-content-center mb-5">
@@ -13,23 +13,23 @@
     <div class="col-md-4">
         <div class="card border-0 shadow-sm p-4 h-100 text-center">
             <div class="mb-3">
-                <span class="badge px-3 py-2" style="background:var(--turquoise-light);color:var(--turquoise-dark);font-size:0.85rem">Mensuel</span>
+                <span class="badge px-3 py-2" style="background:var(--turquoise-light);color:var(--turquoise-dark);font-size:0.85rem">{{ t.tarifs_monthly }}</span>
             </div>
             <div class="fw-bold mb-1" style="font-size:2.6rem;letter-spacing:-2px">
-                7,90 €<span class="fs-6 text-muted fw-normal"> / mois</span>
+                7,90 €<span class="fs-6 text-muted fw-normal"> / {% if lang == 'nl' %}maand{% else %}mois{% endif %}</span>
             </div>
-            <p class="text-muted mb-4" style="font-size:0.85rem">Facturation mensuelle · Sans engagement · <span style="color:var(--turquoise)">14 j d'essai inclus</span></p>
+            <p class="text-muted mb-4" style="font-size:0.85rem">{{ t.tarifs_monthly_sub | safe }}</p>
             <hr>
             <ul class="text-start mt-3 mb-4 text-muted" style="line-height:2.2;padding-left:1.2rem;font-size:0.9rem">
-                <li>Clients illimités</li>
-                <li>QR code imprimable en PDF</li>
-                <li>Tableau de bord complet</li>
-                <li>Points par visite ou par produit</li>
-                <li>Statistiques & messages clients</li>
-                <li>Zéro commission</li>
+                <li>{{ t.tarifs_feat1 }}</li>
+                <li>{{ t.tarifs_feat2 }}</li>
+                <li>{{ t.tarifs_feat3 }}</li>
+                <li>{{ t.tarifs_feat4 }}</li>
+                <li>{{ t.tarifs_feat5 }}</li>
+                <li>{{ t.tarifs_feat6 }}</li>
             </ul>
             <a href="{{ url_for('register') }}" class="btn btn-outline-dark btn-lg w-100 fw-bold mt-auto">
-                Choisir ce plan
+                {{ t.tarifs_choose }}
             </a>
         </div>
     </div>
@@ -38,24 +38,24 @@
     <div class="col-md-4">
         <div class="card border-0 shadow p-4 h-100 text-center position-relative" style="border: 2px solid var(--turquoise) !important;">
             <div class="position-absolute top-0 start-50 translate-middle">
-                <span class="badge px-3 py-2 fw-bold" style="background:var(--turquoise);color:#fff">Économisez 8 %</span>
+                <span class="badge px-3 py-2 fw-bold" style="background:var(--turquoise);color:#fff">{{ t.tarifs_save }}</span>
             </div>
             <div class="mb-3 mt-2">
-                <span class="badge px-3 py-2" style="background:var(--turquoise);color:#fff;font-size:0.85rem">Annuel ⭐</span>
+                <span class="badge px-3 py-2" style="background:var(--turquoise);color:#fff;font-size:0.85rem">{{ t.tarifs_annual }}</span>
             </div>
             <div class="fw-bold mb-0" style="font-size:2.6rem;letter-spacing:-2px">
-                87,22 €<span class="fs-6 text-muted fw-normal"> / an</span>
+                87,22 €<span class="fs-6 text-muted fw-normal"> / {% if lang == 'nl' %}jaar{% else %}an{% endif %}</span>
             </div>
-            <div class="mb-1" style="font-size:0.9rem">soit <strong style="color:var(--turquoise)">7,27 €/mois</strong></div>
-            <p class="text-muted mb-4" style="font-size:0.82rem"><s>94,80 €</s> → <strong>économisez 7,58 €</strong> · <span style="color:var(--turquoise)">14 j d'essai inclus</span></p>
+            <div class="mb-1" style="font-size:0.9rem">{% if lang == 'nl' %}of{% else %}soit{% endif %} <strong style="color:var(--turquoise)">7,27 €/{% if lang == 'nl' %}maand{% else %}mois{% endif %}</strong></div>
+            <p class="text-muted mb-4" style="font-size:0.82rem">{{ t.tarifs_annual_sub | safe }}</p>
             <hr>
             <ul class="text-start mt-3 mb-4 text-muted" style="line-height:2.2;padding-left:1.2rem;font-size:0.9rem">
-                <li>Tout du plan mensuel</li>
-                <li>Facturation annuelle unique</li>
-                <li>✅ <strong>8 % de réduction</strong></li>
+                <li>{{ t.tarifs_feat_all }}</li>
+                <li>{{ t.tarifs_feat_annual }}</li>
+                <li>{{ t.tarifs_feat_disc | safe }}</li>
             </ul>
             <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-lg w-100 fw-bold mt-auto">
-                Choisir ce plan
+                {{ t.tarifs_choose }}
             </a>
         </div>
     </div>
@@ -69,96 +69,71 @@
             <div class="col-4">
                 <div class="p-3 rounded-3" style="background:#f8f9fa">
                     <div class="fs-3 mb-1">🔒</div>
-                    <div class="fw-semibold" style="font-size:0.9rem">Sans engagement</div>
-                    <div class="text-muted" style="font-size:0.8rem">Résiliez à tout moment, sans frais</div>
+                    <div class="fw-semibold" style="font-size:0.9rem">{{ t.tarifs_no_commit }}</div>
+                    <div class="text-muted" style="font-size:0.8rem">{{ t.tarifs_no_commit_sub }}</div>
                 </div>
             </div>
             <div class="col-4">
                 <div class="p-3 rounded-3" style="background:#f8f9fa">
                     <div class="fs-3 mb-1">0 %</div>
-                    <div class="fw-semibold" style="font-size:0.9rem">Zéro commission</div>
-                    <div class="text-muted" style="font-size:0.8rem">Gardez 100 % de vos revenus</div>
+                    <div class="fw-semibold" style="font-size:0.9rem">{{ t.tarifs_zero }}</div>
+                    <div class="text-muted" style="font-size:0.8rem">{{ t.tarifs_zero_sub }}</div>
                 </div>
             </div>
             <div class="col-4">
                 <div class="p-3 rounded-3" style="background:#f8f9fa">
                     <div class="fs-3 mb-1">🇧🇪</div>
-                    <div class="fw-semibold" style="font-size:0.9rem">Local</div>
-                    <div class="text-muted" style="font-size:0.8rem">Conçu pour les restaurants belges</div>
+                    <div class="fw-semibold" style="font-size:0.9rem">{{ t.tarifs_local }}</div>
+                    <div class="text-muted" style="font-size:0.8rem">{{ t.tarifs_local_sub }}</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- FAQ rapide -->
+<!-- FAQ -->
 <div class="row justify-content-center mb-5">
     <div class="col-md-8">
-        <h4 class="fw-bold mb-4 text-center">Questions fréquentes</h4>
-
+        <h4 class="fw-bold mb-4 text-center">{{ t.tarifs_faq_title }}</h4>
         <div class="accordion" id="faq">
             <div class="accordion-item border-0 mb-2 shadow-sm rounded-3 overflow-hidden">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                        Comment fonctionne l'essai gratuit ?
-                    </button>
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">{{ t.tarifs_faq1_q }}</button>
                 </h2>
                 <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faq">
-                    <div class="accordion-body text-muted">
-                        Lors de l'inscription, vous saisissez votre carte bancaire via Stripe (paiement sécurisé). <strong>Aucun prélèvement n'est effectué pendant 14 jours.</strong> Au terme de l'essai, l'abonnement de 7,90 €/mois démarre automatiquement. Si vous résiliez avant cette date, vous ne payez rien.
-                    </div>
+                    <div class="accordion-body text-muted">{{ t.tarifs_faq1_a | safe }}</div>
                 </div>
             </div>
-
             <div class="accordion-item border-0 mb-2 shadow-sm rounded-3 overflow-hidden">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                        Puis-je annuler mon abonnement à tout moment ?
-                    </button>
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">{{ t.tarifs_faq2_q }}</button>
                 </h2>
                 <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faq">
-                    <div class="accordion-body text-muted">
-                        Oui, sans frais ni préavis. L'accès reste actif jusqu'à la fin de la période déjà payée.
-                    </div>
+                    <div class="accordion-body text-muted">{{ t.tarifs_faq2_a }}</div>
                 </div>
             </div>
-
             <div class="accordion-item border-0 mb-2 shadow-sm rounded-3 overflow-hidden">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                        Mes clients doivent-ils télécharger une application ?
-                    </button>
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">{{ t.tarifs_faq3_q }}</button>
                 </h2>
                 <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faq">
-                    <div class="accordion-body text-muted">
-                        Non. Vos clients scannent simplement le QR code avec l'appareil photo de leur téléphone. Aucune installation requise, ça marche sur tous les smartphones.
-                    </div>
+                    <div class="accordion-body text-muted">{{ t.tarifs_faq3_a }}</div>
                 </div>
             </div>
-
             <div class="accordion-item border-0 mb-2 shadow-sm rounded-3 overflow-hidden">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                        Y a-t-il des frais cachés ou des commissions ?
-                    </button>
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">{{ t.tarifs_faq4_q }}</button>
                 </h2>
                 <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faq">
-                    <div class="accordion-body text-muted">
-                        <strong>Aucun.</strong> Vous payez uniquement 7,90 €/mois. hera. ne prend aucune commission sur vos ventes ni sur les récompenses que vous offrez à vos clients.
-                    </div>
+                    <div class="accordion-body text-muted">{{ t.tarifs_faq4_a | safe }}</div>
                 </div>
             </div>
-
             <div class="accordion-item border-0 shadow-sm rounded-3 overflow-hidden">
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
-                        Puis-je changer mes récompenses à tout moment ?
-                    </button>
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">{{ t.tarifs_faq5_q }}</button>
                 </h2>
                 <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faq">
-                    <div class="accordion-body text-muted">
-                        Oui. Points par visite, seuil de récompense, montant minimum, mode par produit — tout est modifiable à tout moment depuis votre tableau de bord.
-                    </div>
+                    <div class="accordion-body text-muted">{{ t.tarifs_faq5_a }}</div>
                 </div>
             </div>
         </div>
@@ -167,10 +142,10 @@
 
 <!-- CTA final -->
 <div class="text-center rounded-4 p-5 mb-4" style="background:linear-gradient(135deg,#1BBFB2,#13998E);color:#fff">
-    <h2 class="fw-bold">Prêt à fidéliser vos clients ?</h2>
-    <p class="mt-2 mb-4" style="opacity:0.9">14 jours gratuits · Sans carte bancaire · Annulation libre</p>
+    <h2 class="fw-bold">{{ t.tarifs_cta_title }}</h2>
+    <p class="mt-2 mb-4" style="opacity:0.9">{{ t.tarifs_cta_sub }}</p>
     <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-5 fw-bold" style="color:var(--turquoise)">
-        Créer mon compte gratuitement
+        {{ t.tarifs_cta_btn }}
     </a>
 </div>
 

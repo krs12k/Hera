@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Inscription — {{ resto.name }}{% endblock %}
+{% block title %}{{ t.client_new_title }} — {{ resto.name }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -7,8 +7,11 @@
         <div class="card shadow-sm border-0">
             <div class="card-body p-4 text-center">
                 <div class="fs-1">👋</div>
-                <h2 class="mt-2">Bienvenue !</h2>
-                <p class="text-muted">Crée ton compte fidélité chez <strong>{{ resto.name }}</strong></p>
+                <h2 class="mt-2">{% if lang == 'nl' %}Welkom!{% else %}Bienvenue !{% endif %}</h2>
+                <p class="text-muted">
+                    {% if lang == 'nl' %}Maak je loyaliteitsaccount aan bij{% else %}Crée ton compte fidélité chez{% endif %}
+                    <strong>{{ resto.name }}</strong>
+                </p>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% for category, message in messages %}
@@ -18,16 +21,19 @@
 
                 {% if device_blocked %}
                 <div class="alert alert-warning text-start">
-                    <strong>Inscription temporairement limitée.</strong><br>
-                    Un compte a déjà été créé depuis cet appareil chez {{ resto.name }} récemment.
-                    Réessaie dans quelques heures ou contacte {{ resto.name }} directement.
+                    <strong>{% if lang == 'nl' %}Registratie tijdelijk beperkt.{% else %}Inscription temporairement limitée.{% endif %}</strong><br>
+                    {% if lang == 'nl' %}
+                        Er is al een account aangemaakt vanaf dit apparaat bij {{ resto.name }}. Probeer over een paar uur opnieuw.
+                    {% else %}
+                        Un compte a déjà été créé depuis cet appareil chez {{ resto.name }} récemment. Réessaie dans quelques heures ou contacte {{ resto.name }} directement.
+                    {% endif %}
                 </div>
                 {% else %}
                 <form method="POST" class="text-start mt-3">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="email" value="{{ email }}">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Ton prénom</label>
+                        <label class="form-label fw-bold">{{ t.client_new_firstname }}</label>
                         <input type="text" name="first_name" class="form-control form-control-lg" required autofocus>
                     </div>
                     <div class="mb-3 text-muted" style="font-size:0.9rem">
@@ -37,15 +43,21 @@
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="consent" id="consent" required>
                             <label class="form-check-label" for="consent" style="font-size:0.85rem">
-                                J'accepte que <strong>{{ resto.name }}</strong> conserve mon prénom et mon email
-                                pour gérer mon programme de fidélité.
-                                Ces données ne seront pas transmises à des tiers.
-                                <a href="{{ url_for('confidentialite') }}" target="_blank">En savoir plus</a>
+                                {% if lang == 'nl' %}
+                                    Ik ga akkoord dat <strong>{{ resto.name }}</strong> mijn voornaam en e-mail bewaart
+                                    voor het beheer van mijn loyaliteitsprogramma.
+                                    Deze gegevens worden niet aan derden doorgegeven.
+                                {% else %}
+                                    J'accepte que <strong>{{ resto.name }}</strong> conserve mon prénom et mon email
+                                    pour gérer mon programme de fidélité.
+                                    Ces données ne seront pas transmises à des tiers.
+                                {% endif %}
+                                <a href="{{ url_for('confidentialite') }}" target="_blank">{% if lang == 'nl' %}Meer info{% else %}En savoir plus{% endif %}</a>
                             </label>
                         </div>
                     </div>
                     <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
-                        Je m'inscris !
+                        {{ t.client_new_btn }}
                     </button>
                 </form>
                 {% endif %}

@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Contact — hera{% endblock %}
+{% block title %}{{ t.contact_title }} — hera{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <h2 class="fw-bold mb-1">Contact</h2>
-        <p class="text-muted mb-4">Une question ? Nous sommes là pour vous aider.</p>
+        <h2 class="fw-bold mb-1">{{ t.contact_title }}</h2>
+        <p class="text-muted mb-4">{{ t.contact_sub }}</p>
 
         <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
-                <h5 class="fw-bold mb-3">Nous contacter</h5>
+                <h5 class="fw-bold mb-3">{{ t.contact_card_title }}</h5>
                 <div class="d-flex align-items-center gap-3 mb-3">
                     <div style="width:40px;height:40px;background:#f0fdf9;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem">✉️</div>
                     <div>
@@ -20,12 +20,12 @@
                 <div class="d-flex align-items-center gap-3 mb-3">
                     <div style="width:40px;height:40px;background:#f0fdf9;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem">📞</div>
                     <div>
-                        <div class="fw-semibold" style="font-size:0.85rem;color:#6c757d;text-transform:uppercase;letter-spacing:.05em">Téléphone</div>
+                        <div class="fw-semibold" style="font-size:0.85rem;color:#6c757d;text-transform:uppercase;letter-spacing:.05em">{% if lang == 'nl' %}Telefoon{% else %}Téléphone{% endif %}</div>
                         <a href="tel:+32494653961" style="color:var(--turquoise);font-weight:600">+32 494 65 39 61</a>
                     </div>
                 </div>
                 <div class="text-muted mt-3" style="font-size:0.9rem">
-                    Pour les questions fréquentes, consultez notre <a href="{{ url_for('pour_restaurateurs') }}#faq" style="color:var(--turquoise)">section FAQ</a>.
+                    {{ t.contact_faq_text }} <a href="{{ url_for('pour_restaurateurs') }}#faq" style="color:var(--turquoise)">{{ t.contact_faq_link }}</a>.
                 </div>
             </div>
         </div>

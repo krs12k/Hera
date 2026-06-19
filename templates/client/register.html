@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Rejoindre la fidélité — {{ resto.name }}{% endblock %}
+{% block title %}{% if lang == 'nl' %}Loyaliteitsprogramma vervoegen{% else %}Rejoindre la fidélité{% endif %} — {{ resto.name }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -8,18 +8,20 @@
             <div class="card-body p-4 text-center">
                 <div class="fs-1">🍽️</div>
                 <h2 class="mt-2">{{ resto.name }}</h2>
-                <p class="text-muted">Programme de fidélité — gagne des récompenses à chaque visite !</p>
+                <p class="text-muted">
+                    {% if lang == 'nl' %}Loyaliteitsprogramma — verdien beloningen bij elk bezoek!{% else %}Programme de fidélité — gagne des récompenses à chaque visite !{% endif %}
+                </p>
                 <div class="alert alert-light border">
-                    <strong>{{ resto.reward_threshold }} points</strong> = {{ resto.reward_description }}
+                    <strong>{{ resto.reward_threshold }} {{ t.client_profile_points }}</strong> = {{ resto.reward_description }}
                 </div>
                 <form method="POST" class="text-start mt-3">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Ton adresse email</label>
+                        <label class="form-label fw-bold">{{ t.client_register_email }}</label>
                         <input type="email" name="email" class="form-control form-control-lg" placeholder="exemple@email.com" required autofocus>
                     </div>
                     <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
-                        Continuer →
+                        {{ t.client_register_btn }} →
                     </button>
                 </form>
             </div>

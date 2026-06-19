@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Mes points — {{ resto.name }}{% endblock %}
+{% block title %}{{ t.client_profile_title }} — {{ resto.name }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -16,8 +16,10 @@
                 {% else %}
                 <div class="fs-1">⭐</div>
                 {% endif %}
-                <h2 class="mt-2">Bonjour {{ client.first_name }} !</h2>
-                <p class="text-muted">Chez <strong>{{ resto.name }}</strong></p>
+                <h2 class="mt-2">
+                    {% if lang == 'nl' %}Hallo {{ client.first_name }}!{% else %}Bonjour {{ client.first_name }} !{% endif %}
+                </h2>
+                <p class="text-muted">{% if lang == 'nl' %}Bij{% else %}Chez{% endif %} <strong>{{ resto.name }}</strong></p>
 
                 <div class="display-4 fw-bold text-warning my-3">
                     {{ client.total_points }} pts
@@ -30,24 +32,28 @@
                     </div>
                 </div>
                 <p class="text-muted">
-                    {{ client.total_points }} / {{ resto.reward_threshold }} points
-                    pour obtenir : <strong>{{ resto.reward_description }}</strong>
+                    {{ client.total_points }} / {{ resto.reward_threshold }} {{ t.client_profile_points }}
+                    {% if lang == 'nl' %}voor:{% else %}pour obtenir :{% endif %}
+                    <strong>{{ resto.reward_description }}</strong>
                 </p>
 
                 {% if client.total_points >= resto.reward_threshold %}
                 <div class="alert alert-success mt-3">
-                    🎁 Tu as atteint la récompense ! Montre cet écran au restaurateur.
+                    🎁 {{ t.client_profile_reward }}
                 </div>
                 {% else %}
                 <p class="text-muted mt-3">
-                    Encore <strong>{{ resto.reward_threshold - client.total_points }} points</strong>
-                    avant ta récompense !
+                    {% if lang == 'nl' %}Nog{% else %}Encore{% endif %}
+                    <strong>{{ resto.reward_threshold - client.total_points }} {{ t.client_profile_points }}</strong>
+                    {% if lang == 'nl' %}tot je beloning!{% else %}avant ta récompense !{% endif %}
                 </p>
                 {% endif %}
 
                 {% if codes %}
                 <div class="mt-4 text-start">
-                    <h6 class="fw-bold mb-2">Codes de réduction disponibles</h6>
+                    <h6 class="fw-bold mb-2">
+                        {% if lang == 'nl' %}Beschikbare kortingscodes{% else %}Codes de réduction disponibles{% endif %}
+                    </h6>
                     {% for code in codes %}
                         {% if client.total_points >= code.min_points %}
                         <div class="p-3 mb-2 rounded text-center" style="background:#e8f8f7;border:2px dashed #1BBFB2">
@@ -58,7 +64,13 @@
                         <div class="p-3 mb-2 rounded text-center" style="background:#f8f9fa;border:2px dashed #dee2e6;opacity:0.7">
                             <div class="fw-bold font-monospace fs-5 text-muted">🔒 {{ code.code }}</div>
                             <div class="text-muted" style="font-size:0.85rem">{{ code.description }}</div>
-                            <div style="font-size:0.78rem;color:#aaa">Débloqué à {{ code.min_points }} points (il vous en manque {{ code.min_points - client.total_points }})</div>
+                            <div style="font-size:0.78rem;color:#aaa">
+                                {% if lang == 'nl' %}
+                                    Ontgrendeld bij {{ code.min_points }} punten (nog {{ code.min_points - client.total_points }} te gaan)
+                                {% else %}
+                                    Débloqué à {{ code.min_points }} points (il vous en manque {{ code.min_points - client.total_points }})
+                                {% endif %}
+                            </div>
                         </div>
                         {% endif %}
                     {% endfor %}
@@ -66,7 +78,9 @@
                 {% endif %}
 
                 <a href="{{ url_for('client_register', token=resto.qr_token) }}"
-                   class="btn btn-outline-dark btn-sm mt-2">Retour</a>
+                   class="btn btn-outline-dark btn-sm mt-2">
+                    {% if lang == 'nl' %}Terug{% else %}Retour{% endif %}
+                </a>
             </div>
         </div>
     </div>

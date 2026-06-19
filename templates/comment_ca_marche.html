@@ -1,52 +1,47 @@
 {% extends 'base.html' %}
-{% block title %}Comment ça marche — hera.{% endblock %}
+{% block title %}{% if lang == 'nl' %}Hoe werkt het{% else %}Comment ça marche{% endif %} — hera.{% endblock %}
 
 {% block content %}
 
-<!-- En-tête -->
 <div class="text-center py-5">
-    <h1 class="fw-bold" style="letter-spacing:-1px;font-size:2.5rem">Comment ça marche ?</h1>
-    <p class="text-muted mt-2 fs-5">Simple pour vous, agréable pour vos clients.</p>
+    <h1 class="fw-bold" style="letter-spacing:-1px;font-size:2.5rem">{{ t.how_title }}</h1>
+    <p class="text-muted mt-2 fs-5">{{ t.how_sub }}</p>
 </div>
 
 <!-- CÔTÉ RESTAURATEUR -->
 <div class="mb-2 px-2">
     <span class="badge px-3 py-2 fw-normal" style="background:#e8f8f7;color:var(--turquoise);font-size:0.9rem;border-radius:20px">
-        🏪 Pour le restaurateur
+        {{ t.how_resto_badge }}
     </span>
 </div>
 
 <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
     <div class="row g-0">
-        <!-- Étape 1 -->
         <div class="col-12 col-md-4 d-flex flex-column flex-md-row gap-3 align-items-start p-3">
             <div class="step-circle flex-shrink-0">1</div>
             <div>
-                <h6 class="fw-bold mb-1">Créez votre compte</h6>
-                <p class="text-muted mb-0" style="font-size:0.9rem">Inscrivez-vous en 2 minutes. Entrez le nom de votre restaurant, choisissez votre récompense et le nombre de points pour l'atteindre.</p>
+                <h6 class="fw-bold mb-1">{{ t.how_r1_title }}</h6>
+                <p class="text-muted mb-0" style="font-size:0.9rem">{{ t.how_r1_text }}</p>
             </div>
         </div>
-        <!-- Séparateur vertical (desktop) -->
         <div class="col-md-auto d-none d-md-flex align-items-center px-0">
             <div style="width:1px;height:80%;background:#e5e5e5;margin:auto"></div>
         </div>
-        <!-- Étape 2 -->
         <div class="col-12 col-md-4 d-flex flex-column flex-md-row gap-3 align-items-start p-3">
             <div class="step-circle flex-shrink-0">2</div>
             <div>
-                <h6 class="fw-bold mb-1">Affichez votre QR code</h6>
-                <p class="text-muted mb-0" style="font-size:0.9rem">hera. génère un QR code unique pour votre restaurant. Imprimez-le en A4, posez-le à la caisse ou sur chaque table.</p>
+                <h6 class="fw-bold mb-1">{{ t.how_r2_title }}</h6>
+                <p class="text-muted mb-0" style="font-size:0.9rem">{{ t.how_r2_text }}</p>
             </div>
         </div>
         <div class="col-md-auto d-none d-md-flex align-items-center px-0">
             <div style="width:1px;height:80%;background:#e5e5e5;margin:auto"></div>
         </div>
-        <!-- Étape 3 -->
         <div class="col-12 col-md-4 d-flex flex-column flex-md-row gap-3 align-items-start p-3">
             <div class="step-circle flex-shrink-0">3</div>
             <div>
-                <h6 class="fw-bold mb-1">Suivez vos fidèles</h6>
-                <p class="text-muted mb-0" style="font-size:0.9rem">Dans votre tableau de bord, voyez tous vos clients inscrits, leur progression, l'historique des visites et vos statistiques mensuelles.</p>
+                <h6 class="fw-bold mb-1">{{ t.how_r3_title }}</h6>
+                <p class="text-muted mb-0" style="font-size:0.9rem">{{ t.how_r3_text }}</p>
             </div>
         </div>
     </div>
@@ -55,51 +50,47 @@
 <!-- CÔTÉ CLIENT -->
 <div class="mb-2 px-2 mt-4">
     <span class="badge px-3 py-2 fw-normal" style="background:#fff8e1;color:#b8860b;font-size:0.9rem;border-radius:20px">
-        👤 Pour le client
+        {{ t.how_client_badge }}
     </span>
 </div>
 
 <div class="card border-0 shadow-sm rounded-4 p-4 mb-5">
     <div class="row g-0">
-        <!-- Étape A -->
         <div class="col-12 col-md-3 d-flex flex-column flex-md-row gap-3 align-items-start p-3">
             <div class="step-circle flex-shrink-0" style="background:var(--gold)">A</div>
             <div>
-                <h6 class="fw-bold mb-1">Il scanne le QR code</h6>
-                <p class="text-muted mb-0" style="font-size:0.9rem">Avec son téléphone, sans app à télécharger. Il entre son email et son prénom — c'est tout.</p>
+                <h6 class="fw-bold mb-1">{{ t.how_a_title }}</h6>
+                <p class="text-muted mb-0" style="font-size:0.9rem">{{ t.how_a_text }}</p>
             </div>
         </div>
         <div class="col-md-auto d-none d-md-flex align-items-center px-0">
             <div style="width:1px;height:80%;background:#e5e5e5;margin:auto"></div>
         </div>
-        <!-- Étape B -->
         <div class="col-12 col-md-3 d-flex flex-column flex-md-row gap-3 align-items-start p-3">
             <div class="step-circle flex-shrink-0" style="background:var(--gold)">B</div>
             <div>
-                <h6 class="fw-bold mb-1">Il valide sa commande</h6>
-                <p class="text-muted mb-0" style="font-size:0.9rem">Il sélectionne ce qu'il a pris (menu, boisson, dessert…) directement sur son écran. Les points sont calculés automatiquement.</p>
+                <h6 class="fw-bold mb-1">{{ t.how_b_title }}</h6>
+                <p class="text-muted mb-0" style="font-size:0.9rem">{{ t.how_b_text }}</p>
             </div>
         </div>
         <div class="col-md-auto d-none d-md-flex align-items-center px-0">
             <div style="width:1px;height:80%;background:#e5e5e5;margin:auto"></div>
         </div>
-        <!-- Étape C -->
         <div class="col-12 col-md-3 d-flex flex-column flex-md-row gap-3 align-items-start p-3">
             <div class="step-circle flex-shrink-0" style="background:var(--gold)">C</div>
             <div>
-                <h6 class="fw-bold mb-1">Il accumule des points</h6>
-                <p class="text-muted mb-0" style="font-size:0.9rem">À chaque visite, ses points s'ajoutent. Il voit sa progression en temps réel et sait exactement combien il en manque.</p>
+                <h6 class="fw-bold mb-1">{{ t.how_c_title }}</h6>
+                <p class="text-muted mb-0" style="font-size:0.9rem">{{ t.how_c_text }}</p>
             </div>
         </div>
         <div class="col-md-auto d-none d-md-flex align-items-center px-0">
             <div style="width:1px;height:80%;background:#e5e5e5;margin:auto"></div>
         </div>
-        <!-- Étape D -->
         <div class="col-12 col-md-3 d-flex flex-column flex-md-row gap-3 align-items-start p-3">
             <div class="step-circle flex-shrink-0" style="background:var(--gold)">D</div>
             <div>
-                <h6 class="fw-bold mb-1">Il réclame sa récompense</h6>
-                <p class="text-muted mb-0" style="font-size:0.9rem">Une fois le seuil atteint, il le montre au restaurateur. Celui-ci remet les points à zéro depuis son tableau de bord.</p>
+                <h6 class="fw-bold mb-1">{{ t.how_d_title }}</h6>
+                <p class="text-muted mb-0" style="font-size:0.9rem">{{ t.how_d_text }}</p>
             </div>
         </div>
     </div>
@@ -110,96 +101,71 @@
     <div class="col-md-4 text-center">
         <div class="p-4 rounded-4" style="background:#f8f9fa">
             <div class="fs-2 mb-2">🔒</div>
-            <h6 class="fw-bold">Données protégées</h6>
-            <p class="text-muted mb-0" style="font-size:0.85rem">Seul le prénom et l'email sont collectés. Aucune donnée sensible, conformité RGPD assurée.</p>
+            <h6 class="fw-bold">{{ t.how_secure_title }}</h6>
+            <p class="text-muted mb-0" style="font-size:0.85rem">{{ t.how_secure_text }}</p>
         </div>
     </div>
     <div class="col-md-4 text-center">
         <div class="p-4 rounded-4" style="background:#f8f9fa">
             <div class="fs-2 mb-2">📱</div>
-            <h6 class="fw-bold">Zéro app</h6>
-            <p class="text-muted mb-0" style="font-size:0.85rem">Tout fonctionne dans le navigateur du téléphone. Le client n'a rien à installer, le restaurant non plus.</p>
+            <h6 class="fw-bold">{{ t.how_noapp_title }}</h6>
+            <p class="text-muted mb-0" style="font-size:0.85rem">{{ t.how_noapp_text }}</p>
         </div>
     </div>
     <div class="col-md-4 text-center">
         <div class="p-4 rounded-4" style="background:#f8f9fa">
             <div class="fs-2 mb-2">⚡</div>
-            <h6 class="fw-bold">En service en 5 minutes</h6>
-            <p class="text-muted mb-0" style="font-size:0.85rem">Inscrivez-vous, configurez vos points, imprimez le QR code. Vous êtes prêt avant la prochaine commande.</p>
+            <h6 class="fw-bold">{{ t.how_fast_title }}</h6>
+            <p class="text-muted mb-0" style="font-size:0.85rem">{{ t.how_fast_text }}</p>
         </div>
     </div>
 </div>
 
-<!-- FAQ rapide -->
+<!-- FAQ -->
 <div class="mb-5">
-    <h3 class="fw-bold text-center mb-4">Questions fréquentes</h3>
+    <h3 class="fw-bold text-center mb-4">{{ t.how_faq_title }}</h3>
     <div class="accordion" id="faq">
-
         <div class="accordion-item border-0 shadow-sm mb-2 rounded-3 overflow-hidden">
             <h2 class="accordion-header">
-                <button class="accordion-button collapsed fw-semibold" type="button"
-                        data-bs-toggle="collapse" data-bs-target="#faq1">
-                    Mon client peut-il tricher et valider plusieurs fois par jour ?
-                </button>
+                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">{{ t.how_faq1_q }}</button>
             </h2>
             <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faq">
-                <div class="accordion-body text-muted">
-                    Non. Chaque client ne peut valider qu'<strong>une seule visite toutes les 6 heures</strong> par restaurant. Si quelqu'un essaie de scanner à nouveau trop tôt, il voit un message l'informant du délai restant.
-                </div>
+                <div class="accordion-body text-muted">{{ t.how_faq1_a | safe }}</div>
             </div>
         </div>
-
         <div class="accordion-item border-0 shadow-sm mb-2 rounded-3 overflow-hidden">
             <h2 class="accordion-header">
-                <button class="accordion-button collapsed fw-semibold" type="button"
-                        data-bs-toggle="collapse" data-bs-target="#faq2">
-                    Et si le client perd son téléphone ou change d'appareil ?
-                </button>
+                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">{{ t.how_faq2_q }}</button>
             </h2>
             <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faq">
-                <div class="accordion-body text-muted">
-                    Le compte est lié à l'adresse email. Il suffit de rescanner le QR code et de saisir son email. Si le téléphone est reconnu (cookie de 30 jours), il est redirigé directement sans ressaisie.
-                </div>
+                <div class="accordion-body text-muted">{{ t.how_faq2_a }}</div>
             </div>
         </div>
-
         <div class="accordion-item border-0 shadow-sm mb-2 rounded-3 overflow-hidden">
             <h2 class="accordion-header">
-                <button class="accordion-button collapsed fw-semibold" type="button"
-                        data-bs-toggle="collapse" data-bs-target="#faq3">
-                    Puis-je personnaliser les points par type de produit ?
-                </button>
+                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">{{ t.how_faq3_q }}</button>
             </h2>
             <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faq">
-                <div class="accordion-body text-muted">
-                    Oui. Dans les paramètres, activez le mode <em>Par produit</em> et définissez vos catégories (menu, boisson, dessert…) avec les points correspondants. Le client sélectionne ce qu'il a pris lors de sa validation.
-                </div>
+                <div class="accordion-body text-muted">{{ t.how_faq3_a | safe }}</div>
             </div>
         </div>
-
         <div class="accordion-item border-0 shadow-sm rounded-3 overflow-hidden">
             <h2 class="accordion-header">
-                <button class="accordion-button collapsed fw-semibold" type="button"
-                        data-bs-toggle="collapse" data-bs-target="#faq4">
-                    Y a-t-il une commission sur les récompenses accordées ?
-                </button>
+                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">{{ t.how_faq4_q }}</button>
             </h2>
             <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faq">
-                <div class="accordion-body text-muted">
-                    <strong>Aucune commission.</strong> Vous payez un abonnement fixe de 7,90 €/mois. hera. ne prend aucun pourcentage sur vos ventes ni sur les récompenses que vous offrez à vos clients.
-                </div>
+                <div class="accordion-body text-muted">{{ t.how_faq4_a | safe }}</div>
             </div>
         </div>
-
     </div>
 </div>
 
 <!-- CTA -->
 <div class="text-center rounded-4 p-5 mb-4" style="background:linear-gradient(135deg,#1BBFB2,#13998E);color:#fff">
-    <h2 class="fw-bold">Prêt à démarrer ?</h2>
-    <p class="mt-2 mb-4" style="opacity:0.9">Dès 7,27 €/mois · Sans commission · Résiliable à tout moment</p>
+    <h2 class="fw-bold">{{ t.how_cta_title }}</h2>
+    <p class="mt-2 mb-4" style="opacity:0.9">{{ t.how_cta_sub }}</p>
     <a href="{{ url_for('register') }}" class="btn btn-light btn-lg px-5 fw-bold" style="color:var(--turquoise)">
-        Créer mon compte
+        {{ t.how_cta_btn }}
     </a>
 </div>
 

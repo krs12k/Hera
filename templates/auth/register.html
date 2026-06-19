@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Inscription — hera.{% endblock %}
+{% block title %}{{ t.register_title }} — hera.{% endblock %}
 
 {% block content %}
 <div class="row g-0 justify-content-center" style="min-height:80vh;align-items:center">
@@ -8,13 +8,13 @@
     <div class="col-md-5 d-none d-md-flex flex-column justify-content-center pe-5">
         <div class="mb-4">
             <span class="badge px-3 py-2 fw-normal mb-3" style="background:#e8f8f7;color:var(--turquoise);font-size:0.85rem;border-radius:20px">
-                🇧🇪 Pour les restaurants belges
+                {{ t.index_badge }}
             </span>
             <h2 class="fw-bold mb-3" style="font-size:1.9rem;letter-spacing:-0.5px;line-height:1.2">
-                Fidélisez vos clients.<br>Sans commission.
+                {{ t.index_h1 | safe }}
             </h2>
             <p class="text-muted" style="font-size:0.95rem;line-height:1.7">
-                Un QR code à la caisse, un tableau de bord simple, et vos habitués reviennent. Conçu pour les restaurateurs de quartier.
+                {{ t.index_step1_text }}
             </p>
         </div>
 
@@ -24,36 +24,38 @@
                      style="width:36px;height:36px;background:var(--turquoise-light)">
                     <span style="color:var(--turquoise);font-size:1rem">✓</span>
                 </div>
-                <span style="font-size:0.9rem">QR code imprimable en A4 en 2 minutes</span>
+                <span style="font-size:0.9rem">{{ t.tarifs_feat2 }}</span>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                      style="width:36px;height:36px;background:var(--turquoise-light)">
                     <span style="color:var(--turquoise);font-size:1rem">✓</span>
                 </div>
-                <span style="font-size:0.9rem">Clients illimités, zéro commission</span>
+                <span style="font-size:0.9rem">{{ t.tarifs_feat1 }} · {{ t.tarifs_feat6 }}</span>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                      style="width:36px;height:36px;background:var(--turquoise-light)">
                     <span style="color:var(--turquoise);font-size:1rem">✓</span>
                 </div>
-                <span style="font-size:0.9rem">Statistiques et historique des visites</span>
+                <span style="font-size:0.9rem">{{ t.tarifs_feat5 }}</span>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                      style="width:36px;height:36px;background:var(--turquoise-light)">
                     <span style="color:var(--turquoise);font-size:1rem">✓</span>
                 </div>
-                <span style="font-size:0.9rem">Résiliable à tout moment, sans engagement</span>
+                <span style="font-size:0.9rem">{{ t.tarifs_no_commit }}</span>
             </div>
         </div>
 
         <div class="mt-4 pt-3 border-top">
             <div class="fw-bold" style="font-size:1.4rem;letter-spacing:-0.5px">
-                Dès <span style="color:var(--turquoise)">7,27 €</span>/mois
+                {% if lang == 'nl' %}Vanaf{% else %}Dès{% endif %} <span style="color:var(--turquoise)">7,27 €</span>/{% if lang == 'nl' %}maand{% else %}mois{% endif %}
             </div>
-            <div class="text-muted" style="font-size:0.82rem">14 jours d'essai inclus · Premier débit après l'essai</div>
+            <div class="text-muted" style="font-size:0.82rem">
+                {% if lang == 'nl' %}14 dagen proefperiode inbegrepen · Eerste betaling na proef{% else %}14 jours d'essai inclus · Premier débit après l'essai{% endif %}
+            </div>
         </div>
     </div>
 
@@ -61,8 +63,10 @@
     <div class="col-md-5 col-12">
         <div class="card shadow border-0 rounded-4">
             <div class="card-body p-4 p-md-5">
-                <h4 class="fw-bold mb-1">Créer mon compte</h4>
-                <p class="text-muted mb-4" style="font-size:0.88rem">Quelques informations pour démarrer.</p>
+                <h4 class="fw-bold mb-1">{{ t.register_title }}</h4>
+                <p class="text-muted mb-4" style="font-size:0.88rem">
+                    {% if lang == 'nl' %}Een paar gegevens om te starten.{% else %}Quelques informations pour démarrer.{% endif %}
+                </p>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% for category, message in messages %}
@@ -74,24 +78,25 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold" style="font-size:0.88rem">Nom du restaurant *</label>
-                        <input type="text" name="name" class="form-control" placeholder="Ex : Chez Marie" required>
+                        <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_name }} *</label>
+                        <input type="text" name="name" class="form-control" placeholder="{% if lang == 'nl' %}Bv: Bij Marie{% else %}Ex : Chez Marie{% endif %}" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold" style="font-size:0.88rem">Email *</label>
-                        <input type="email" name="email" class="form-control" placeholder="contact@monrestaurant.be" required>
+                        <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_email }} *</label>
+                        <input type="email" name="email" class="form-control" placeholder="contact@mijnrestaurant.be" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold" style="font-size:0.88rem">Mot de passe *</label>
-                        <input type="password" name="password" class="form-control" minlength="6" placeholder="6 caractères minimum" required>
+                        <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_password }} *</label>
+                        <input type="password" name="password" class="form-control" minlength="6"
+                               placeholder="{% if lang == 'nl' %}Minimum 6 tekens{% else %}6 caractères minimum{% endif %}" required>
                     </div>
                     <div class="row">
                         <div class="col-md-7 mb-3">
-                            <label class="form-label fw-semibold" style="font-size:0.88rem">Adresse</label>
-                            <input type="text" name="address" class="form-control" placeholder="Rue, ville">
+                            <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_address }}</label>
+                            <input type="text" name="address" class="form-control" placeholder="{% if lang == 'nl' %}Straat, stad{% else %}Rue, ville{% endif %}">
                         </div>
                         <div class="col-md-5 mb-3">
-                            <label class="form-label fw-semibold" style="font-size:0.88rem">Téléphone</label>
+                            <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_phone }}</label>
                             <input type="tel" name="phone" class="form-control" placeholder="04…">
                         </div>
                     </div>
@@ -99,19 +104,25 @@
                     <div class="rounded-3 p-3 mb-4 d-flex gap-2 align-items-start" style="background:#f8f9fa;font-size:0.82rem">
                         <span>🔒</span>
                         <span class="text-muted">
-                            L'étape suivante vous demande votre carte via Stripe.
-                            <strong>Aucun prélèvement pendant 14 jours.</strong>
-                            Résiliable avant sans frais.
+                            {% if lang == 'nl' %}
+                                De volgende stap vraagt uw kaart via Stripe.
+                                <strong>Geen afschrijving gedurende 14 dagen.</strong>
+                                Opzegbaar voor die datum zonder kosten.
+                            {% else %}
+                                L'étape suivante vous demande votre carte via Stripe.
+                                <strong>Aucun prélèvement pendant 14 jours.</strong>
+                                Résiliable avant sans frais.
+                            {% endif %}
                         </span>
                     </div>
 
                     <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
-                        Continuer →
+                        {{ t.register_btn }} →
                     </button>
                 </form>
 
                 <p class="text-center mt-3 text-muted" style="font-size:0.83rem">
-                    Déjà un compte ? <a href="{{ url_for('login') }}" style="color:var(--turquoise)">Se connecter</a>
+                    {{ t.register_have }} <a href="{{ url_for('login') }}" style="color:var(--turquoise)">{{ t.login_btn }}</a>
                 </p>
             </div>
         </div>

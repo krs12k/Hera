@@ -1,29 +1,29 @@
 {% extends 'base.html' %}
-{% block title %}Connexion — Hera{% endblock %}
+{% block title %}{{ t.login_title }} — hera{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-5">
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
-                <h2 class="mb-4 text-center">Connexion</h2>
+                <h2 class="mb-4 text-center">{{ t.login_title }}</h2>
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
+                        <label class="form-label">{{ t.login_email }}</label>
                         <input type="email" name="email" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Mot de passe</label>
+                        <label class="form-label">{{ t.login_password }}</label>
                         <input type="password" name="password" class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-dark w-100">Se connecter</button>
+                    <button type="submit" class="btn btn-dark w-100">{{ t.login_btn }}</button>
                 </form>
                 <p class="text-center mt-3 mb-1 text-muted">
-                    <a href="{{ url_for('forgot_password') }}" style="font-size:0.9rem">Mot de passe oublié ?</a>
+                    <a href="{{ url_for('forgot_password') }}" style="font-size:0.9rem">{{ t.login_forgot }}</a>
                 </p>
                 <p class="text-center text-muted">
-                    Pas encore de compte ? <a href="{{ url_for('register') }}">S'inscrire</a>
+                    {{ t.login_no_account }} <a href="{{ url_for('register') }}">{{ t.login_register }}</a>
                 </p>
             </div>
         </div>

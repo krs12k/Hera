@@ -1,5 +1,6 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session, make_response
+from translations import TRANSLATIONS
 from sqlalchemy import text, func
 from collections import defaultdict
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -26,6 +27,17 @@ csrf = CSRFProtect(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Connecte-toi pour accéder à cette page.'
+
+@app.context_processor
+def inject_translations():
+    lang = session.get('lang', 'fr')
+    return {'t': TRANSLATIONS[lang], 'lang': lang}
+
+@app.route('/set-language/<lang>')
+def set_language(lang):
+    if lang in ('fr', 'nl'):
+        session['lang'] = lang
+    return redirect(request.referrer or url_for('home'))
 
 @login_manager.user_loader
 def load_user(user_id):
