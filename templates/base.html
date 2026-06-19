@@ -26,11 +26,16 @@
             </div>
 
             <!-- Sélecteur de langue : toujours visible, tout à droite -->
-            <a href="{{ url_for('set_language', lang='nl' if lang == 'fr' else 'fr') }}"
-               class="btn btn-outline-light btn-sm me-2"
-               style="font-size:0.8rem;padding:4px 12px;font-weight:600;letter-spacing:0.5px">
-                {{ t.lang_switch }}
-            </a>
+            <div class="d-flex align-items-center me-2" style="gap:4px">
+                <a href="{{ url_for('set_language', lang='fr') }}"
+                   style="font-size:0.72rem;padding:3px 7px;text-decoration:none;border-radius:6px;border:1px solid rgba(255,255,255,{% if lang == 'fr' %}0.9{% else %}0.3{% endif %});color:#fff;background:rgba(255,255,255,{% if lang == 'fr' %}0.2{% else %}0{% endif %});font-weight:{% if lang == 'fr' %}700{% else %}400{% endif %}">
+                    🇫🇷 FR
+                </a>
+                <a href="{{ url_for('set_language', lang='nl') }}"
+                   style="font-size:0.72rem;padding:3px 7px;text-decoration:none;border-radius:6px;border:1px solid rgba(255,255,255,{% if lang == 'nl' %}0.9{% else %}0.3{% endif %});color:#fff;background:rgba(255,255,255,{% if lang == 'nl' %}0.2{% else %}0{% endif %});font-weight:{% if lang == 'nl' %}700{% else %}400{% endif %}">
+                    🇳🇱 NL
+                </a>
+            </div>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
                 <span class="navbar-toggler-icon"></span>
