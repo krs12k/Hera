@@ -15,26 +15,19 @@
                 <span class="logo-text">hera</span><span class="logo-dot">.</span>
             </a>
 
-            <!-- Boutons mobile (connexion/inscription) -->
-            <div class="d-flex gap-2 align-items-center d-lg-none me-2">
+            <!-- Mobile : boutons login + drapeaux avant hamburger -->
+            <div class="d-flex gap-2 align-items-center d-lg-none me-1">
                 {% if current_user.is_authenticated %}
                     <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light btn-sm">Dashboard</a>
                 {% else %}
                     <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-sm">{{ t.nav_login }}</a>
                     <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-sm">{{ t.nav_register_sm }}</a>
                 {% endif %}
-            </div>
-
-            <!-- Sélecteur de langue : toujours visible, tout à droite -->
-            <div class="d-flex align-items-center me-2" style="gap:4px">
+                <!-- Drapeaux mobile -->
                 <a href="{{ url_for('set_language', lang='fr') }}"
-                   style="font-size:0.72rem;padding:3px 7px;text-decoration:none;border-radius:6px;border:1px solid rgba(255,255,255,{% if lang == 'fr' %}0.9{% else %}0.3{% endif %});color:#fff;background:rgba(255,255,255,{% if lang == 'fr' %}0.2{% else %}0{% endif %});font-weight:{% if lang == 'fr' %}700{% else %}400{% endif %}">
-                    🇫🇷 FR
-                </a>
+                   style="font-size:1.1rem;text-decoration:none;opacity:{% if lang == 'fr' %}1{% else %}0.45{% endif %}">&#127467;&#127479;</a>
                 <a href="{{ url_for('set_language', lang='nl') }}"
-                   style="font-size:0.72rem;padding:3px 7px;text-decoration:none;border-radius:6px;border:1px solid rgba(255,255,255,{% if lang == 'nl' %}0.9{% else %}0.3{% endif %});color:#fff;background:rgba(255,255,255,{% if lang == 'nl' %}0.2{% else %}0{% endif %});font-weight:{% if lang == 'nl' %}700{% else %}400{% endif %}">
-                    🇳🇱 NL
-                </a>
+                   style="font-size:1.1rem;text-decoration:none;opacity:{% if lang == 'nl' %}1{% else %}0.45{% endif %}">&#127475;&#127473;</a>
             </div>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
@@ -54,7 +47,7 @@
                     </li>
                 </ul>
 
-                <!-- Boutons visibles sur desktop uniquement -->
+                <!-- Desktop : boutons + drapeaux tout à droite -->
                 <div class="d-none d-lg-flex align-items-center gap-2">
                     {% if current_user.is_authenticated %}
                         <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light btn-sm">{{ t.nav_dashboard }}</a>
@@ -64,6 +57,15 @@
                         <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-sm">{{ t.nav_login }}</a>
                         <a href="{{ url_for('register') }}" class="btn hera-btn-gold btn-sm">{{ t.nav_register }}</a>
                     {% endif %}
+                    <!-- Drapeaux desktop -->
+                    <div class="d-flex align-items-center ms-1" style="gap:5px">
+                        <a href="{{ url_for('set_language', lang='fr') }}"
+                           title="Français"
+                           style="font-size:1.2rem;text-decoration:none;opacity:{% if lang == 'fr' %}1{% else %}0.4{% endif %};transition:opacity 0.2s">&#127467;&#127479;</a>
+                        <a href="{{ url_for('set_language', lang='nl') }}"
+                           title="Nederlands"
+                           style="font-size:1.2rem;text-decoration:none;opacity:{% if lang == 'nl' %}1{% else %}0.4{% endif %};transition:opacity 0.2s">&#127475;&#127473;</a>
+                    </div>
                 </div>
             </div>
         </div>
