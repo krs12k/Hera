@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}hera — Mentions légales{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1">Mentions légales</h2>
+        <p class="text-muted mb-4" style="font-size:0.9rem">Dernière mise à jour : juin 2025</p>
+
+        <div class="card border-0 shadow-sm p-4 mb-4">
+            <h5 class="fw-bold mb-3">Éditeur du site</h5>
+            <p class="text-muted mb-1"><strong>Nom :</strong> hera.</p>
+            <p class="text-muted mb-1"><strong>Statut :</strong> Projet étudiant en phase de lancement</p>
+            <p class="text-muted mb-1"><strong>Pays :</strong> Belgique</p>
+            <p class="text-muted mb-0"><strong>Email :</strong> <a href="mailto:heraloyalty.contact@gmail.com" style="color:var(--turquoise)">heraloyalty.contact@gmail.com</a></p>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4">
+            <h5 class="fw-bold mb-3">Hébergement</h5>
+            <p class="text-muted mb-1"><strong>Hébergeur :</strong> Render Services, Inc.</p>
+            <p class="text-muted mb-1"><strong>Adresse :</strong> 525 Brannan Street, Suite 300, San Francisco, CA 94107, États-Unis</p>
+            <p class="text-muted mb-0"><strong>Site :</strong> render.com</p>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4">
+            <h5 class="fw-bold mb-3">Propriété intellectuelle</h5>
+            <p class="text-muted mb-0">
+                L'ensemble du contenu de ce site (textes, visuels, logo, code) est la propriété exclusive de hera.
+                Toute reproduction, même partielle, est interdite sans autorisation préalable écrite.
+            </p>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4">
+            <h5 class="fw-bold mb-3">Données personnelles & cookies</h5>
+            <p class="text-muted mb-2">
+                Le site utilise des cookies techniques strictement nécessaires au fonctionnement (session utilisateur, préférence de langue).
+                Aucun cookie publicitaire ou de tracking tiers n'est utilisé.
+            </p>
+            <p class="text-muted mb-0">
+                Pour en savoir plus sur la gestion de vos données personnelles, consultez notre
+                <a href="{{ url_for('confidentialite') }}" style="color:var(--turquoise)">politique de confidentialité</a>.
+            </p>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4">
+            <h5 class="fw-bold mb-3">Limitation de responsabilité</h5>
+            <p class="text-muted mb-0">
+                hera. s'efforce d'assurer l'exactitude des informations présentes sur ce site mais ne peut garantir leur exhaustivité.
+                hera. ne saurait être tenu responsable des dommages directs ou indirects résultant de l'utilisation du site
+                ou de l'impossibilité d'y accéder.
+            </p>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4">
+            <h5 class="fw-bold mb-3">Droit applicable</h5>
+            <p class="text-muted mb-0">
+                Le présent site est soumis au droit belge. En cas de litige, les tribunaux belges sont seuls compétents.
+            </p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

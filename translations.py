@@ -14,6 +14,7 @@ TRANSLATIONS = {
         # ── Footer ───────────────────────────────────────────────
         'footer_tagline':   'Fidélité locale pour restaurateurs belges',
         'footer_privacy':   'Confidentialité',
+        'footer_legal':     'Mentions légales',
         'footer_report':    'Signaler un problème',
         'footer_copyright': '© 2025 hera. Belgique',
 
@@ -240,6 +241,7 @@ TRANSLATIONS = {
         # ── Footer ───────────────────────────────────────────────
         'footer_tagline':   'Lokale loyaliteit voor Belgische restauranthouders',
         'footer_privacy':   'Privacy',
+        'footer_legal':     'Wettelijke vermeldingen',
         'footer_report':    'Probleem melden',
         'footer_copyright': '© 2025 hera. België',
 

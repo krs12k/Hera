@@ -569,6 +569,10 @@ def supprimer_regle(rule_id):
 def confidentialite():
     return render_template('confidentialite.html')
 
+@app.route('/mentions-legales')
+def mentions_legales():
+    return render_template('mentions_legales.html')
+
 
 # ── Codes de réduction ──────────────────────────────────────────
 @app.route('/dashboard/codes/ajouter', methods=['POST'])

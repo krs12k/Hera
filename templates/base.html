@@ -99,6 +99,7 @@
                         <a href="{{ url_for('tarifs') }}" class="footer-link">Tarifs</a>
                         <a href="{{ url_for('pour_restaurateurs') }}" class="footer-link">{{ t.nav_about }}</a>
                         <a href="{{ url_for('confidentialite') }}" class="footer-link">{{ t.footer_privacy }}</a>
+                        <a href="{{ url_for('mentions_legales') }}" class="footer-link">{{ t.footer_legal }}</a>
                         <a href="{{ url_for('signaler') }}" class="footer-link">{{ t.footer_report }}</a>
                     </div>
                 </div>
@@ -118,5 +119,32 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Bannière cookies GDPR -->
+    <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#1a1a2e;color:#fff;padding:14px 20px;box-shadow:0 -2px 16px rgba(0,0,0,0.2)">
+        <div class="container d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <p class="mb-0" style="font-size:0.85rem;opacity:0.9;max-width:600px">
+                {% if lang == 'nl' %}
+                    hera. gebruikt alleen functionele cookies (sessie, taalvoorkeur). Geen tracking, geen reclame.
+                    <a href="{{ url_for('mentions_legales') }}" style="color:var(--turquoise)">Meer info</a>
+                {% else %}
+                    hera. utilise uniquement des cookies fonctionnels (session, langue). Aucun tracking, aucune publicité.
+                    <a href="{{ url_for('mentions_legales') }}" style="color:var(--turquoise)">En savoir plus</a>
+                {% endif %}
+            </p>
+            <button onclick="acceptCookies()" class="btn btn-sm fw-bold" style="background:var(--turquoise);color:#fff;white-space:nowrap">
+                {% if lang == 'nl' %}Begrepen{% else %}J'accepte{% endif %}
+            </button>
+        </div>
+    </div>
+    <script>
+        function acceptCookies() {
+            localStorage.setItem('hera_cookies_ok', '1');
+            document.getElementById('cookie-banner').style.display = 'none';
+        }
+        if (!localStorage.getItem('hera_cookies_ok')) {
+            document.getElementById('cookie-banner').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
