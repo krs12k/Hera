@@ -28,6 +28,19 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Connecte-toi pour accéder à cette page.'
 
+
+@app.after_request
+def set_security_headers(response):
+    """En-têtes de sécurité appliqués à toutes les réponses."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    # HSTS uniquement en production (HTTPS), pour ne pas gêner le dev local en HTTP.
+    if app.config.get('SESSION_COOKIE_SECURE'):
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
+
 @app.context_processor
 def inject_translations():
     lang = session.get('lang', 'fr')
@@ -960,7 +973,7 @@ def admin_login():
         password = request.form.get('password', '')
 
         # Super admin via variables d'environnement
-        if username == 'admin' and password == app.config.get('ADMIN_PASSWORD'):
+        if username == 'admin' and secrets.compare_digest(password, app.config.get('ADMIN_PASSWORD') or ''):
             session['admin_logged_in'] = True
             session['admin_is_super'] = True
             session['admin_username'] = 'admin'
@@ -993,7 +1006,7 @@ def admin_change_password():
     current = request.form.get('current_password', '')
     new_pw = request.form.get('new_password', '')
     confirm = request.form.get('confirm_password', '')
-    if current != app.config.get('ADMIN_PASSWORD'):
+    if not secrets.compare_digest(current, app.config.get('ADMIN_PASSWORD') or ''):
         flash('Mot de passe actuel incorrect.', 'danger')
     elif new_pw != confirm:
         flash('Les nouveaux mots de passe ne correspondent pas.', 'danger')
@@ -1223,4 +1236,6 @@ def admin_supprimer(resto_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # debug activé uniquement si FLASK_DEBUG=1 ; jamais en production.
+    debug = os.environ.get('FLASK_DEBUG') == '1'
+    app.run(debug=debug)

@@ -1,7 +1,28 @@
 import os
+import secrets
+from datetime import timedelta
+
+# Render définit toujours RENDER=true sur ses instances → signal de production.
+IS_PRODUCTION = bool(os.environ.get('RENDER'))
+
+
+def _require(name, value, dev_fallback):
+    """En production : la variable est obligatoire (aucune valeur par défaut connue).
+    En local : on retombe sur une valeur de dev pour rester pratique."""
+    if value:
+        return value
+    if IS_PRODUCTION:
+        raise RuntimeError(
+            f"{name} doit être défini comme variable d'environnement en production. "
+            f"Configure-le dans Render → Settings → Environment."
+        )
+    return dev_fallback
+
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'local-dev-only-not-for-production'
+    # Clé de signature des sessions : jamais de valeur connue en production.
+    SECRET_KEY = _require('SECRET_KEY', os.environ.get('SECRET_KEY'),
+                          'local-dev-only-not-for-production')
 
     database_url = os.environ.get('DATABASE_URL') or 'sqlite:///fidelite.db'
     if database_url.startswith('postgres://'):
@@ -11,6 +32,12 @@ class Config:
     SQLALCHEMY_DATABASE_URI = database_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {'pool_pre_ping': True}
+
+    # ── Sécurité des cookies de session ──────────────────────────
+    SESSION_COOKIE_HTTPONLY = True            # inaccessible au JavaScript (anti-XSS)
+    SESSION_COOKIE_SAMESITE = 'Lax'           # limite l'envoi cross-site (anti-CSRF)
+    SESSION_COOKIE_SECURE = IS_PRODUCTION     # cookie envoyé uniquement en HTTPS en prod
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
 
     MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
     MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
@@ -26,4 +53,6 @@ class Config:
     STRIPE_PRICE = os.environ.get('STRIPE_PRICE')
     STRIPE_PRICE_ANNUAL = os.environ.get('STRIPE_PRICE_ANNUAL')
 
-    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'hera-admin-local'
+    # Mot de passe admin : jamais de valeur connue en production.
+    ADMIN_PASSWORD = _require('ADMIN_PASSWORD', os.environ.get('ADMIN_PASSWORD'),
+                              'hera-admin-local')
