@@ -6,6 +6,8 @@ from collections import defaultdict
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from models import db, Restaurant, Client, Visit, PointRule, AdminUser, Report, DiscountCode
 from config import Config
 from datetime import datetime, timedelta
@@ -23,6 +25,20 @@ app.config.from_object(Config)
 db.init_app(app)
 mail = Mail(app)
 csrf = CSRFProtect(app)
+
+# Limitation de débit : protège les routes sensibles contre le brute-force.
+# Stockage en mémoire (suffisant pour un seul worker gunicorn).
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    storage_uri='memory://',
+)
+
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    flash('Trop de tentatives. Patiente une minute avant de réessayer.', 'danger')
+    return redirect(request.referrer or url_for('home')), 429
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -192,6 +208,7 @@ def contact():
 
 # ── Inscription restaurateur ────────────────────────────────────
 @app.route('/inscription', methods=['GET', 'POST'])
+@limiter.limit('5 per minute; 20 per hour', methods=['POST'])
 def register():
     if request.method == 'POST':
         name = request.form['name']
@@ -227,6 +244,7 @@ def register():
 
 # ── Connexion restaurateur ──────────────────────────────────────
 @app.route('/connexion', methods=['GET', 'POST'])
+@limiter.limit('10 per minute; 50 per hour', methods=['POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
@@ -252,6 +270,7 @@ def logout():
 
 # ── Mot de passe oublié ──────────────────────────────────────────
 @app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])
+@limiter.limit('5 per minute; 15 per hour', methods=['POST'])
 def forgot_password():
     if request.method == 'POST':
         try:
@@ -283,6 +302,7 @@ def forgot_password():
 
 # ── Réinitialisation du mot de passe ────────────────────────────
 @app.route('/reinitialiser-mdp/<token>', methods=['GET', 'POST'])
+@limiter.limit('10 per minute', methods=['POST'])
 def reset_password(token):
     resto = Restaurant.query.filter_by(reset_token=token).first()
     if not resto or not resto.reset_token_expires or resto.reset_token_expires < datetime.utcnow():
@@ -967,6 +987,7 @@ def stripe_webhook():
 
 # ── Admin — Login ────────────────────────────────────────────────
 @app.route('/hera-admin', methods=['GET', 'POST'])
+@limiter.limit('5 per minute; 20 per hour', methods=['POST'])
 def admin_login():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
