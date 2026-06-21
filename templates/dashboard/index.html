@@ -45,27 +45,27 @@
 <!-- Statistiques -->
 <div class="row g-3 mb-4">
     <div class="col-4">
-        <div class="card border-0 shadow-sm text-center p-3">
-            <div class="fw-bold text-warning" style="font-size:clamp(1.4rem,5vw,2.5rem)">{{ clients|length }}</div>
-            <div class="text-muted" style="font-size:clamp(0.7rem,2.5vw,0.9rem)">Clients</div>
+        <div class="card stat-card text-center p-3">
+            <div class="stat-value" style="font-size:clamp(1.4rem,5vw,2.5rem)">{{ clients|length }}</div>
+            <div class="stat-label" style="font-size:clamp(0.7rem,2.5vw,0.9rem)">Clients</div>
         </div>
     </div>
     <div class="col-4">
-        <div class="card border-0 shadow-sm text-center p-3">
-            <div class="fw-bold text-success" style="font-size:clamp(1.4rem,5vw,2.5rem)">{{ total_visits }}</div>
-            <div class="text-muted" style="font-size:clamp(0.7rem,2.5vw,0.9rem)">Visites</div>
+        <div class="card stat-card text-center p-3">
+            <div class="stat-value is-visits" style="font-size:clamp(1.4rem,5vw,2.5rem)">{{ total_visits }}</div>
+            <div class="stat-label" style="font-size:clamp(0.7rem,2.5vw,0.9rem)">Visites</div>
         </div>
     </div>
     <div class="col-4">
-        <div class="card border-0 shadow-sm text-center p-3">
-            <div class="fw-bold text-info" style="font-size:clamp(1.1rem,4vw,2.5rem)">
+        <div class="card stat-card text-center p-3">
+            <div class="stat-value is-amount" style="font-size:clamp(1.1rem,4vw,2.5rem)">
                 {% if current_user.minimum_amount > 0 %}
                     {{ "%.0f"|format(current_user.minimum_amount) }}€
                 {% else %}
                     —
                 {% endif %}
             </div>
-            <div class="text-muted" style="font-size:clamp(0.7rem,2.5vw,0.9rem)">Min. achat</div>
+            <div class="stat-label" style="font-size:clamp(0.7rem,2.5vw,0.9rem)">Min. achat</div>
         </div>
     </div>
 </div>

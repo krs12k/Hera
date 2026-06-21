@@ -350,6 +350,83 @@ main, .container.mt-4 > .row, .container.mt-4 > [class*="rounded"] {
     font-size: 0.85rem;
 }
 
+/* ── Boutons : harmonisation warning → turquoise (marque) ───── */
+.btn-warning {
+    background-color: var(--turquoise);
+    background-image: linear-gradient(135deg, var(--turquoise) 0%, var(--turquoise-dark) 100%);
+    border-color: var(--turquoise);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(27, 191, 178, 0.28);
+}
+.btn-warning:hover, .btn-warning:focus, .btn-warning:active {
+    background-color: var(--turquoise-dark) !important;
+    border-color: var(--turquoise-dark) !important;
+    color: #ffffff !important;
+    box-shadow: var(--shadow-turquoise);
+}
+
+/* ── Pages d'authentification ───────────────────────────────── */
+.auth-card {
+    border-radius: 18px;
+    border: none;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    position: relative;
+}
+
+.auth-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, var(--turquoise) 0%, var(--turquoise-dark) 100%);
+}
+
+.auth-brand {
+    text-align: center;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 1px;
+}
+
+.auth-brand .logo-text { color: var(--dark); font-size: 1.7rem; }
+.auth-brand .logo-dot  { color: var(--turquoise); font-size: 2rem; }
+
+.auth-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* ── Dashboard : tuiles de statistiques ─────────────────────── */
+.stat-card {
+    border: 1px solid rgba(26, 26, 46, 0.05);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-value {
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--turquoise);
+}
+
+.stat-value.is-visits { color: var(--turquoise-dark); }
+.stat-value.is-amount { color: var(--dark); }
+
+.stat-label {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
 /* ── Responsive mobile ──────────────────────────────────────── */
 @media (max-width: 767px) {
 
