@@ -7,20 +7,73 @@
     --dark: #1A1A2E;
     --light: #F4FFFE;
     --text-muted: #7A9E9C;
+
+    /* Ombres cohérentes */
+    --shadow-sm: 0 1px 3px rgba(26, 26, 46, 0.06), 0 1px 2px rgba(26, 26, 46, 0.04);
+    --shadow-md: 0 4px 16px rgba(26, 26, 46, 0.07), 0 2px 6px rgba(26, 26, 46, 0.04);
+    --shadow-lg: 0 12px 32px rgba(26, 26, 46, 0.10), 0 4px 12px rgba(26, 26, 46, 0.06);
+    --shadow-turquoise: 0 8px 24px rgba(27, 191, 178, 0.25);
+
+    --radius: 14px;
+    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Base ──────────────────────────────────────────────────── */
 * { font-family: 'Inter', sans-serif; }
 
+html { scroll-behavior: smooth; }
+
 body {
     background-color: var(--light);
+    background-image:
+        radial-gradient(circle at 0% 0%, rgba(27, 191, 178, 0.06) 0%, transparent 35%),
+        radial-gradient(circle at 100% 100%, rgba(27, 191, 178, 0.05) 0%, transparent 40%);
+    background-attachment: fixed;
     color: var(--dark);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.4px;
+}
+
+/* Sélection de texte */
+::selection {
+    background: rgba(27, 191, 178, 0.22);
+    color: var(--dark);
+}
+
+/* Barre de défilement */
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: rgba(122, 158, 156, 0.35);
+    border-radius: 10px;
+    border: 3px solid var(--light);
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(122, 158, 156, 0.55); }
+
+/* Apparition douce du contenu */
+@keyframes pageFade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+main, .container.mt-4 > .row, .container.mt-4 > [class*="rounded"] {
+    animation: pageFade 0.5s ease both;
 }
 
 /* ── Navbar ────────────────────────────────────────────────── */
 .hera-nav {
     background-color: var(--dark);
+    background-image: linear-gradient(120deg, #1A1A2E 0%, #232347 100%);
     padding: 14px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    box-shadow: 0 2px 16px rgba(26, 26, 46, 0.18);
+    border-bottom: 1px solid rgba(27, 191, 178, 0.12);
 }
 
 .hera-logo {
@@ -28,7 +81,10 @@ body {
     display: flex;
     align-items: baseline;
     gap: 1px;
+    transition: transform var(--transition);
 }
+
+.hera-logo:hover { transform: translateY(-1px); }
 
 .logo-text {
     font-size: 1.5rem;
@@ -52,26 +108,46 @@ body {
 
 /* ── Boutons ───────────────────────────────────────────────── */
 .btn {
-    border-radius: 6px;
+    border-radius: 9px;
     font-weight: 500;
+    transition: transform var(--transition), box-shadow var(--transition),
+                background-color var(--transition), border-color var(--transition),
+                color var(--transition);
 }
+
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(0); }
+
+.btn-lg { border-radius: 11px; }
 
 .hera-btn-gold {
     background-color: var(--turquoise);
     color: #ffffff;
     border: none;
+    box-shadow: 0 4px 14px rgba(27, 191, 178, 0.30);
 }
 
 .hera-btn-gold:hover {
     background-color: var(--turquoise-dark);
     color: #ffffff;
+    box-shadow: var(--shadow-turquoise);
 }
+
+.btn-outline-light:hover { box-shadow: 0 4px 12px rgba(255, 255, 255, 0.12); }
+.btn-dark { background-color: var(--dark); border-color: var(--dark); }
+.btn-dark:hover { background-color: #2a2a4a; border-color: #2a2a4a; box-shadow: var(--shadow-md); }
 
 /* ── Cards ─────────────────────────────────────────────────── */
 .card {
-    border-radius: 12px;
+    border-radius: var(--radius);
     background-color: #ffffff;
+    border: 1px solid rgba(26, 26, 46, 0.04);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition), transform var(--transition);
 }
+
+.card.shadow-sm { box-shadow: var(--shadow-md) !important; }
+.card.shadow-lg { box-shadow: var(--shadow-lg) !important; }
 
 /* ── Page d'accueil ────────────────────────────────────────── */
 .hero-section {
@@ -95,6 +171,7 @@ body {
     font-size: 1.1rem;
     margin-top: 16px;
     font-weight: 300;
+    line-height: 1.6;
 }
 
 .hero-underline {
@@ -103,25 +180,30 @@ body {
     height: 3px;
     background: var(--turquoise);
     margin: 24px auto 32px;
+    border-radius: 3px;
 }
 
 /* ── Feature cards ─────────────────────────────────────────── */
 .feature-card {
-    border: none;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1px solid rgba(26, 26, 46, 0.04);
+    box-shadow: var(--shadow-md);
     padding: 32px 24px;
-    transition: transform 0.2s;
+    transition: transform var(--transition), box-shadow var(--transition);
 }
 
 .feature-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 20px rgba(27, 191, 178, 0.15);
+    transform: translateY(-6px);
+    box-shadow: 0 16px 32px rgba(27, 191, 178, 0.16);
 }
 
 .feature-icon {
-    font-size: 2rem;
-    margin-bottom: 12px;
+    font-size: 2.2rem;
+    margin-bottom: 14px;
+    display: inline-block;
+    transition: transform var(--transition);
 }
+
+.feature-card:hover .feature-icon { transform: scale(1.12) translateY(-2px); }
 
 .feature-card h5 {
     font-weight: 600;
@@ -132,22 +214,57 @@ body {
 .progress {
     border-radius: 10px;
     background-color: var(--turquoise-light);
+    overflow: hidden;
 }
 
 .progress-bar {
     background-color: var(--turquoise) !important;
+    background-image: linear-gradient(90deg, var(--turquoise) 0%, var(--turquoise-dark) 100%);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Badge ─────────────────────────────────────────────────── */
+.badge {
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
 .badge.bg-warning {
     background-color: var(--turquoise) !important;
     color: #ffffff !important;
 }
 
 /* ── Formulaires ───────────────────────────────────────────── */
-.form-control:focus {
+.form-control, .form-select {
+    border-radius: 9px;
+    border: 1px solid #dbe6e5;
+    padding: 0.55rem 0.85rem;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
     border-color: var(--turquoise);
-    box-shadow: 0 0 0 0.2rem rgba(27, 191, 178, 0.2);
+    box-shadow: 0 0 0 0.2rem rgba(27, 191, 178, 0.18);
+}
+
+.form-label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+}
+
+/* ── Alertes ───────────────────────────────────────────────── */
+.alert {
+    border-radius: 11px;
+    border: none;
+    box-shadow: var(--shadow-sm);
+}
+
+/* ── Modale ────────────────────────────────────────────────── */
+.modal-content {
+    border-radius: var(--radius);
+    border: none;
+    box-shadow: var(--shadow-lg);
 }
 
 /* ── Navbar liens publics ──────────────────────────────────── */
@@ -155,11 +272,14 @@ body {
     color: rgba(255,255,255,0.7) !important;
     font-size: 0.9rem;
     font-weight: 400;
-    transition: color 0.2s;
+    border-radius: 7px;
+    padding: 0.4rem 0.7rem !important;
+    transition: color var(--transition), background-color var(--transition);
 }
 
 .nav-public:hover {
     color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.07);
 }
 
 /* ── Étapes (comment ça marche) ────────────────────────────── */
@@ -168,6 +288,7 @@ body {
     height: 60px;
     border-radius: 50%;
     background: var(--turquoise);
+    background-image: linear-gradient(135deg, var(--turquoise) 0%, var(--turquoise-dark) 100%);
     color: white;
     font-size: 1.4rem;
     font-weight: 700;
@@ -175,19 +296,29 @@ body {
     align-items: center;
     justify-content: center;
     margin: 0 auto;
+    box-shadow: var(--shadow-turquoise);
+}
+
+/* ── Tables ─────────────────────────────────────────────────── */
+.table { --bs-table-hover-bg: rgba(27, 191, 178, 0.05); }
+
+.table thead th {
+    border-bottom: 2px solid rgba(27, 191, 178, 0.15);
+    font-weight: 600;
 }
 
 /* ── Footer ────────────────────────────────────────────────── */
 .hera-footer {
     background-color: #ffffff;
     border-top: 1px solid #e8e8e8;
-    padding: 24px 0;
+    padding: 28px 0;
 }
 
 .footer-link {
     color: var(--text-muted);
     text-decoration: none;
     font-size: 0.85rem;
+    transition: color var(--transition);
 }
 
 .footer-link:hover {
@@ -298,5 +429,14 @@ body {
     .navbar .btn-sm {
         font-size: 0.78rem;
         padding: 4px 8px;
+    }
+}
+
+/* Respect des préférences de mouvement réduit */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
     }
 }
