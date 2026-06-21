@@ -9,7 +9,7 @@
     <!-- Gauche : copy -->
     <div class="col-md-6 pe-md-5">
         <span class="badge px-3 py-2 fw-normal mb-4 d-inline-block"
-              style="background:#e8f8f7;color:var(--turquoise);font-size:0.85rem;border-radius:20px;letter-spacing:0.2px">
+              style="background:var(--amber-light);color:var(--amber-dark);font-size:0.85rem;border-radius:20px;letter-spacing:0.2px">
             {{ t.index_badge }}
         </span>
         <h1 class="hero-title mb-3">
@@ -104,6 +104,7 @@
 
 <!-- ── Pourquoi hera ───────────────────────────────────────────── -->
 <div class="text-center mb-4">
+    <span class="section-eyebrow">{% if lang == 'nl' %}Waarom hera{% else %}Pourquoi hera{% endif %}</span>
     <h2 class="fw-bold">{{ t.index_why_title }}</h2>
     <p class="text-muted">{{ t.index_why_sub }}</p>
 </div>
@@ -131,33 +132,76 @@
     </div>
 </div>
 
-<!-- ── En 3 étapes ────────────────────────────────────────────── -->
-<div class="rounded-4 p-5 mb-5 text-center" style="background:var(--turquoise-light)">
-    <h2 class="fw-bold mb-4">{{ t.index_steps_title }}</h2>
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="step-circle mx-auto">1</div>
-            <h6 class="fw-bold mt-3">{{ t.index_step1_title }}</h6>
-            <p class="text-muted mb-0" style="font-size:0.9rem">{{ t.index_step1_text }}</p>
+<!-- ── En 3 étapes : carrousel illustré ───────────────────────── -->
+<div class="text-center mb-4">
+    <span class="section-eyebrow">{% if lang == 'nl' %}Stap voor stap{% else %}Pas à pas{% endif %}</span>
+    <h2 class="fw-bold">{{ t.index_steps_title }}</h2>
+</div>
+
+<div id="howCarousel" class="carousel slide hera-carousel mb-4" data-bs-ride="carousel" data-bs-interval="5000">
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#howCarousel" data-bs-slide-to="0" class="active" aria-label="1"></button>
+        <button type="button" data-bs-target="#howCarousel" data-bs-slide-to="1" aria-label="2"></button>
+        <button type="button" data-bs-target="#howCarousel" data-bs-slide-to="2" aria-label="3"></button>
+        <button type="button" data-bs-target="#howCarousel" data-bs-slide-to="3" aria-label="4"></button>
+    </div>
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <div class="slide-media">
+                <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=70" alt="">
+                <div class="slide-overlay">
+                    <span class="slide-step">1</span>
+                    <h3 class="slide-title">{{ t.index_step1_title }}</h3>
+                    <p class="slide-text">{{ t.index_step1_text }}</p>
+                </div>
+            </div>
         </div>
-        <div class="col-md-4">
-            <div class="step-circle mx-auto">2</div>
-            <h6 class="fw-bold mt-3">{{ t.index_step2_title }}</h6>
-            <p class="text-muted mb-0" style="font-size:0.9rem">{{ t.index_step2_text }}</p>
+        <div class="carousel-item">
+            <div class="slide-media">
+                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=70" alt="">
+                <div class="slide-overlay">
+                    <span class="slide-step">2</span>
+                    <h3 class="slide-title">{{ t.index_step2_title }}</h3>
+                    <p class="slide-text">{{ t.index_step2_text }}</p>
+                </div>
+            </div>
         </div>
-        <div class="col-md-4">
-            <div class="step-circle mx-auto">3</div>
-            <h6 class="fw-bold mt-3">{{ t.index_step3_title }}</h6>
-            <p class="text-muted mb-0" style="font-size:0.9rem">{{ t.index_step3_text }}</p>
+        <div class="carousel-item">
+            <div class="slide-media">
+                <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1200&q=70" alt="">
+                <div class="slide-overlay">
+                    <span class="slide-step">3</span>
+                    <h3 class="slide-title">{{ t.index_step3_title }}</h3>
+                    <p class="slide-text">{{ t.index_step3_text }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="carousel-item">
+            <div class="slide-media">
+                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=70" alt="">
+                <div class="slide-overlay">
+                    <span class="slide-step">★</span>
+                    <h3 class="slide-title">{% if lang == 'nl' %}Uw klant komt terug{% else %}Votre client revient{% endif %}</h3>
+                    <p class="slide-text">{% if lang == 'nl' %}Bij genoeg punten geniet hij van zijn beloning — en u van een trouwe vaste klant.{% else %}Au seuil atteint, il profite de sa récompense — et vous d'un habitué fidèle qui revient.{% endif %}</p>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="mt-4">
-        <a href="{{ url_for('comment_ca_marche') }}" class="btn btn-outline-dark px-4">{{ t.index_steps_detail }}</a>
-    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#howCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#howCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
+</div>
+
+<div class="text-center mb-5">
+    <a href="{{ url_for('comment_ca_marche') }}" class="btn btn-outline-dark px-4">{{ t.index_steps_detail }}</a>
 </div>
 
 <!-- ── VS carte papier ────────────────────────────────────────── -->
 <div class="text-center mb-4">
+    <span class="section-eyebrow">{% if lang == 'nl' %}Het verschil{% else %}La différence{% endif %}</span>
     <h2 class="fw-bold">{{ t.index_vs_title }}</h2>
     <p class="text-muted">{{ t.index_vs_sub }}</p>
 </div>

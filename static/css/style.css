@@ -6,7 +6,14 @@
     --gold: #F59E0B;
     --dark: #1A1A2E;
     --light: #F4FFFE;
-    --text-muted: #7A9E9C;
+    --text-muted: #7A8A86;
+
+    /* Direction « éditorial gourmand » : accent ambre chaud + fond crème */
+    --amber: #DD9A3C;
+    --amber-dark: #C07F28;
+    --amber-light: #FBEFD7;
+    --cream: #FBF7F0;
+    --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
 
     /* Ombres cohérentes */
     --shadow-sm: 0 1px 3px rgba(26, 26, 46, 0.06), 0 1px 2px rgba(26, 26, 46, 0.04);
@@ -24,10 +31,11 @@
 html { scroll-behavior: smooth; }
 
 body {
-    background-color: var(--light);
+    background-color: var(--cream);
     background-image:
-        radial-gradient(circle at 0% 0%, rgba(27, 191, 178, 0.06) 0%, transparent 35%),
-        radial-gradient(circle at 100% 100%, rgba(27, 191, 178, 0.05) 0%, transparent 40%);
+        radial-gradient(circle at 0% 0%, rgba(221, 154, 60, 0.07) 0%, transparent 32%),
+        radial-gradient(circle at 100% 12%, rgba(27, 191, 178, 0.07) 0%, transparent 38%),
+        radial-gradient(circle at 100% 100%, rgba(221, 154, 60, 0.05) 0%, transparent 40%);
     background-attachment: fixed;
     color: var(--dark);
     -webkit-font-smoothing: antialiased;
@@ -35,8 +43,12 @@ body {
     text-rendering: optimizeLegibility;
 }
 
-h1, h2, h3, h4, h5, h6 {
+/* Titres en serif éditorial (Fraunces) */
+h1, h2, h3, h4, h5, h6,
+.card-title, .modal-title {
+    font-family: var(--serif);
     letter-spacing: -0.4px;
+    font-optical-sizing: auto;
 }
 
 /* Sélection de texte */
@@ -87,15 +99,17 @@ main, .container.mt-4 > .row, .container.mt-4 > [class*="rounded"] {
 .hera-logo:hover { transform: translateY(-1px); }
 
 .logo-text {
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: -1px;
+    font-family: var(--serif);
+    font-size: 1.55rem;
+    font-weight: 600;
+    letter-spacing: -0.5px;
     color: #ffffff;
 }
 
 .logo-dot {
-    font-size: 1.8rem;
-    font-weight: 700;
+    font-family: var(--serif);
+    font-size: 1.85rem;
+    font-weight: 600;
     color: var(--turquoise);
     line-height: 1;
 }
@@ -156,29 +170,31 @@ main, .container.mt-4 > .row, .container.mt-4 > [class*="rounded"] {
 }
 
 .hero-title {
-    font-size: 3rem;
-    font-weight: 700;
-    letter-spacing: -1.5px;
-    line-height: 1.1;
+    font-family: var(--serif);
+    font-size: 3.4rem;
+    font-weight: 600;
+    letter-spacing: -1px;
+    line-height: 1.08;
 }
 
 .hero-title span {
     color: var(--turquoise);
+    font-style: italic;
 }
 
 .hero-sub {
-    color: var(--text-muted);
-    font-size: 1.1rem;
+    color: #5c6b68;
+    font-size: 1.12rem;
     margin-top: 16px;
     font-weight: 300;
-    line-height: 1.6;
+    line-height: 1.65;
 }
 
 .hero-underline {
     display: block;
-    width: 48px;
+    width: 56px;
     height: 3px;
-    background: var(--turquoise);
+    background: linear-gradient(90deg, var(--amber) 0%, var(--turquoise) 100%);
     margin: 24px auto 32px;
     border-radius: 3px;
 }
@@ -427,18 +443,140 @@ main, .container.mt-4 > .row, .container.mt-4 > [class*="rounded"] {
     font-weight: 500;
 }
 
+/* ── Libellé « eyebrow » au-dessus des titres de section ─────── */
+.section-eyebrow {
+    font-family: 'Inter', sans-serif;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--amber-dark);
+    margin-bottom: 8px;
+}
+
+/* ── Badge accent ambre ─────────────────────────────────────── */
+.badge-amber {
+    background: var(--amber-light);
+    color: var(--amber-dark);
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+/* ── Carrousel de slides explicatifs ────────────────────────── */
+.hera-carousel {
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    background: var(--dark);
+}
+
+.hera-carousel .slide-media {
+    position: relative;
+    height: 460px;
+}
+
+.hera-carousel .slide-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hera-carousel .slide-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 48px;
+    background: linear-gradient(to top,
+        rgba(20, 20, 35, 0.92) 0%,
+        rgba(20, 20, 35, 0.55) 40%,
+        rgba(20, 20, 35, 0.10) 75%,
+        transparent 100%);
+    color: #fff;
+}
+
+.hera-carousel .slide-step {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--amber) 0%, var(--amber-dark) 100%);
+    color: #fff;
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+    box-shadow: 0 6px 18px rgba(192, 127, 40, 0.4);
+}
+
+.hera-carousel .slide-title {
+    font-family: var(--serif);
+    font-size: 1.9rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    max-width: 560px;
+}
+
+.hera-carousel .slide-text {
+    font-size: 1.02rem;
+    line-height: 1.55;
+    opacity: 0.9;
+    max-width: 520px;
+    margin-bottom: 0;
+}
+
+/* Indicateurs et contrôles */
+.hera-carousel .carousel-indicators [data-bs-target] {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: none;
+    background-color: rgba(255, 255, 255, 0.55);
+}
+
+.hera-carousel .carousel-indicators .active {
+    background-color: var(--amber);
+    width: 26px;
+    border-radius: 6px;
+}
+
+.hera-carousel .carousel-control-prev,
+.hera-carousel .carousel-control-next {
+    width: 9%;
+}
+
+.hera-carousel .carousel-control-prev-icon,
+.hera-carousel .carousel-control-next-icon {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-radius: 50%;
+    background-size: 50%;
+    width: 44px;
+    height: 44px;
+}
+
 /* ── Responsive mobile ──────────────────────────────────────── */
 @media (max-width: 767px) {
 
     /* Titre hero */
     .hero-title {
-        font-size: 2rem;
-        letter-spacing: -1px;
+        font-size: 2.25rem;
+        letter-spacing: -0.5px;
     }
 
     .hero-sub {
         font-size: 1rem;
     }
+
+    /* Carrousel sur mobile */
+    .hera-carousel .slide-media { height: 380px; }
+    .hera-carousel .slide-overlay { padding: 28px 24px; }
+    .hera-carousel .slide-step { width: 44px; height: 44px; font-size: 1.25rem; margin-bottom: 12px; }
+    .hera-carousel .slide-title { font-size: 1.4rem; }
+    .hera-carousel .slide-text { font-size: 0.92rem; }
 
     /* Conteneur principal */
     .container {
