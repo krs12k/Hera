@@ -13,7 +13,6 @@
     --amber-dark: #C07F28;
     --amber-light: #FBEFD7;
     --cream: #FBF7F0;
-    --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
 
     /* Ombres cohérentes */
     --shadow-sm: 0 1px 3px rgba(26, 26, 46, 0.06), 0 1px 2px rgba(26, 26, 46, 0.04);
@@ -43,12 +42,8 @@ body {
     text-rendering: optimizeLegibility;
 }
 
-/* Titres en serif éditorial (Fraunces) */
-h1, h2, h3, h4, h5, h6,
-.card-title, .modal-title {
-    font-family: var(--serif);
+h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.4px;
-    font-optical-sizing: auto;
 }
 
 /* Sélection de texte */
@@ -99,17 +94,17 @@ main, .container.mt-4 > .row, .container.mt-4 > [class*="rounded"] {
 .hera-logo:hover { transform: translateY(-1px); }
 
 .logo-text {
-    font-family: var(--serif);
-    font-size: 1.55rem;
-    font-weight: 600;
-    letter-spacing: -0.5px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -1px;
     color: #ffffff;
 }
 
 .logo-dot {
-    font-family: var(--serif);
-    font-size: 1.85rem;
-    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
     color: var(--turquoise);
     line-height: 1;
 }
@@ -170,16 +165,14 @@ main, .container.mt-4 > .row, .container.mt-4 > [class*="rounded"] {
 }
 
 .hero-title {
-    font-family: var(--serif);
-    font-size: 3.4rem;
-    font-weight: 600;
-    letter-spacing: -1px;
-    line-height: 1.08;
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
 }
 
 .hero-title span {
     color: var(--turquoise);
-    font-style: italic;
 }
 
 .hero-sub {
@@ -503,9 +496,8 @@ main, .container.mt-4 > .row, .container.mt-4 > [class*="rounded"] {
     border-radius: 50%;
     background: linear-gradient(135deg, var(--amber) 0%, var(--amber-dark) 100%);
     color: #fff;
-    font-family: var(--serif);
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -514,9 +506,8 @@ main, .container.mt-4 > .row, .container.mt-4 > [class*="rounded"] {
 }
 
 .hera-carousel .slide-title {
-    font-family: var(--serif);
     font-size: 1.9rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 8px;
     max-width: 560px;
 }
@@ -557,6 +548,128 @@ main, .container.mt-4 > .row, .container.mt-4 > [class*="rounded"] {
     width: 44px;
     height: 44px;
 }
+
+/* ── Carte à tampons (signature « carte de fidélité réinventée ») ── */
+.stamp-showcase {
+    background:
+        radial-gradient(circle at 15% 20%, rgba(221,154,60,0.10) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(27,191,178,0.10) 0%, transparent 45%),
+        #ffffff;
+    border-radius: 28px;
+    border: 1px solid rgba(26,26,46,0.05);
+    overflow: hidden;
+}
+
+.stamp-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 26px 28px;
+    box-shadow: var(--shadow-lg);
+    border: 2px dashed rgba(27,191,178,0.40);
+    max-width: 440px;
+    width: 100%;
+    transform: rotate(-2.5deg);
+    transition: transform var(--transition);
+    position: relative;
+}
+
+.stamp-card:hover { transform: rotate(0deg) translateY(-4px); }
+
+/* Encoches latérales (effet ticket déchirable) */
+.stamp-card::before,
+.stamp-card::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--cream);
+    transform: translateY(-50%);
+}
+.stamp-card::before { left: -12px; }
+.stamp-card::after  { right: -12px; }
+
+.stamp-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+    border-bottom: 2px dashed rgba(26,26,46,0.10);
+}
+
+.stamp-card-resto { font-weight: 700; font-size: 0.95rem; }
+.stamp-card-sub { color: var(--text-muted); font-size: 0.72rem; letter-spacing: 0.3px; text-transform: uppercase; }
+
+.stamp-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+
+.stamp {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 2px dashed rgba(122,138,134,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: transparent;
+}
+
+.stamp.filled {
+    border: none;
+    background: linear-gradient(135deg, var(--turquoise) 0%, var(--turquoise-dark) 100%);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(27,191,178,0.30);
+    animation: stampPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.stamp.reward {
+    border: 2px dashed var(--amber);
+    color: var(--amber-dark);
+    background: var(--amber-light);
+}
+
+.stamp-card-foot {
+    margin-top: 18px;
+    font-size: 0.85rem;
+    color: var(--dark);
+    text-align: center;
+}
+.stamp-card-foot strong { color: var(--turquoise-dark); }
+
+@keyframes stampPop {
+    0%   { transform: scale(0) rotate(-25deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.stamp.filled:nth-child(1) { animation-delay: 0.05s; }
+.stamp.filled:nth-child(2) { animation-delay: 0.13s; }
+.stamp.filled:nth-child(3) { animation-delay: 0.21s; }
+.stamp.filled:nth-child(4) { animation-delay: 0.29s; }
+.stamp.filled:nth-child(5) { animation-delay: 0.37s; }
+.stamp.filled:nth-child(6) { animation-delay: 0.45s; }
+.stamp.filled:nth-child(7) { animation-delay: 0.53s; }
+
+/* ── Cartes features : touche « ticket » ────────────────────── */
+.feature-card { position: relative; overflow: visible; }
+
+.feature-card::before,
+.feature-card::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--cream);
+    transform: translateY(-50%);
+    z-index: 1;
+}
+.feature-card::before { left: -9px; }
+.feature-card::after  { right: -9px; }
 
 /* ── Responsive mobile ──────────────────────────────────────── */
 @media (max-width: 767px) {
