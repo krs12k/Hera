@@ -4,3 +4,9 @@ __pycache__/
 *.pyc
 .env
 .claude/
+
+# Données de prospection (emails privés — ne pas publier)
+campagne.txt
+campagne_brevo.csv
+envois_*.json
+restaurants_*.txt

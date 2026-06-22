@@ -21,6 +21,7 @@
     <span class="navbar-brand fw-bold">hera<span>.</span> admin</span>
     <div class="d-flex gap-2 align-items-center">
         <span class="text-muted" style="font-size:0.8rem">{{ admin_username }}</span>
+        <a href="{{ url_for('admin_codes_promo') }}" class="btn btn-outline-light btn-sm">🎟️ Codes promo</a>
         {% if is_super %}
         <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAdminPw">
             🔑 Mot de passe

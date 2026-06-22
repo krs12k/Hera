@@ -8,7 +8,7 @@ from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from models import db, Restaurant, Client, Visit, PointRule, AdminUser, Report, DiscountCode
+from models import db, Restaurant, Client, Visit, PointRule, AdminUser, Report, DiscountCode, SubscriptionPromoCode
 from config import Config
 from datetime import datetime, timedelta
 from functools import wraps
@@ -17,6 +17,7 @@ import io
 import base64
 import time
 import secrets
+import string
 import stripe
 
 app = Flask(__name__)
@@ -1223,6 +1224,128 @@ def admin_reset_mdp_collaborateur(user_id):
     db.session.commit()
     flash(f'Mot de passe de {user.username} mis à jour.', 'success')
     return redirect(url_for('admin_dashboard'))
+
+
+# ── Admin — Codes promo abonnement ───────────────────────────────
+def _generer_code_unique():
+    # Alphabet sans caractères ambigus (0/O, 1/I) pour faciliter la dictée.
+    alphabet = ''.join(c for c in (string.ascii_uppercase + string.digits)
+                       if c not in 'O0I1')
+    while True:
+        code = 'HERA-' + ''.join(secrets.choice(alphabet) for _ in range(8))
+        if not SubscriptionPromoCode.query.filter_by(code=code).first():
+            return code
+
+
+@app.route('/hera-admin/codes-promo')
+@admin_required
+def admin_codes_promo():
+    codes = SubscriptionPromoCode.query.order_by(SubscriptionPromoCode.created_at.desc()).all()
+    # Synchronise le statut « utilisé » depuis Stripe pour les codes encore disponibles.
+    if stripe.api_key:
+        modifie = False
+        for c in codes:
+            if not c.redeemed and c.stripe_promotion_code_id:
+                try:
+                    pc = stripe.PromotionCode.retrieve(c.stripe_promotion_code_id)
+                    if pc.get('times_redeemed', 0) >= 1 or not pc.get('active', True):
+                        c.redeemed = True
+                        c.redeemed_at = datetime.utcnow()
+                        modifie = True
+                except Exception:
+                    pass
+        if modifie:
+            db.session.commit()
+    return render_template('admin/codes_promo.html',
+                           codes=codes,
+                           is_super=session.get('admin_is_super', False),
+                           admin_username=session.get('admin_username', 'admin'))
+
+
+@app.route('/hera-admin/codes-promo/generer', methods=['POST'])
+@admin_required
+def admin_generer_code():
+    try:
+        percent = int(request.form.get('percent', 0))
+    except (ValueError, TypeError):
+        percent = 0
+    if percent < 1 or percent > 100:
+        flash('Le pourcentage doit être compris entre 1 et 100.', 'danger')
+        return redirect(url_for('admin_codes_promo'))
+
+    duration = request.form.get('duration', 'once')
+    if duration not in ('once', 'repeating', 'forever'):
+        duration = 'once'
+
+    months = None
+    if duration == 'repeating':
+        try:
+            months = int(request.form.get('duration_in_months', 0))
+        except (ValueError, TypeError):
+            months = 0
+        if months < 1:
+            flash('Indique un nombre de mois valide pour une réduction récurrente.', 'danger')
+            return redirect(url_for('admin_codes_promo'))
+
+    note = (request.form.get('note') or '').strip()[:200]
+
+    if not stripe.api_key:
+        flash('Stripe non configuré (STRIPE_SECRET_KEY manquant). Impossible de générer un code.', 'danger')
+        return redirect(url_for('admin_codes_promo'))
+
+    code = _generer_code_unique()
+    try:
+        coupon_params = {
+            'percent_off': percent,
+            'duration': duration,
+            'name': f'hera -{percent}%',
+        }
+        if duration == 'repeating':
+            coupon_params['duration_in_months'] = months
+        coupon = stripe.Coupon.create(**coupon_params)
+        promo = stripe.PromotionCode.create(
+            coupon=coupon.id,
+            code=code,
+            max_redemptions=1,
+        )
+    except Exception as e:
+        flash(f'Erreur Stripe : {str(e)}', 'danger')
+        return redirect(url_for('admin_codes_promo'))
+
+    entry = SubscriptionPromoCode(
+        code=code,
+        percent_off=percent,
+        duration=duration,
+        duration_in_months=months,
+        stripe_coupon_id=coupon.id,
+        stripe_promotion_code_id=promo.id,
+        note=note or None,
+    )
+    db.session.add(entry)
+    db.session.commit()
+    flash(f'Code généré : {code} (-{percent}%). Communique-le au restaurateur.', 'success')
+    return redirect(url_for('admin_codes_promo'))
+
+
+@app.route('/hera-admin/codes-promo/<int:code_id>/supprimer', methods=['POST'])
+@admin_required
+def admin_supprimer_code(code_id):
+    entry = SubscriptionPromoCode.query.get_or_404(code_id)
+    # Désactive le code côté Stripe pour qu'il ne soit plus utilisable.
+    if stripe.api_key and entry.stripe_promotion_code_id:
+        try:
+            stripe.PromotionCode.modify(entry.stripe_promotion_code_id, active=False)
+        except Exception:
+            pass
+    if stripe.api_key and entry.stripe_coupon_id:
+        try:
+            stripe.Coupon.delete(entry.stripe_coupon_id)
+        except Exception:
+            pass
+    db.session.delete(entry)
+    db.session.commit()
+    flash('Code supprimé.', 'success')
+    return redirect(url_for('admin_codes_promo'))
 
 
 # ── Admin — Fiche restaurant ─────────────────────────────────────

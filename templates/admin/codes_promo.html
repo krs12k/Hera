@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>hera admin — Codes promo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --turquoise: #1BBFB2; }
+        body { background: #f4f6f9; }
+        .navbar-brand span { color: var(--turquoise); }
+        .code-cell { font-family: monospace; font-weight: 700; letter-spacing: 0.5px; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark px-4 mb-4">
+    <span class="navbar-brand fw-bold">hera<span>.</span> admin</span>
+    <div class="d-flex gap-2 align-items-center">
+        <span class="text-muted" style="font-size:0.8rem">{{ admin_username }}</span>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light btn-sm">← Dashboard</a>
+        <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-light btn-sm">Déconnexion</a>
+    </div>
+</nav>
+
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <h4 class="fw-bold mb-1">🎟️ Codes promo abonnement</h4>
+    <p class="text-muted" style="font-size:0.9rem">
+        Génère un code de réduction unique à donner à un restaurateur. Il le saisira
+        sur la page de paiement Stripe. Chaque code n'est utilisable qu'<strong>une seule fois</strong>.
+    </p>
+
+    <!-- Formulaire de génération -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h6 class="fw-bold mb-3">Générer un nouveau code</h6>
+            <form method="POST" action="{{ url_for('admin_generer_code') }}" class="row g-3 align-items-end">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Réduction (%)</label>
+                    <input type="number" name="percent" class="form-control" min="1" max="100" value="50" required>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Durée</label>
+                    <select name="duration" id="durationSelect" class="form-select">
+                        <option value="once">Une seule facture</option>
+                        <option value="repeating">Plusieurs mois</option>
+                        <option value="forever">Toujours</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2" id="monthsField" style="display:none">
+                    <label class="form-label">Nombre de mois</label>
+                    <input type="number" name="duration_in_months" class="form-control" min="1" value="3">
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Note (optionnel)</label>
+                    <input type="text" name="note" class="form-control" placeholder="Ex: Le Rive Gauche">
+                </div>
+                <div class="col-12 col-md-2">
+                    <button type="submit" class="btn fw-bold w-100" style="background:var(--turquoise);color:#fff">
+                        Générer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des codes -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h6 class="fw-bold mb-3">Codes générés ({{ codes|length }})</h6>
+            {% if codes %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Code</th>
+                            <th>Réduction</th>
+                            <th>Durée</th>
+                            <th>Statut</th>
+                            <th>Note</th>
+                            <th>Créé le</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in codes %}
+                        <tr>
+                            <td class="code-cell">{{ c.code }}</td>
+                            <td>-{{ c.percent_off }}%</td>
+                            <td style="font-size:0.88rem">{{ c.duree_label }}</td>
+                            <td>
+                                {% if c.redeemed %}
+                                    <span class="badge bg-secondary">Utilisé</span>
+                                    {% if c.redeemed_at %}
+                                    <small class="text-muted d-block" style="font-size:0.72rem">
+                                        le {{ c.redeemed_at.strftime('%d/%m/%Y') }}
+                                    </small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-success">Disponible</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted" style="font-size:0.85rem">{{ c.note or '—' }}</td>
+                            <td class="text-muted" style="font-size:0.85rem">{{ c.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            onclick="copierCode('{{ c.code }}', this)" title="Copier le code">
+                                        📋
+                                    </button>
+                                    <form method="POST" action="{{ url_for('admin_supprimer_code', code_id=c.id) }}"
+                                          onsubmit="return confirm('Supprimer ce code ? Il ne sera plus utilisable.')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button class="btn btn-sm btn-outline-danger" title="Supprimer">🗑</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0" style="font-size:0.9rem">Aucun code généré pour l'instant.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const durationSelect = document.getElementById('durationSelect')
+const monthsField = document.getElementById('monthsField')
+function toggleMonths() {
+    monthsField.style.display = durationSelect.value === 'repeating' ? '' : 'none'
+}
+durationSelect.addEventListener('change', toggleMonths)
+toggleMonths()
+
+function copierCode(code, btn) {
+    navigator.clipboard.writeText(code).then(() => {
+        const old = btn.textContent
+        btn.textContent = '✓'
+        setTimeout(() => { btn.textContent = old }, 1200)
+    })
+}
+</script>
+</body>
+</html>

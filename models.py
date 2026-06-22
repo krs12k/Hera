@@ -120,6 +120,35 @@ class DiscountCode(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class SubscriptionPromoCode(db.Model):
+    """Code de réduction sur l'abonnement Stripe, généré depuis l'admin.
+    S'appuie sur un Coupon + Promotion Code Stripe (max_redemptions=1)."""
+    __tablename__ = 'subscription_promo_codes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(50), unique=True, nullable=False)
+    percent_off = db.Column(db.Integer, nullable=False)
+    duration = db.Column(db.String(20), nullable=False)        # once, repeating, forever
+    duration_in_months = db.Column(db.Integer, nullable=True)  # si repeating
+    stripe_coupon_id = db.Column(db.String(100), nullable=True)
+    stripe_promotion_code_id = db.Column(db.String(100), nullable=True)
+    redeemed = db.Column(db.Boolean, default=False)
+    redeemed_at = db.Column(db.DateTime, nullable=True)
+    note = db.Column(db.String(200), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @property
+    def duree_label(self):
+        if self.duration == 'once':
+            return 'Une seule facture'
+        if self.duration == 'forever':
+            return 'Toujours'
+        if self.duration == 'repeating':
+            n = self.duration_in_months or 0
+            return f"{n} mois"
+        return self.duration
+
+
 class Report(db.Model):
     __tablename__ = 'reports'
 
