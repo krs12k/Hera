@@ -1304,7 +1304,7 @@ def admin_generer_code():
             coupon_params['duration_in_months'] = months
         coupon = stripe.Coupon.create(**coupon_params)
         promo = stripe.PromotionCode.create(
-            coupon=coupon.id,
+            promotion={'type': 'coupon', 'coupon': coupon.id},
             code=code,
             max_redemptions=1,
         )
