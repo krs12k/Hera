@@ -18,6 +18,7 @@ import base64
 import time
 import secrets
 import string
+import csv
 import stripe
 
 app = Flask(__name__)
@@ -1289,41 +1290,56 @@ def admin_generer_code():
 
     note = (request.form.get('note') or '').strip()[:200]
 
+    try:
+        quantite = int(request.form.get('quantite', 1))
+    except (ValueError, TypeError):
+        quantite = 1
+    quantite = max(1, min(quantite, 50))
+
     if not stripe.api_key:
         flash('Stripe non configuré (STRIPE_SECRET_KEY manquant). Impossible de générer un code.', 'danger')
         return redirect(url_for('admin_codes_promo'))
 
-    code = _generer_code_unique()
-    try:
-        coupon_params = {
-            'percent_off': percent,
-            'duration': duration,
-            'name': f'hera -{percent}%',
-        }
-        if duration == 'repeating':
-            coupon_params['duration_in_months'] = months
-        coupon = stripe.Coupon.create(**coupon_params)
-        promo = stripe.PromotionCode.create(
-            promotion={'type': 'coupon', 'coupon': coupon.id},
+    crees = []
+    erreur = None
+    for _ in range(quantite):
+        code = _generer_code_unique()
+        try:
+            coupon_params = {
+                'percent_off': percent,
+                'duration': duration,
+                'name': f'hera -{percent}%',
+            }
+            if duration == 'repeating':
+                coupon_params['duration_in_months'] = months
+            coupon = stripe.Coupon.create(**coupon_params)
+            promo = stripe.PromotionCode.create(
+                promotion={'type': 'coupon', 'coupon': coupon.id},
+                code=code,
+                max_redemptions=1,
+            )
+        except Exception as e:
+            erreur = str(e)
+            break
+        db.session.add(SubscriptionPromoCode(
             code=code,
-            max_redemptions=1,
-        )
-    except Exception as e:
-        flash(f'Erreur Stripe : {str(e)}', 'danger')
-        return redirect(url_for('admin_codes_promo'))
+            percent_off=percent,
+            duration=duration,
+            duration_in_months=months,
+            stripe_coupon_id=coupon.id,
+            stripe_promotion_code_id=promo.id,
+            note=note or None,
+        ))
+        crees.append(code)
 
-    entry = SubscriptionPromoCode(
-        code=code,
-        percent_off=percent,
-        duration=duration,
-        duration_in_months=months,
-        stripe_coupon_id=coupon.id,
-        stripe_promotion_code_id=promo.id,
-        note=note or None,
-    )
-    db.session.add(entry)
     db.session.commit()
-    flash(f'Code généré : {code} (-{percent}%). Communique-le au restaurateur.', 'success')
+
+    if crees and erreur:
+        flash(f'{len(crees)} code(s) généré(s), puis arrêt sur erreur Stripe : {erreur}', 'warning')
+    elif crees:
+        flash(f'{len(crees)} code(s) généré(s) à -{percent}%. Tu peux les copier ou les exporter.', 'success')
+    else:
+        flash(f'Erreur Stripe : {erreur}', 'danger')
     return redirect(url_for('admin_codes_promo'))
 
 
@@ -1346,6 +1362,24 @@ def admin_supprimer_code(code_id):
     db.session.commit()
     flash('Code supprimé.', 'success')
     return redirect(url_for('admin_codes_promo'))
+
+
+@app.route('/hera-admin/codes-promo/export')
+@admin_required
+def admin_export_codes():
+    dispo = (SubscriptionPromoCode.query
+             .filter_by(redeemed=False)
+             .order_by(SubscriptionPromoCode.created_at.desc())
+             .all())
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['code', 'reduction_percent', 'duree', 'note'])
+    for c in dispo:
+        writer.writerow([c.code, c.percent_off, c.duree_label, c.note or ''])
+    resp = make_response(output.getvalue())
+    resp.headers['Content-Type'] = 'text/csv; charset=utf-8'
+    resp.headers['Content-Disposition'] = 'attachment; filename=codes_promo_disponibles.csv'
+    return resp
 
 
 # ── Admin — Fiche restaurant ─────────────────────────────────────

@@ -44,6 +44,10 @@
                     <label class="form-label">Réduction (%)</label>
                     <input type="number" name="percent" class="form-control" min="1" max="100" value="50" required>
                 </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label">Quantité</label>
+                    <input type="number" name="quantite" class="form-control" min="1" max="50" value="1">
+                </div>
                 <div class="col-6 col-md-3">
                     <label class="form-label">Durée</label>
                     <select name="duration" id="durationSelect" class="form-select">
@@ -72,7 +76,17 @@
     <!-- Liste des codes -->
     <div class="card border-0 shadow-sm">
         <div class="card-body p-4">
-            <h6 class="fw-bold mb-3">Codes générés ({{ codes|length }})</h6>
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h6 class="fw-bold mb-0">Codes générés ({{ codes|length }})</h6>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-dark" onclick="copierDispos()">
+                        📋 Copier les codes dispo
+                    </button>
+                    <a href="{{ url_for('admin_export_codes') }}" class="btn btn-sm btn-outline-dark">
+                        📥 Exporter (CSV)
+                    </a>
+                </div>
+            </div>
             {% if codes %}
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
@@ -147,6 +161,14 @@ function copierCode(code, btn) {
         const old = btn.textContent
         btn.textContent = '✓'
         setTimeout(() => { btn.textContent = old }, 1200)
+    })
+}
+
+const codesDispo = [{% for c in codes if not c.redeemed %}"{{ c.code }}",{% endfor %}]
+function copierDispos() {
+    if (!codesDispo.length) { alert('Aucun code disponible à copier.'); return }
+    navigator.clipboard.writeText(codesDispo.join('\n')).then(() => {
+        alert(codesDispo.length + ' code(s) disponible(s) copié(s) dans le presse-papier !')
     })
 }
 </script>
