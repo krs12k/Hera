@@ -27,6 +27,9 @@ class Restaurant(UserMixin, db.Model):
     # Mode fidélité
     point_mode = db.Column(db.String(20), default='simple')
 
+    # Emails automatiques aux clients (points gagnés / récompense atteinte)
+    notify_clients = db.Column(db.Boolean, default=True)
+
     # Reset mot de passe
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_expires = db.Column(db.DateTime, nullable=True)

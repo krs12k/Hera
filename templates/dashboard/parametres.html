@@ -144,6 +144,19 @@
                         </div>
                     </div>
 
+                    <hr class="my-4">
+                    <h5 class="mb-3 fw-bold">Emails automatiques aux clients</h5>
+                    <div class="form-check form-switch mb-3">
+                        <input type="checkbox" class="form-check-input" role="switch" id="notifyClients"
+                               name="notify_clients" {{ 'checked' if current_user.notify_clients else '' }}>
+                        <label class="form-check-label" for="notifyClients">
+                            Prévenir le client par email à chaque visite validée
+                        </label>
+                        <div class="text-muted" style="font-size:0.85rem">
+                            Il reçoit sa progression vers la récompense, et un email de félicitations dès qu'il l'atteint. Cela fait revenir vos clients.
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn hera-btn-gold w-100 fw-bold">Enregistrer</button>
                 </form>
             </div>

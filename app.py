@@ -81,6 +81,7 @@ with app.app_context():
         "ALTER TABLE restaurants ADD COLUMN reset_token VARCHAR(100)",
         "ALTER TABLE restaurants ADD COLUMN reset_token_expires TIMESTAMP",
         "ALTER TABLE restaurants ADD COLUMN logo_data TEXT",
+        "ALTER TABLE restaurants ADD COLUMN notify_clients BOOLEAN DEFAULT TRUE",
     ]:
         try:
             with db.engine.connect() as conn:
@@ -153,6 +154,87 @@ def send_email(subject, recipients, body_text, body_html=None):
 
     import threading
     threading.Thread(target=_send, daemon=True).start()
+
+
+def notifier_points(client, resto, points_ajoutes):
+    """Envoie au client un email après un ajout de points :
+    soit « récompense débloquée » si le seuil vient d'être franchi,
+    soit « points gagnés + progression » sinon. Sans effet si le resto
+    a désactivé les notifications ou si le client n'a pas d'email."""
+    if not getattr(resto, 'notify_clients', True):
+        return
+    if not client.email or points_ajoutes <= 0:
+        return
+
+    total = client.total_points
+    seuil = resto.reward_threshold or 0
+    avant = total - points_ajoutes
+    vient_de_franchir = bool(seuil) and avant < seuil <= total
+
+    logo_html = (
+        f'<div style="text-align:center;margin-bottom:20px"><img src="{resto.logo_data}" alt="{resto.name}" style="height:56px;object-fit:contain"></div>'
+        if resto.logo_data else
+        f'<div style="text-align:center;font-size:1.3rem;font-weight:700;margin-bottom:16px">{resto.name}</div>'
+    )
+
+    if vient_de_franchir:
+        subject = f'🎁 Ta récompense chez {resto.name} t\'attend !'
+        body_text = (
+            f"Bonjour {client.first_name},\n\n"
+            f"Bravo ! Tu as atteint {seuil} points chez {resto.name}.\n"
+            f"Tu peux maintenant profiter de : {resto.reward_description}.\n\n"
+            f"Présente ton email à la caisse lors de ta prochaine visite pour en profiter.\n\n"
+            f"À bientôt !"
+        )
+        body_html = hera_email(f"""
+            {logo_html}
+            <h2 style="font-size:1.25rem;margin:0 0 8px;text-align:center">🎁 Récompense débloquée !</h2>
+            <p style="color:#555;line-height:1.6;text-align:center">Bravo <strong>{client.first_name}</strong>, tu as atteint <strong>{seuil} points</strong> chez {resto.name}.</p>
+            <div style="background:#e8f8f7;border:1px solid #1BBFB2;border-radius:12px;padding:22px;margin:20px 0;text-align:center">
+                <div style="font-size:0.85rem;color:#0a8a80;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Ta récompense</div>
+                <div style="font-size:1.15rem;font-weight:700;color:#1a1a2e">{resto.reward_description}</div>
+            </div>
+            <p style="color:#555;line-height:1.6;text-align:center">Présente ton email à la caisse lors de ta prochaine visite pour en profiter.</p>
+        """)
+    else:
+        if seuil and total < seuil:
+            restant = seuil - total
+            pct = int(min(100, total * 100 / seuil)) if seuil else 0
+            progression = f"""
+            <div style="background:#eee;border-radius:99px;height:12px;overflow:hidden;margin:6px 0 10px">
+                <div style="background:#1BBFB2;height:12px;width:{pct}%"></div>
+            </div>
+            <div style="font-size:0.95rem;color:#1a1a2e;text-align:center">
+                Plus que <strong>{restant} point{'s' if restant > 1 else ''}</strong> avant <strong>{resto.reward_description}</strong> !
+            </div>"""
+            ligne_text = f"Plus que {restant} point(s) avant {resto.reward_description} !"
+        else:
+            progression = f"""
+            <div style="font-size:0.95rem;color:#0a8a80;text-align:center">
+                🎁 Ta récompense <strong>{resto.reward_description}</strong> est disponible !
+            </div>"""
+            ligne_text = f"Ta récompense {resto.reward_description} est disponible !"
+
+        subject = f'+{points_ajoutes} points chez {resto.name} 🎉'
+        body_text = (
+            f"Bonjour {client.first_name},\n\n"
+            f"Ta visite chez {resto.name} vient d'être validée : +{points_ajoutes} points.\n"
+            f"Tu as maintenant {total} points.\n"
+            f"{ligne_text}\n\n"
+            f"À bientôt !"
+        )
+        body_html = hera_email(f"""
+            {logo_html}
+            <h2 style="font-size:1.25rem;margin:0 0 8px;text-align:center">+{points_ajoutes} points 🎉</h2>
+            <p style="color:#555;line-height:1.6;text-align:center">Ta visite chez <strong>{resto.name}</strong> vient d'être validée.</p>
+            <div style="background:#f8f9fa;border-radius:12px;padding:22px;margin:20px 0">
+                <div style="text-align:center;font-size:1.6rem;font-weight:700;color:#1a1a2e;margin-bottom:4px">{total} points</div>
+                {progression}
+            </div>
+        """)
+
+    send_email(subject=subject, recipients=[client.email], body_text=body_text, body_html=body_html)
+
 
 def subscription_required(f):
     @wraps(f)
@@ -432,6 +514,7 @@ def valider_visite(client_id):
     )
     db.session.add(visit)
     db.session.commit()
+    notifier_points(client, current_user, points)
     flash(f'+{points} points ajoutés pour {client.first_name} !', 'success')
     return redirect(url_for('dashboard'))
 
@@ -463,6 +546,7 @@ def parametres():
         current_user.address = request.form.get('address', '')
         current_user.phone = request.form.get('phone', '')
         current_user.point_mode = request.form.get('point_mode', 'simple')
+        current_user.notify_clients = request.form.get('notify_clients') == 'on'
         current_user.points_per_visit = int(request.form['points_per_visit'])
         current_user.reward_threshold = int(request.form['reward_threshold'])
         current_user.reward_description = request.form['reward_description']
@@ -837,6 +921,7 @@ def client_commander(token):
         client.total_points += points
         db.session.add(visit)
         db.session.commit()
+        notifier_points(client, resto, points)
 
         flash(f'🎉 +{points} points ajoutés ! Tu as maintenant {client.total_points} points.', 'success')
         return redirect(url_for('client_profil', token=token, email=email))
