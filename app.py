@@ -82,6 +82,7 @@ with app.app_context():
         "ALTER TABLE restaurants ADD COLUMN reset_token_expires TIMESTAMP",
         "ALTER TABLE restaurants ADD COLUMN logo_data TEXT",
         "ALTER TABLE restaurants ADD COLUMN notify_clients BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE clients ADD COLUMN last_relance_at TIMESTAMP",
     ]:
         try:
             with db.engine.connect() as conn:
@@ -234,6 +235,76 @@ def notifier_points(client, resto, points_ajoutes):
         """)
 
     send_email(subject=subject, recipients=[client.email], body_text=body_text, body_html=body_html)
+
+
+def clients_a_relancer(resto_id):
+    """Clients déjà venus mais pas revenus depuis plus de 30 jours, ayant un
+    email, et qui n'ont pas déjà été relancés dans les 30 derniers jours."""
+    now = datetime.utcnow()
+    inactif = now - timedelta(days=30)
+    agg = db.session.query(
+        Visit.client_id.label('cid'),
+        func.max(Visit.created_at).label('last_seen'),
+    ).filter(Visit.restaurant_id == resto_id).group_by(Visit.client_id).subquery()
+    rows = db.session.query(Client, agg.c.last_seen)\
+        .join(agg, Client.id == agg.c.cid)\
+        .filter(Client.restaurant_id == resto_id, agg.c.last_seen < inactif)\
+        .order_by(agg.c.last_seen.asc()).all()
+    eligibles = []
+    for client, _ in rows:
+        if not client.email:
+            continue
+        if client.last_relance_at and client.last_relance_at > inactif:
+            continue
+        eligibles.append(client)
+    return eligibles
+
+
+def envoyer_relance(client, resto):
+    """Email « vous nous manquez » à un client inactif."""
+    seuil = resto.reward_threshold or 0
+    if seuil and client.total_points >= seuil:
+        ligne_text = f"Bonne nouvelle : ta récompense {resto.reward_description} t'attend déjà !"
+        encart = f"""
+            <div style="background:#e8f8f7;border:1px solid #1BBFB2;border-radius:12px;padding:18px;margin:18px 0;text-align:center">
+                <div style="font-size:0.82rem;color:#0a8a80;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Ta récompense t'attend</div>
+                <div style="font-size:1.1rem;font-weight:700;color:#1a1a2e">{resto.reward_description}</div>
+            </div>"""
+    elif seuil:
+        restant = seuil - client.total_points
+        ligne_text = f"Tu as {client.total_points} points — plus que {restant} avant {resto.reward_description} !"
+        encart = f"""
+            <div style="background:#f8f9fa;border-radius:12px;padding:18px;margin:18px 0;text-align:center">
+                <div style="font-size:1.5rem;font-weight:700;color:#1a1a2e">{client.total_points} points</div>
+                <div style="font-size:0.92rem;color:#555;margin-top:4px">Plus que <strong>{restant} point{'s' if restant > 1 else ''}</strong> avant <strong>{resto.reward_description}</strong></div>
+            </div>"""
+    else:
+        ligne_text = f"Tu as {client.total_points} points chez nous."
+        encart = ""
+
+    logo_html = (
+        f'<div style="text-align:center;margin-bottom:20px"><img src="{resto.logo_data}" alt="{resto.name}" style="height:56px;object-fit:contain"></div>'
+        if resto.logo_data else
+        f'<div style="text-align:center;font-size:1.3rem;font-weight:700;margin-bottom:16px">{resto.name}</div>'
+    )
+
+    send_email(
+        subject=f'{resto.name} — vous nous manquez ! 🍽️',
+        recipients=[client.email],
+        body_text=(
+            f"Bonjour {client.first_name},\n\n"
+            f"Ça fait un moment qu'on ne vous a pas vu chez {resto.name} !\n"
+            f"{ligne_text}\n\n"
+            f"On serait ravis de vous revoir très bientôt.\n\nÀ très vite !"
+        ),
+        body_html=hera_email(f"""
+            {logo_html}
+            <h2 style="font-size:1.25rem;margin:0 0 8px;text-align:center">Vous nous manquez ! 🍽️</h2>
+            <p style="color:#555;line-height:1.6;text-align:center">Bonjour <strong>{client.first_name}</strong>, ça fait un moment qu'on ne vous a pas vu chez {resto.name}.</p>
+            {encart}
+            <p style="color:#555;line-height:1.6;text-align:center">On serait ravis de vous revoir très bientôt. À très vite !</p>
+        """)
+    )
 
 
 def subscription_required(f):
@@ -480,6 +551,8 @@ def statistiques():
         .outerjoin(agg, Client.id == agg.c.cid)\
         .filter(Client.restaurant_id == current_user.id).all()
 
+    eligibles_set = {c.id for c in clients_a_relancer(current_user.id)}
+
     clients_actifs = 0          # vus dans les 30 derniers jours
     avec_visite = 0             # ont au moins 1 visite
     recurrents = 0              # ont au moins 2 visites
@@ -494,11 +567,12 @@ def statistiques():
             clients_actifs += 1
         elif last_seen:
             a_risque.append({'client': client, 'last_seen': last_seen,
-                             'days': (now - last_seen).days})
+                             'days': (now - last_seen).days,
+                             'eligible': client.id in eligibles_set})
 
     a_risque.sort(key=lambda x: x['last_seen'])   # les plus anciens d'abord
     clients_a_risque_count = len(a_risque)
-    a_risque = a_risque[:10]
+    a_risque = a_risque[:50]
     taux_retour = round(recurrents * 100 / avec_visite) if avec_visite else 0
 
     top_clients = Client.query.filter_by(restaurant_id=current_user.id)\
@@ -511,8 +585,37 @@ def statistiques():
         new_clients_month=new_clients_month, clients_actifs=clients_actifs,
         taux_retour=taux_retour, clients_a_risque=a_risque,
         clients_a_risque_count=clients_a_risque_count,
-        clients_rewarded=clients_rewarded, top_clients=top_clients
+        clients_rewarded=clients_rewarded, top_clients=top_clients,
+        relance_eligibles=len(eligibles_set),
     )
+
+
+# ── Relancer les clients inactifs ───────────────────────────────
+@app.route('/dashboard/relancer-inactifs', methods=['POST'])
+@login_required
+@subscription_required
+@limiter.limit('4 per hour', methods=['POST'])
+def relancer_inactifs():
+    eligibles = clients_a_relancer(current_user.id)
+    if not eligibles:
+        flash('Aucun client à relancer pour le moment.', 'info')
+        return redirect(url_for('statistiques'))
+
+    # On ne garde que les clients cochés (et toujours éligibles, par sécurité).
+    ids = set(request.form.getlist('client_ids'))
+    cibles = [c for c in eligibles if str(c.id) in ids]
+    if not cibles:
+        flash('Sélectionne au moins un client à relancer.', 'warning')
+        return redirect(url_for('statistiques'))
+
+    now = datetime.utcnow()
+    for client in cibles:
+        envoyer_relance(client, current_user)
+        client.last_relance_at = now
+    db.session.commit()
+
+    flash(f'Relance envoyée à {len(cibles)} client(s) inactif(s) ! 📨', 'success')
+    return redirect(url_for('statistiques'))
 
 
 # ── Valider une visite client ───────────────────────────────────

@@ -116,39 +116,97 @@
 
 <!-- Clients à risque -->
 <div class="stat-panel mb-4">
-    <div class="d-flex align-items-center justify-content-between mb-1">
-        <h5 class="fw-bold mb-0">💤 Clients à risque</h5>
-        {% if clients_a_risque_count %}<span class="badge rounded-pill bg-danger">{{ clients_a_risque_count }}</span>{% endif %}
-    </div>
-    <p class="text-muted mb-3" style="font-size:0.85rem">
-        Déjà venus mais pas revenus depuis plus de 30 jours — un petit message peut les faire revenir.
-    </p>
-    {% if clients_a_risque %}
-    <div class="table-responsive">
-        <table class="table table-borderless align-middle mb-0 stat-table">
-            <tbody>
-                {% for item in clients_a_risque %}
-                <tr>
-                    <td style="width:48px">
-                        <span class="avatar" style="background:{{ palette[loop.index0 % palette|length] }}">{{ item.client.first_name[:1]|upper }}</span>
-                    </td>
-                    <td><strong>{{ item.client.first_name }}</strong><div class="text-muted small">{{ item.client.email }}</div></td>
-                    <td><span class="pill pill-amber">{{ item.client.total_points }} pts</span></td>
-                    <td class="text-end">
-                        <span class="pill {{ 'pill-red' if item.days >= 60 else 'pill-grey' }}">il y a {{ item.days }} j</span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% if clients_a_risque_count > clients_a_risque|length %}
-    <p class="text-muted text-center mt-2 mb-0" style="font-size:0.82rem">… et {{ clients_a_risque_count - clients_a_risque|length }} autre(s).</p>
-    {% endif %}
-    {% else %}
-    <p class="text-muted text-center py-3 mb-0">Aucun client à risque — vos clients reviennent régulièrement. 🎉</p>
-    {% endif %}
+    <form method="POST" action="{{ url_for('relancer_inactifs') }}" id="formRelance" onsubmit="return confirmRelance()">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <h5 class="fw-bold mb-1">💤 Clients à risque
+            {% if clients_a_risque_count %}<span class="badge rounded-pill bg-danger ms-1">{{ clients_a_risque_count }}</span>{% endif %}
+        </h5>
+        <p class="text-muted mb-3" style="font-size:0.88rem">
+            Ces clients sont déjà venus chez vous, mais pas depuis plus de 30 jours.
+            Cochez ceux que vous voulez <strong>relancer par email</strong> pour les inviter à revenir.
+            Un même client ne peut être relancé qu'une fois par mois.
+        </p>
+
+        {% if clients_a_risque %}
+            {% if relance_eligibles %}
+            <!-- Barre d'action -->
+            <div class="relance-bar d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <label class="d-flex align-items-center gap-2 mb-0" style="cursor:pointer">
+                    <input type="checkbox" class="form-check-input mt-0" id="cbAll" checked onchange="toggleAll(this)">
+                    <span class="fw-semibold">Tout sélectionner</span>
+                    <span class="text-muted small">— <span id="relCount">{{ relance_eligibles }}</span> sur {{ relance_eligibles }} client(s)</span>
+                </label>
+                <button type="submit" class="btn btn-sm hera-btn-gold fw-bold rounded-pill px-3" id="btnRelance">
+                    📨 Envoyer la relance
+                </button>
+            </div>
+            {% elif clients_a_risque_count %}
+            <div class="relance-bar mb-3 text-muted" style="font-size:0.88rem">
+                ✓ Tous vos clients à risque ont déjà été relancés ce mois-ci.
+            </div>
+            {% endif %}
+
+            <div class="table-responsive">
+                <table class="table table-borderless align-middle mb-0 stat-table">
+                    <thead>
+                        <tr class="text-muted" style="font-size:0.74rem;text-transform:uppercase;letter-spacing:.5px">
+                            <th style="width:42px">{% if relance_eligibles %}Relancer{% endif %}</th>
+                            <th colspan="2">Client</th>
+                            <th>Points</th>
+                            <th class="text-end">Dernière visite</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in clients_a_risque %}
+                        <tr class="{{ '' if item.eligible else 'row-paused' }}">
+                            <td style="width:42px">
+                                {% if item.eligible %}
+                                <input type="checkbox" class="form-check-input relance-cb" name="client_ids"
+                                       value="{{ item.client.id }}" checked onchange="updateCount()">
+                                {% else %}
+                                <span class="pill pill-grey" title="Déjà relancé ce mois-ci">en pause</span>
+                                {% endif %}
+                            </td>
+                            <td style="width:48px">
+                                <span class="avatar" style="background:{{ palette[loop.index0 % palette|length] }}">{{ item.client.first_name[:1]|upper }}</span>
+                            </td>
+                            <td><strong>{{ item.client.first_name }}</strong><div class="text-muted small">{{ item.client.email }}</div></td>
+                            <td><span class="pill pill-amber">{{ item.client.total_points }} pts</span></td>
+                            <td class="text-end">
+                                <span class="pill {{ 'pill-red' if item.days >= 60 else 'pill-grey' }}">il y a {{ item.days }} j</span>
+                                {% if not item.eligible %}<div class="text-muted" style="font-size:0.7rem">relancé récemment</div>{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if clients_a_risque_count > clients_a_risque|length %}
+            <p class="text-muted text-center mt-2 mb-0" style="font-size:0.82rem">… et {{ clients_a_risque_count - clients_a_risque|length }} autre(s).</p>
+            {% endif %}
+        {% else %}
+        <p class="text-muted text-center py-3 mb-0">Aucun client à risque — vos clients reviennent régulièrement. 🎉</p>
+        {% endif %}
+    </form>
 </div>
+
+<script>
+function relCbs(){ return Array.from(document.querySelectorAll('.relance-cb')) }
+function updateCount(){
+    const n = relCbs().filter(c => c.checked).length
+    const span = document.getElementById('relCount'); if (span) span.textContent = n
+    const btn = document.getElementById('btnRelance'); if (btn) btn.disabled = (n === 0)
+    const all = document.getElementById('cbAll')
+    if (all){ all.checked = (n === relCbs().length && n > 0) }
+}
+function toggleAll(master){ relCbs().forEach(c => c.checked = master.checked); updateCount() }
+function confirmRelance(){
+    const n = relCbs().filter(c => c.checked).length
+    if (n === 0){ alert('Cochez au moins un client à relancer.'); return false }
+    return confirm('Envoyer un email de relance à ' + n + ' client(s) ?')
+}
+</script>
 
 <!-- Top clients -->
 <div class="stat-panel">
@@ -221,6 +279,9 @@
 .pill-amber{background:rgba(225,169,72,.16);color:#b07d1d}
 .pill-red{background:rgba(242,120,159,.16);color:#c43c66}
 .pill-grey{background:#eef0f4;color:#7a7f8c}
+.relance-bar{background:#f5f7fa;border:1px solid #eceef3;border-radius:12px;padding:.7rem 1rem}
+.row-paused{opacity:.55}
+.stat-table thead th{border-bottom:1px solid #eceef3;padding-bottom:.5rem}
 @keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 </style>
 

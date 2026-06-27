@@ -81,6 +81,7 @@ class Client(db.Model):
     email = db.Column(db.String(120), nullable=False)
     total_points = db.Column(db.Integer, default=0)
     rgpd_consent = db.Column(db.Boolean, default=False)
+    last_relance_at = db.Column(db.DateTime, nullable=True)  # dernière relance "client inactif"
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     visits = db.relationship('Visit', backref='client', lazy=True)
