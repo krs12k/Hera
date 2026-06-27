@@ -9,7 +9,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from models import db, Restaurant, Client, Visit, PointRule, AdminUser, Report, DiscountCode, SubscriptionPromoCode
-from config import Config
+from config import Config, IS_PRODUCTION
 from datetime import datetime, timedelta
 from functools import wraps
 import qrcode
@@ -1245,12 +1245,16 @@ def checkout():
 @login_required
 def abonnement_success():
     session_id = request.args.get('session_id')
-    if session_id:
+    if session_id and current_user.stripe_customer_id:
         try:
             checkout_session = stripe.checkout.Session.retrieve(session_id)
-            current_user.subscription_status = 'active'
-            current_user.stripe_subscription_id = checkout_session.subscription
-            db.session.commit()
+            # La session doit appartenir à ce compte et être aboutie,
+            # sinon on n'active rien (anti-falsification du session_id).
+            if (checkout_session.customer == current_user.stripe_customer_id
+                    and checkout_session.status == 'complete'):
+                current_user.subscription_status = 'active'
+                current_user.stripe_subscription_id = checkout_session.subscription
+                db.session.commit()
         except Exception:
             pass
     flash('Essai démarré ! Votre carte ne sera débitée que dans 14 jours. Bienvenue sur hera. 🎉', 'success')
@@ -1265,13 +1269,21 @@ def stripe_webhook():
     sig = request.headers.get('Stripe-Signature')
     webhook_secret = app.config.get('STRIPE_WEBHOOK_SECRET')
 
-    try:
-        if webhook_secret:
-            event = stripe.Webhook.construct_event(payload, sig, webhook_secret)
-        else:
+    if not webhook_secret:
+        # En production : jamais d'événement non vérifié (sinon abonnement forgeable).
+        if IS_PRODUCTION:
+            app.logger.error("STRIPE_WEBHOOK_SECRET manquant — webhook Stripe rejeté.")
+            return '', 400
+        # Dev local uniquement : on accepte sans vérifier la signature.
+        try:
             event = stripe.Event.construct_from(request.get_json(), stripe.api_key)
-    except Exception:
-        return '', 400
+        except Exception:
+            return '', 400
+    else:
+        try:
+            event = stripe.Webhook.construct_event(payload, sig, webhook_secret)
+        except Exception:
+            return '', 400
 
     if event['type'] == 'customer.subscription.deleted':
         sub = event['data']['object']
