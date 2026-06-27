@@ -30,6 +30,10 @@ class Restaurant(UserMixin, db.Model):
     # Emails automatiques aux clients (points gagnés / récompense atteinte)
     notify_clients = db.Column(db.Boolean, default=True)
 
+    # Onboarding (checklist de démarrage du dashboard)
+    onboarding_configured = db.Column(db.Boolean, default=False)  # a enregistré ses paramètres
+    qr_seen = db.Column(db.Boolean, default=False)                # a ouvert sa page QR code
+
     # Reset mot de passe
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_expires = db.Column(db.DateTime, nullable=True)

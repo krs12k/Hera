@@ -85,6 +85,9 @@ with app.app_context():
         "ALTER TABLE restaurants ADD COLUMN notify_clients BOOLEAN DEFAULT TRUE",
         "ALTER TABLE clients ADD COLUMN last_relance_at TIMESTAMP",
         "ALTER TABLE clients ADD COLUMN email_opt_out BOOLEAN DEFAULT FALSE",
+        # Restos déjà existants : considérés comme onboardés (DEFAULT TRUE).
+        "ALTER TABLE restaurants ADD COLUMN onboarding_configured BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE restaurants ADD COLUMN qr_seen BOOLEAN DEFAULT TRUE",
     ]:
         try:
             with db.engine.connect() as conn:
@@ -741,6 +744,7 @@ def parametres():
             current_user.minimum_amount = float(request.form['minimum_amount'].replace(',', '.'))
         except ValueError:
             current_user.minimum_amount = 0.0
+        current_user.onboarding_configured = True
         db.session.commit()
         flash('Paramètres mis à jour !', 'success')
         return redirect(url_for('parametres'))
@@ -987,6 +991,9 @@ def signaler():
 @app.route('/dashboard/qrcode')
 @login_required
 def qrcode_page():
+    if not current_user.qr_seen:
+        current_user.qr_seen = True
+        db.session.commit()
     registration_url = url_for('client_register', token=current_user.qr_token, _external=True)
     img = qrcode.make(registration_url)
     buf = io.BytesIO()

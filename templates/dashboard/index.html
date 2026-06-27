@@ -21,6 +21,51 @@
 </div>
 {% endif %}
 
+{# ── Checklist d'onboarding (visible tant que tout n'est pas fait) ── #}
+{% set ob_steps = [
+    {'done': current_user.onboarding_configured, 'icon': '🎯', 'label': 'Personnalisez votre programme de fidélité',
+     'desc': 'Points par visite, seuil et récompense', 'url': url_for('parametres'), 'cta': 'Configurer'},
+    {'done': current_user.logo_data is not none, 'icon': '🖼️', 'label': 'Ajoutez le logo de votre restaurant',
+     'desc': 'Il apparaît sur la page client et les emails', 'url': url_for('parametres'), 'cta': 'Ajouter'},
+    {'done': current_user.qr_seen, 'icon': '📱', 'label': 'Affichez et imprimez votre QR code',
+     'desc': 'Vos clients le scannent pour s\'inscrire', 'url': url_for('qrcode_page'), 'cta': 'Voir le QR'},
+    {'done': clients|length > 0, 'icon': '🎉', 'label': 'Obtenez votre premier client',
+     'desc': 'Posez le QR à la caisse et c\'est parti', 'url': url_for('qrcode_page'), 'cta': 'Voir le QR'}
+] %}
+{% set ob_done = ob_steps|selectattr('done')|list|length %}
+{% if ob_done < ob_steps|length %}
+<div class="card border-0 shadow-sm mb-4 onboarding-card">
+    <div class="onboarding-head">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold mb-1" style="color:#fff">🚀 Bien démarrer sur hera.</h5>
+                <p class="mb-0" style="color:rgba(255,255,255,.85);font-size:0.88rem">
+                    Encore {{ ob_steps|length - ob_done }} étape{{ 's' if (ob_steps|length - ob_done) > 1 else '' }} pour être prêt à fidéliser vos clients.
+                </p>
+            </div>
+            <div class="onboarding-progress-num">{{ ob_done }}<span style="opacity:.6">/{{ ob_steps|length }}</span></div>
+        </div>
+        <div class="onboarding-bar"><div class="onboarding-bar-fill" style="width:{{ (ob_done / ob_steps|length * 100)|int }}%"></div></div>
+    </div>
+    <div class="card-body p-2 p-sm-3">
+        {% for step in ob_steps %}
+        <div class="onboarding-step d-flex align-items-center gap-3 p-2 rounded {{ 'is-done' if step.done else '' }}">
+            <div class="onboarding-check">{{ '✓' if step.done else step.icon }}</div>
+            <div class="flex-grow-1">
+                <div class="fw-semibold {{ 'text-decoration-line-through text-muted' if step.done else '' }}">{{ step.label }}</div>
+                {% if not step.done %}<div class="text-muted" style="font-size:0.82rem">{{ step.desc }}</div>{% endif %}
+            </div>
+            {% if not step.done %}
+            <a href="{{ step.url }}" class="btn btn-sm hera-btn-gold fw-bold rounded-pill px-3 text-nowrap">{{ step.cta }}</a>
+            {% else %}
+            <span class="badge rounded-pill" style="background:#e8f8f7;color:#0a8a80">Fait</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div class="d-flex align-items-center gap-3">
         {% if current_user.logo_data %}
@@ -309,4 +354,20 @@ document.querySelectorAll('.toggle-history').forEach(btn => {
     target.addEventListener('hide.bs.collapse', () => btn.querySelector('.chevron').style.transform = 'rotate(0deg)')
 })
 </script>
+
+<style>
+.onboarding-card{border-radius:16px;overflow:hidden}
+.onboarding-head{background:linear-gradient(120deg,#1A1A2E 0%,#2a2a4a 100%);padding:1.1rem 1.3rem}
+.onboarding-progress-num{font-size:1.6rem;font-weight:800;color:#fff;line-height:1}
+.onboarding-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.18);margin-top:.8rem;overflow:hidden}
+.onboarding-bar-fill{height:7px;border-radius:99px;background:#1BBFB2;transition:width .4s ease}
+.onboarding-step{transition:background .15s}
+.onboarding-step:hover{background:#f8f9fa}
+.onboarding-step.is-done{opacity:.7}
+.onboarding-check{
+    width:38px;height:38px;min-width:38px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-size:1.1rem;background:#f1f2f6
+}
+.onboarding-step.is-done .onboarding-check{background:#1BBFB2;color:#fff;font-weight:700}
+</style>
 {% endblock %}
