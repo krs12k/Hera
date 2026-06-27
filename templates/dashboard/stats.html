@@ -175,7 +175,7 @@
                             <td><span class="pill pill-amber">{{ item.client.total_points }} pts</span></td>
                             <td class="text-end">
                                 <span class="pill {{ 'pill-red' if item.days >= 60 else 'pill-grey' }}">il y a {{ item.days }} j</span>
-                                {% if not item.eligible %}<div class="text-muted" style="font-size:0.7rem">relancé récemment</div>{% endif %}
+                                {% if not item.eligible %}<div class="text-muted" style="font-size:0.7rem">{{ 'désinscrit' if item.client.email_opt_out else 'relancé récemment' }}</div>{% endif %}
                             </td>
                         </tr>
                         {% endfor %}

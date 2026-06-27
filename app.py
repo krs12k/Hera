@@ -20,6 +20,7 @@ import secrets
 import string
 import csv
 import stripe
+from itsdangerous import URLSafeSerializer, BadData
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -83,6 +84,7 @@ with app.app_context():
         "ALTER TABLE restaurants ADD COLUMN logo_data TEXT",
         "ALTER TABLE restaurants ADD COLUMN notify_clients BOOLEAN DEFAULT TRUE",
         "ALTER TABLE clients ADD COLUMN last_relance_at TIMESTAMP",
+        "ALTER TABLE clients ADD COLUMN email_opt_out BOOLEAN DEFAULT FALSE",
     ]:
         try:
             with db.engine.connect() as conn:
@@ -157,6 +159,40 @@ def send_email(subject, recipients, body_text, body_html=None):
     threading.Thread(target=_send, daemon=True).start()
 
 
+def _unsub_serializer():
+    return URLSafeSerializer(app.config['SECRET_KEY'], salt='desinscription-client')
+
+
+def lien_desinscription(client):
+    """URL absolue de désinscription pour un client (token signé, sans stockage)."""
+    token = _unsub_serializer().dumps(client.id)
+    return url_for('desinscription', token=token, _external=True)
+
+
+def pied_desinscription(client):
+    """Bloc « se désinscrire » (HTML + texte) à ajouter aux emails clients."""
+    url = lien_desinscription(client)
+    html = (f'<p style="margin:18px 0 0;font-size:0.72rem;color:#bbb;text-align:center">'
+            f'Vous ne souhaitez plus recevoir ces emails ? '
+            f'<a href="{url}" style="color:#999;text-decoration:underline">Se désinscrire</a></p>')
+    text = f"\n\n—\nPour ne plus recevoir ces emails : {url}"
+    return html, text
+
+
+def envoyer_email_client(client, resto, subject, body_text, content_html):
+    """Envoi d'un email à un client : saute les désinscrits et ajoute
+    automatiquement le pied de désinscription (RGPD)."""
+    if getattr(client, 'email_opt_out', False) or not client.email:
+        return
+    foot_html, foot_text = pied_desinscription(client)
+    send_email(
+        subject=subject,
+        recipients=[client.email],
+        body_text=body_text + foot_text,
+        body_html=hera_email(content_html + foot_html),
+    )
+
+
 def notifier_points(client, resto, points_ajoutes):
     """Envoie au client un email après un ajout de points :
     soit « récompense débloquée » si le seuil vient d'être franchi,
@@ -187,7 +223,7 @@ def notifier_points(client, resto, points_ajoutes):
             f"Présente ton email à la caisse lors de ta prochaine visite pour en profiter.\n\n"
             f"À bientôt !"
         )
-        body_html = hera_email(f"""
+        content_html = (f"""
             {logo_html}
             <h2 style="font-size:1.25rem;margin:0 0 8px;text-align:center">🎁 Récompense débloquée !</h2>
             <p style="color:#555;line-height:1.6;text-align:center">Bravo <strong>{client.first_name}</strong>, tu as atteint <strong>{seuil} points</strong> chez {resto.name}.</p>
@@ -224,7 +260,7 @@ def notifier_points(client, resto, points_ajoutes):
             f"{ligne_text}\n\n"
             f"À bientôt !"
         )
-        body_html = hera_email(f"""
+        content_html = (f"""
             {logo_html}
             <h2 style="font-size:1.25rem;margin:0 0 8px;text-align:center">+{points_ajoutes} points 🎉</h2>
             <p style="color:#555;line-height:1.6;text-align:center">Ta visite chez <strong>{resto.name}</strong> vient d'être validée.</p>
@@ -234,7 +270,7 @@ def notifier_points(client, resto, points_ajoutes):
             </div>
         """)
 
-    send_email(subject=subject, recipients=[client.email], body_text=body_text, body_html=body_html)
+    envoyer_email_client(client, resto, subject, body_text, content_html)
 
 
 def clients_a_relancer(resto_id):
@@ -252,7 +288,7 @@ def clients_a_relancer(resto_id):
         .order_by(agg.c.last_seen.asc()).all()
     eligibles = []
     for client, _ in rows:
-        if not client.email:
+        if not client.email or client.email_opt_out:
             continue
         if client.last_relance_at and client.last_relance_at > inactif:
             continue
@@ -288,22 +324,22 @@ def envoyer_relance(client, resto):
         f'<div style="text-align:center;font-size:1.3rem;font-weight:700;margin-bottom:16px">{resto.name}</div>'
     )
 
-    send_email(
+    envoyer_email_client(
+        client, resto,
         subject=f'{resto.name} — vous nous manquez ! 🍽️',
-        recipients=[client.email],
         body_text=(
             f"Bonjour {client.first_name},\n\n"
             f"Ça fait un moment qu'on ne vous a pas vu chez {resto.name} !\n"
             f"{ligne_text}\n\n"
             f"On serait ravis de vous revoir très bientôt.\n\nÀ très vite !"
         ),
-        body_html=hera_email(f"""
+        content_html=f"""
             {logo_html}
             <h2 style="font-size:1.25rem;margin:0 0 8px;text-align:center">Vous nous manquez ! 🍽️</h2>
             <p style="color:#555;line-height:1.6;text-align:center">Bonjour <strong>{client.first_name}</strong>, ça fait un moment qu'on ne vous a pas vu chez {resto.name}.</p>
             {encart}
             <p style="color:#555;line-height:1.6;text-align:center">On serait ravis de vous revoir très bientôt. À très vite !</p>
-        """)
+        """,
     )
 
 
@@ -844,6 +880,37 @@ def mentions_legales():
     return render_template('mentions_legales.html')
 
 
+# ── Désinscription des emails (RGPD) ────────────────────────────
+def _client_depuis_token(token):
+    try:
+        cid = _unsub_serializer().loads(token)
+    except BadData:
+        return None
+    return Client.query.get(cid)
+
+
+@app.route('/desinscription/<token>')
+def desinscription(token):
+    client = _client_depuis_token(token)
+    if not client:
+        return render_template('desinscription.html', etat='invalide')
+    if not client.email_opt_out:
+        client.email_opt_out = True
+        db.session.commit()
+    return render_template('desinscription.html', etat='out', token=token)
+
+
+@app.route('/reabonnement/<token>')
+def reabonnement(token):
+    client = _client_depuis_token(token)
+    if not client:
+        return render_template('desinscription.html', etat='invalide')
+    if client.email_opt_out:
+        client.email_opt_out = False
+        db.session.commit()
+    return render_template('desinscription.html', etat='in', token=token)
+
+
 # ── Codes de réduction ──────────────────────────────────────────
 @app.route('/dashboard/codes/ajouter', methods=['POST'])
 @login_required
@@ -1005,11 +1072,11 @@ def client_nouveau(token):
             db.session.commit()
         if is_new:
             logo_html = f'<img src="{resto.logo_data}" alt="{resto.name}" style="height:56px;object-fit:contain;margin-bottom:16px">' if resto.logo_data else f'<div style="font-size:1.4rem;font-weight:700;margin-bottom:16px">{resto.name}</div>'
-            send_email(
+            envoyer_email_client(
+                client, resto,
                 subject=f'Bienvenue chez {resto.name} 🎉',
-                recipients=[email],
                 body_text=f"Bonjour {first_name},\n\nTu es inscrit(e) au programme de fidélité de {resto.name}.\nGagne {resto.points_per_visit} points à chaque visite et obtiens {resto.reward_description} dès {resto.reward_threshold} points.\n\nÀ bientôt !",
-                body_html=hera_email(f"""
+                content_html=f"""
                     {f'<div style="text-align:center;margin-bottom:20px">{logo_html}</div>' if resto.logo_data else ''}
                     <h2 style="font-size:1.2rem;margin-bottom:8px">Bienvenue, {first_name} 👋</h2>
                     <p style="color:#555;line-height:1.6">Tu es inscrit(e) au programme de fidélité de <strong>{resto.name}</strong>.</p>
@@ -1018,7 +1085,7 @@ def client_nouveau(token):
                         <div>🎁 <strong>{resto.reward_description}</strong> dès <strong>{resto.reward_threshold} points</strong></div>
                     </div>
                     <p style="color:#555;line-height:1.6">Présente simplement ton email à la caisse pour valider tes visites.</p>
-                """)
+                """,
             )
 
         resp = make_response(redirect(url_for('client_commander', token=token, email=email)))
