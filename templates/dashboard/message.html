@@ -16,8 +16,22 @@
         {% else %}
 
         <div class="alert alert-info">
-            Ce message sera envoyé à <strong>{{ clients|length }} client(s)</strong> :
-            {{ clients|map(attribute='first_name')|join(', ') }}.
+            Ce message sera envoyé à <strong>{{ abonnes|length }} client(s) abonné(s)</strong>.
+            {% if abonnes|length < clients|length %}
+            <br><small>{{ clients|length - abonnes|length }} client(s) désinscrit(s) ne seront pas contactés.</small>
+            {% endif %}
+        </div>
+
+        <div class="alert {{ 'alert-secondary' if envois_restants else 'alert-warning' }} d-flex align-items-center gap-2">
+            <span style="font-size:1.2rem">{{ '📨' if envois_restants else '🚦' }}</span>
+            <div style="font-size:0.9rem">
+                {% if envois_restants %}
+                    Il vous reste <strong>{{ envois_restants }}</strong> envoi(s) groupé(s) cette semaine
+                    (max {{ max_semaine }}/semaine, 1/jour) — pour préserver vos clients du spam.
+                {% else %}
+                    Limite hebdomadaire atteinte ({{ max_semaine }} envois/semaine). Réessayez dans quelques jours.
+                {% endif %}
+            </div>
         </div>
 
         {% if not config.MAIL_USERNAME %}
@@ -45,8 +59,9 @@
                         <small class="text-muted">Ton nom ({{ current_user.name }}) sera ajouté automatiquement en signature.</small>
                     </div>
                     <button type="submit" class="btn btn-dark w-100 fw-bold"
-                            onclick="return confirm('Envoyer ce message à {{ clients|length }} client(s) ?')">
-                        Envoyer à {{ clients|length }} client(s)
+                            {{ 'disabled' if not envois_restants else '' }}
+                            onclick="return confirm('Envoyer ce message à {{ abonnes|length }} client(s) ?')">
+                        {{ 'Limite hebdomadaire atteinte' if not envois_restants else 'Envoyer à %d client(s)'|format(abonnes|length) }}
                     </button>
                 </form>
             </div>

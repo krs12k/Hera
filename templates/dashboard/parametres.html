@@ -156,6 +156,16 @@
                             Il reçoit sa progression vers la récompense, et un email de félicitations dès qu'il l'atteint. Cela fait revenir vos clients.
                         </div>
                     </div>
+                    <div class="form-check form-switch mb-3">
+                        <input type="checkbox" class="form-check-input" role="switch" id="weeklyDigest"
+                               name="weekly_digest" {{ 'checked' if current_user.weekly_digest else '' }}>
+                        <label class="form-check-label" for="weeklyDigest">
+                            M'envoyer un récapitulatif chaque semaine
+                        </label>
+                        <div class="text-muted" style="font-size:0.85rem">
+                            Un email hebdomadaire avec vos nouveaux clients, visites et clients à relancer.
+                        </div>
+                    </div>
 
                     <button type="submit" class="btn hera-btn-gold w-100 fw-bold">Enregistrer</button>
                 </form>

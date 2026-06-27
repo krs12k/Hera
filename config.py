@@ -56,3 +56,7 @@ class Config:
     # Mot de passe admin : jamais de valeur connue en production.
     ADMIN_PASSWORD = _require('ADMIN_PASSWORD', os.environ.get('ADMIN_PASSWORD'),
                               'hera-admin-local')
+
+    # Secret protégeant l'endpoint cron (récap hebdo). Si absent, l'endpoint
+    # est désactivé (403) — aucun envoi automatique tant qu'il n'est pas défini.
+    CRON_SECRET = os.environ.get('CRON_SECRET')

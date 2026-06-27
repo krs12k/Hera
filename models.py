@@ -30,6 +30,9 @@ class Restaurant(UserMixin, db.Model):
     # Emails automatiques aux clients (points gagnés / récompense atteinte)
     notify_clients = db.Column(db.Boolean, default=True)
 
+    # Récapitulatif hebdomadaire envoyé au restaurateur
+    weekly_digest = db.Column(db.Boolean, default=True)
+
     # Onboarding (checklist de démarrage du dashboard)
     onboarding_configured = db.Column(db.Boolean, default=False)  # a enregistré ses paramètres
     qr_seen = db.Column(db.Boolean, default=False)                # a ouvert sa page QR code
@@ -156,6 +159,18 @@ class SubscriptionPromoCode(db.Model):
             n = self.duration_in_months or 0
             return f"{n} mois"
         return self.duration
+
+
+class EmailCampaign(db.Model):
+    """Journal des envois manuels vers les clients (message groupé ou relance).
+    Sert à limiter la fréquence pour éviter le spam."""
+    __tablename__ = 'email_campaigns'
+
+    id = db.Column(db.Integer, primary_key=True)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'), nullable=False)
+    kind = db.Column(db.String(20), nullable=False)   # 'message' | 'relance'
+    recipients = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Report(db.Model):

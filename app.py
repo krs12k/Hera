@@ -8,7 +8,7 @@ from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from models import db, Restaurant, Client, Visit, PointRule, AdminUser, Report, DiscountCode, SubscriptionPromoCode
+from models import db, Restaurant, Client, Visit, PointRule, AdminUser, Report, DiscountCode, SubscriptionPromoCode, EmailCampaign
 from config import Config, IS_PRODUCTION
 from datetime import datetime, timedelta
 from functools import wraps
@@ -88,6 +88,7 @@ with app.app_context():
         # Restos déjà existants : considérés comme onboardés (DEFAULT TRUE).
         "ALTER TABLE restaurants ADD COLUMN onboarding_configured BOOLEAN DEFAULT TRUE",
         "ALTER TABLE restaurants ADD COLUMN qr_seen BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE restaurants ADD COLUMN weekly_digest BOOLEAN DEFAULT TRUE",
     ]:
         try:
             with db.engine.connect() as conn:
@@ -299,6 +300,39 @@ def clients_a_relancer(resto_id):
     return eligibles
 
 
+# Limites anti-spam : envois manuels groupés vers les clients (messages + relances).
+CAMPAGNE_MAX_JOUR = 1       # campagnes par 24 h
+CAMPAGNE_MAX_SEMAINE = 3    # campagnes par 7 jours
+
+
+def campagnes_recentes(resto_id, jours):
+    depuis = datetime.utcnow() - timedelta(days=jours)
+    return EmailCampaign.query.filter(
+        EmailCampaign.restaurant_id == resto_id,
+        EmailCampaign.created_at >= depuis,
+    ).count()
+
+
+def quota_campagne(resto_id):
+    """Renvoie (autorisé: bool, message_si_refus: str|None)."""
+    if campagnes_recentes(resto_id, 1) >= CAMPAGNE_MAX_JOUR:
+        return False, ("Vous avez déjà contacté vos clients aujourd'hui. "
+                       "Patientez 24 h pour ne pas les solliciter trop souvent.")
+    if campagnes_recentes(resto_id, 7) >= CAMPAGNE_MAX_SEMAINE:
+        return False, (f"Limite atteinte : {CAMPAGNE_MAX_SEMAINE} envois groupés maximum "
+                       f"par semaine, pour protéger vos clients du spam.")
+    return True, None
+
+
+def envois_restants_semaine(resto_id):
+    return max(0, CAMPAGNE_MAX_SEMAINE - campagnes_recentes(resto_id, 7))
+
+
+def enregistrer_campagne(resto_id, kind, recipients):
+    db.session.add(EmailCampaign(restaurant_id=resto_id, kind=kind, recipients=recipients))
+    db.session.commit()
+
+
 def envoyer_relance(client, resto):
     """Email « vous nous manquez » à un client inactif."""
     seuil = resto.reward_threshold or 0
@@ -344,6 +378,72 @@ def envoyer_relance(client, resto):
             <p style="color:#555;line-height:1.6;text-align:center">On serait ravis de vous revoir très bientôt. À très vite !</p>
         """,
     )
+
+
+def envoyer_recap_hebdo(resto):
+    """Email récapitulatif des 7 derniers jours au restaurateur.
+    Renvoie True si un email a été envoyé."""
+    if not getattr(resto, 'weekly_digest', True):
+        return False
+    if not resto.can_access or not resto.email:
+        return False
+    total_clients = Client.query.filter_by(restaurant_id=resto.id).count()
+    if total_clients == 0:
+        return False  # compte vide : rien à raconter
+
+    now = datetime.utcnow()
+    semaine = now - timedelta(days=7)
+    nouveaux = Client.query.filter_by(restaurant_id=resto.id)\
+        .filter(Client.created_at >= semaine).count()
+    visites = Visit.query.filter_by(restaurant_id=resto.id)\
+        .filter(Visit.created_at >= semaine).count()
+    points = db.session.query(func.sum(Visit.points_earned))\
+        .filter(Visit.restaurant_id == resto.id, Visit.created_at >= semaine).scalar() or 0
+    a_relancer = len(clients_a_relancer(resto.id))
+
+    dashboard_url = url_for('dashboard', _external=True)
+    relance_html = ''
+    relance_text = ''
+    if a_relancer:
+        relance_html = (
+            f'<div style="background:#fff4f7;border:1px solid #f2c4d4;border-radius:12px;padding:16px;margin:8px 0 4px;text-align:center">'
+            f'<strong style="color:#c43c66">{a_relancer} client{"s" if a_relancer > 1 else ""} à relancer</strong>'
+            f'<div style="color:#a06; font-size:0.85rem">Pas revenus depuis plus de 30 jours — un email peut les faire revenir.</div></div>'
+        )
+        relance_text = f"\n⚠️ {a_relancer} client(s) à relancer (pas revenus depuis 30 j+)."
+
+    def stat_html(valeur, libelle):
+        return (f'<td style="text-align:center;padding:8px">'
+                f'<div style="font-size:1.8rem;font-weight:800;color:#1a1a2e">{valeur}</div>'
+                f'<div style="font-size:0.78rem;color:#888">{libelle}</div></td>')
+
+    send_email(
+        subject=f'📊 Votre semaine chez {resto.name}',
+        recipients=[resto.email],
+        body_text=(
+            f"Bonjour,\n\nVoici votre récap des 7 derniers jours sur hera. :\n\n"
+            f"• {nouveaux} nouveau(x) client(s)\n"
+            f"• {visites} visite(s) validée(s)\n"
+            f"• {points} points distribués\n"
+            f"• {total_clients} clients au total"
+            f"{relance_text}\n\n"
+            f"Voir mon dashboard : {dashboard_url}\n\n— L'équipe hera."
+        ),
+        body_html=hera_email(f"""
+            <h2 style="font-size:1.2rem;margin:0 0 4px;text-align:center">Votre semaine en bref 📊</h2>
+            <p style="color:#888;text-align:center;margin:0 0 18px;font-size:0.9rem">{resto.name} — 7 derniers jours</p>
+            <table width="100%" style="background:#f8f9fa;border-radius:12px;margin-bottom:8px"><tr>
+                {stat_html(nouveaux, 'Nouveaux clients')}
+                {stat_html(visites, 'Visites')}
+                {stat_html(points, 'Points')}
+            </tr></table>
+            {relance_html}
+            <div style="text-align:center;margin-top:22px">
+                <a href="{dashboard_url}" style="display:inline-block;padding:12px 26px;background:#1BBFB2;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">Voir mon dashboard</a>
+            </div>
+        """)
+    )
+    return True
 
 
 def subscription_required(f):
@@ -647,11 +747,17 @@ def relancer_inactifs():
         flash('Sélectionne au moins un client à relancer.', 'warning')
         return redirect(url_for('statistiques'))
 
+    autorise, msg = quota_campagne(current_user.id)
+    if not autorise:
+        flash(msg, 'warning')
+        return redirect(url_for('statistiques'))
+
     now = datetime.utcnow()
     for client in cibles:
         envoyer_relance(client, current_user)
         client.last_relance_at = now
     db.session.commit()
+    enregistrer_campagne(current_user.id, 'relance', len(cibles))
 
     flash(f'Relance envoyée à {len(cibles)} client(s) inactif(s) ! 📨', 'success')
     return redirect(url_for('statistiques'))
@@ -737,6 +843,7 @@ def parametres():
         current_user.phone = request.form.get('phone', '')
         current_user.point_mode = request.form.get('point_mode', 'simple')
         current_user.notify_clients = request.form.get('notify_clients') == 'on'
+        current_user.weekly_digest = request.form.get('weekly_digest') == 'on'
         current_user.points_per_visit = int(request.form['points_per_visit'])
         current_user.reward_threshold = int(request.form['reward_threshold'])
         current_user.reward_description = request.form['reward_description']
@@ -790,6 +897,8 @@ def supprimer_logo():
 def envoyer_message():
     clients = Client.query.filter_by(restaurant_id=current_user.id).all()
 
+    abonnes = [c for c in clients if not c.email_opt_out]
+
     if request.method == 'POST':
         sujet = request.form['sujet']
         contenu = request.form['contenu']
@@ -798,13 +907,22 @@ def envoyer_message():
             flash('Aucun client inscrit pour le moment.', 'warning')
             return redirect(url_for('envoyer_message'))
 
+        autorise, msg = quota_campagne(current_user.id)
+        if not autorise:
+            flash(msg, 'warning')
+            return redirect(url_for('envoyer_message'))
+
         api_key = os.environ.get('BREVO_API_KEY') or os.environ.get('MAIL_PASSWORD')
         sender = os.environ.get('MAIL_DEFAULT_SENDER') or os.environ.get('MAIL_USERNAME')
         if not api_key or not sender:
             flash('Email non configuré. Vérifie BREVO_API_KEY sur Render.', 'danger')
             return redirect(url_for('envoyer_message'))
 
-        destinataires = [c.email for c in clients]
+        # On n'écrit jamais aux clients désinscrits (RGPD).
+        destinataires = [c.email for c in abonnes]
+        if not destinataires:
+            flash('Aucun client abonné aux emails pour le moment.', 'warning')
+            return redirect(url_for('envoyer_message'))
         resto_email = current_user.email
         resto_name = current_user.name
         resto_logo = current_user.logo_data
@@ -841,11 +959,14 @@ def envoyer_message():
 
         import threading
         threading.Thread(target=_envoyer, daemon=True).start()
+        enregistrer_campagne(current_user.id, 'message', len(destinataires))
         flash(f'Message en cours d\'envoi à {len(destinataires)} client(s) !', 'success')
 
         return redirect(url_for('envoyer_message'))
 
-    return render_template('dashboard/message.html', clients=clients)
+    return render_template('dashboard/message.html', clients=clients, abonnes=abonnes,
+                           envois_restants=envois_restants_semaine(current_user.id),
+                           max_semaine=CAMPAGNE_MAX_SEMAINE)
 
 
 # ── Règles de points ────────────────────────────────────────────
@@ -1307,6 +1428,26 @@ def stripe_webhook():
             db.session.commit()
 
     return '', 200
+
+
+# ── Cron : récap hebdomadaire aux restaurateurs ─────────────────
+@app.route('/cron/recap-hebdo', methods=['GET', 'POST'])
+@csrf.exempt
+def cron_recap_hebdo():
+    secret = app.config.get('CRON_SECRET')
+    fourni = request.args.get('secret') or request.headers.get('X-Cron-Secret')
+    if not secret or fourni != secret:
+        return '', 403
+
+    envoyes = 0
+    for resto in Restaurant.query.all():
+        try:
+            if envoyer_recap_hebdo(resto):
+                envoyes += 1
+        except Exception:
+            app.logger.exception(f"Recap hebdo échoué pour resto {resto.id}")
+    app.logger.info(f"Recap hebdo : {envoyes} email(s) envoyé(s).")
+    return {'envoyes': envoyes}, 200
 
 
 # ── Admin — Login ────────────────────────────────────────────────
