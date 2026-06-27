@@ -426,20 +426,30 @@ def dashboard():
 @login_required
 @subscription_required
 def statistiques():
-    # Visites par jour sur 30 jours
-    thirty_days_ago = datetime.utcnow() - timedelta(days=29)
+    now = datetime.utcnow()
+    thirty_days_ago = now - timedelta(days=29)        # pour les 30 colonnes du graphe
+    inactif_seuil = now - timedelta(days=30)          # limite "client à risque"
+
+    # Visites + inscriptions par jour sur 30 jours
     all_visits = Visit.query.filter_by(restaurant_id=current_user.id)\
         .filter(Visit.created_at >= thirty_days_ago).all()
-
     visits_by_day = defaultdict(int)
     for v in all_visits:
         visits_by_day[v.created_at.strftime('%d/%m')] += 1
 
-    labels, data = [], []
+    new_clients = Client.query.filter_by(restaurant_id=current_user.id)\
+        .filter(Client.created_at >= thirty_days_ago).all()
+    new_by_day = defaultdict(int)
+    for c in new_clients:
+        if c.created_at:
+            new_by_day[c.created_at.strftime('%d/%m')] += 1
+
+    labels, data, data_inscriptions = [], [], []
     for i in range(30):
         day = (thirty_days_ago + timedelta(days=i)).strftime('%d/%m')
         labels.append(day)
         data.append(visits_by_day.get(day, 0))
+        data_inscriptions.append(new_by_day.get(day, 0))
 
     # Stats globales
     total_visits = Visit.query.filter_by(restaurant_id=current_user.id).count()
@@ -447,22 +457,60 @@ def statistiques():
     total_points = db.session.query(func.sum(Visit.points_earned))\
         .filter(Visit.restaurant_id == current_user.id).scalar() or 0
 
-    first_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0)
+    first_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     visits_this_month = Visit.query.filter_by(restaurant_id=current_user.id)\
         .filter(Visit.created_at >= first_of_month).count()
+    new_clients_month = Client.query.filter_by(restaurant_id=current_user.id)\
+        .filter(Client.created_at >= first_of_month).count()
 
     clients_rewarded = Client.query.filter(
         Client.restaurant_id == current_user.id,
         Client.total_points >= current_user.reward_threshold
     ).count()
 
+    # Dernier passage + nombre de visites par client (une requête agrégée)
+    agg = db.session.query(
+        Visit.client_id.label('cid'),
+        func.max(Visit.created_at).label('last_seen'),
+        func.count(Visit.id).label('nb'),
+    ).filter(Visit.restaurant_id == current_user.id)\
+     .group_by(Visit.client_id).subquery()
+
+    rows = db.session.query(Client, agg.c.last_seen, agg.c.nb)\
+        .outerjoin(agg, Client.id == agg.c.cid)\
+        .filter(Client.restaurant_id == current_user.id).all()
+
+    clients_actifs = 0          # vus dans les 30 derniers jours
+    avec_visite = 0             # ont au moins 1 visite
+    recurrents = 0              # ont au moins 2 visites
+    a_risque = []               # ont déjà visité mais pas depuis 30 j+
+    for client, last_seen, nb in rows:
+        nb = nb or 0
+        if nb >= 1:
+            avec_visite += 1
+        if nb >= 2:
+            recurrents += 1
+        if last_seen and last_seen >= inactif_seuil:
+            clients_actifs += 1
+        elif last_seen:
+            a_risque.append({'client': client, 'last_seen': last_seen,
+                             'days': (now - last_seen).days})
+
+    a_risque.sort(key=lambda x: x['last_seen'])   # les plus anciens d'abord
+    clients_a_risque_count = len(a_risque)
+    a_risque = a_risque[:10]
+    taux_retour = round(recurrents * 100 / avec_visite) if avec_visite else 0
+
     top_clients = Client.query.filter_by(restaurant_id=current_user.id)\
         .order_by(Client.total_points.desc()).limit(5).all()
 
     return render_template('dashboard/stats.html',
-        labels=labels, data=data,
+        labels=labels, data=data, data_inscriptions=data_inscriptions,
         total_visits=total_visits, total_clients=total_clients,
         total_points=total_points, visits_this_month=visits_this_month,
+        new_clients_month=new_clients_month, clients_actifs=clients_actifs,
+        taux_retour=taux_retour, clients_a_risque=a_risque,
+        clients_a_risque_count=clients_a_risque_count,
         clients_rewarded=clients_rewarded, top_clients=top_clients
     )
 

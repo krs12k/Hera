@@ -2,133 +2,279 @@
 {% block title %}Statistiques — {{ current_user.name }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Statistiques</h2>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark btn-sm">← Retour</a>
+{% set jamais_venus = [total_clients - clients_actifs - clients_a_risque_count, 0]|max %}
+{% set palette = ['#1BBFB2','#E1A948','#7C6FF0','#F2789F','#3DBE78','#5B8DEF','#F2994A','#9B59B6'] %}
+
+<div class="stats-head d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0 fw-bold">Statistiques</h2>
+        <p class="text-muted mb-0" style="font-size:0.9rem">Suivez la fidélité de vos clients en un coup d'œil</p>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3">← Retour</a>
 </div>
 
 <!-- Chiffres clés -->
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center p-3 h-100">
-            <div class="fs-1 fw-bold" style="color:var(--turquoise)">{{ total_clients }}</div>
-            <div class="text-muted" style="font-size:0.85rem">Clients inscrits</div>
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card" style="animation-delay:.02s">
+            <div class="stat-icon" style="background:rgba(27,191,178,.14)">👥</div>
+            <div class="stat-value">{{ total_clients }}</div>
+            <div class="stat-label">Clients inscrits</div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center p-3 h-100">
-            <div class="fs-1 fw-bold" style="color:var(--turquoise)">{{ total_visits }}</div>
-            <div class="text-muted" style="font-size:0.85rem">Visites totales</div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card" style="animation-delay:.06s">
+            <div class="stat-icon" style="background:rgba(124,111,240,.14)">📲</div>
+            <div class="stat-value">{{ total_visits }}</div>
+            <div class="stat-label">Visites totales</div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center p-3 h-100">
-            <div class="fs-1 fw-bold" style="color:var(--turquoise)">{{ visits_this_month }}</div>
-            <div class="text-muted" style="font-size:0.85rem">Visites ce mois</div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card" style="animation-delay:.10s">
+            <div class="stat-icon" style="background:rgba(225,169,72,.16)">⭐</div>
+            <div class="stat-value">{{ total_points }}</div>
+            <div class="stat-label">Points distribués</div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center p-3 h-100">
-            <div class="fs-1 fw-bold" style="color:var(--turquoise)">{{ clients_rewarded }}</div>
-            <div class="text-muted" style="font-size:0.85rem">Récompenses disponibles</div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card" style="animation-delay:.14s">
+            <div class="stat-icon" style="background:rgba(61,190,120,.16)">🎁</div>
+            <div class="stat-value">{{ clients_rewarded }}</div>
+            <div class="stat-label">Récompenses dispo</div>
         </div>
     </div>
 </div>
 
-<!-- Graphique visites -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body p-4">
-        <h5 class="fw-bold mb-1">Visites des 30 derniers jours</h5>
-        <p class="text-muted mb-3" style="font-size:0.85rem">{{ total_points }} points distribués au total</p>
-        <canvas id="chartVisites" height="100"></canvas>
+<!-- Engagement -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card" style="animation-delay:.18s">
+            <div class="stat-icon" style="background:rgba(91,141,239,.14)">✨</div>
+            <div class="stat-value">{{ new_clients_month }}</div>
+            <div class="stat-label">Nouveaux ce mois</div>
+        </div>
     </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card" style="animation-delay:.22s">
+            <div class="stat-icon" style="background:rgba(61,190,120,.16)">🔥</div>
+            <div class="stat-value text-success">{{ clients_actifs }}</div>
+            <div class="stat-label">Clients actifs (30 j)</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card {{ 'stat-alert' if clients_a_risque_count else '' }}" style="animation-delay:.26s">
+            <div class="stat-icon" style="background:rgba(242,120,159,.16)">💤</div>
+            <div class="stat-value {{ 'text-danger' if clients_a_risque_count else '' }}">{{ clients_a_risque_count }}</div>
+            <div class="stat-label">Clients à risque</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card" style="animation-delay:.30s">
+            <div class="stat-icon" style="background:rgba(27,191,178,.14)">🔄</div>
+            <div class="stat-value" style="color:var(--turquoise)">{{ taux_retour }}%</div>
+            <div class="stat-label">Taux de retour</div>
+        </div>
+    </div>
+</div>
+
+<!-- Graphe + répartition -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="stat-panel h-100">
+            <div class="d-flex justify-content-between align-items-start mb-1 flex-wrap gap-2">
+                <div>
+                    <h5 class="fw-bold mb-0">Activité des 30 derniers jours</h5>
+                    <p class="text-muted mb-0" style="font-size:0.85rem">Visites validées & nouvelles inscriptions</p>
+                </div>
+                <div class="d-flex gap-3 align-items-center" style="font-size:0.8rem">
+                    <span><span class="legend-dot" style="background:#1BBFB2"></span>Visites</span>
+                    <span><span class="legend-dot" style="background:#1a1a2e"></span>Nouveaux</span>
+                </div>
+            </div>
+            <canvas id="chartVisites" height="115"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="stat-panel h-100 text-center">
+            <h5 class="fw-bold mb-1">Vos clients</h5>
+            <p class="text-muted mb-2" style="font-size:0.85rem">Répartition par activité</p>
+            <div class="donut-wrap">
+                <canvas id="chartDonut"></canvas>
+                <div class="donut-center">
+                    <div class="donut-total">{{ total_clients }}</div>
+                    <div class="donut-sub">clients</div>
+                </div>
+            </div>
+            <div class="d-flex flex-column gap-1 mt-3" style="font-size:0.85rem">
+                <div class="d-flex justify-content-between"><span><span class="legend-dot" style="background:#3DBE78"></span>Actifs</span><strong>{{ clients_actifs }}</strong></div>
+                <div class="d-flex justify-content-between"><span><span class="legend-dot" style="background:#F2789F"></span>À risque</span><strong>{{ clients_a_risque_count }}</strong></div>
+                <div class="d-flex justify-content-between"><span><span class="legend-dot" style="background:#d9dbe3"></span>Jamais venus</span><strong>{{ jamais_venus }}</strong></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clients à risque -->
+<div class="stat-panel mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-1">
+        <h5 class="fw-bold mb-0">💤 Clients à risque</h5>
+        {% if clients_a_risque_count %}<span class="badge rounded-pill bg-danger">{{ clients_a_risque_count }}</span>{% endif %}
+    </div>
+    <p class="text-muted mb-3" style="font-size:0.85rem">
+        Déjà venus mais pas revenus depuis plus de 30 jours — un petit message peut les faire revenir.
+    </p>
+    {% if clients_a_risque %}
+    <div class="table-responsive">
+        <table class="table table-borderless align-middle mb-0 stat-table">
+            <tbody>
+                {% for item in clients_a_risque %}
+                <tr>
+                    <td style="width:48px">
+                        <span class="avatar" style="background:{{ palette[loop.index0 % palette|length] }}">{{ item.client.first_name[:1]|upper }}</span>
+                    </td>
+                    <td><strong>{{ item.client.first_name }}</strong><div class="text-muted small">{{ item.client.email }}</div></td>
+                    <td><span class="pill pill-amber">{{ item.client.total_points }} pts</span></td>
+                    <td class="text-end">
+                        <span class="pill {{ 'pill-red' if item.days >= 60 else 'pill-grey' }}">il y a {{ item.days }} j</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if clients_a_risque_count > clients_a_risque|length %}
+    <p class="text-muted text-center mt-2 mb-0" style="font-size:0.82rem">… et {{ clients_a_risque_count - clients_a_risque|length }} autre(s).</p>
+    {% endif %}
+    {% else %}
+    <p class="text-muted text-center py-3 mb-0">Aucun client à risque — vos clients reviennent régulièrement. 🎉</p>
+    {% endif %}
 </div>
 
 <!-- Top clients -->
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-4">
-        <h5 class="fw-bold mb-3">Top 5 clients les plus fidèles</h5>
-        {% if top_clients %}
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>#</th>
-                        <th>Client</th>
-                        <th>Email</th>
-                        <th>Points</th>
-                        <th>Progression</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for client in top_clients %}
-                    {% set progression = [((client.total_points / current_user.reward_threshold) * 100)|int, 100]|min %}
-                    <tr>
-                        <td>
-                            {% if loop.index == 1 %}🥇
-                            {% elif loop.index == 2 %}🥈
-                            {% elif loop.index == 3 %}🥉
-                            {% else %}{{ loop.index }}
-                            {% endif %}
-                        </td>
-                        <td><strong>{{ client.first_name }}</strong></td>
-                        <td class="text-muted">{{ client.email }}</td>
-                        <td>
-                            <span class="badge bg-warning text-dark fs-6">{{ client.total_points }} pts</span>
-                            {% if client.total_points >= current_user.reward_threshold %}
-                                <span class="badge bg-success ms-1">🎁</span>
-                            {% endif %}
-                        </td>
-                        <td style="min-width:120px">
-                            <div class="progress" style="height:8px">
-                                <div class="progress-bar" style="width:{{ progression }}%;background:var(--turquoise)"></div>
+<div class="stat-panel">
+    <h5 class="fw-bold mb-3">🏆 Top 5 clients les plus fidèles</h5>
+    {% if top_clients %}
+    <div class="table-responsive">
+        <table class="table table-borderless align-middle mb-0 stat-table">
+            <tbody>
+                {% for client in top_clients %}
+                {% set progression = [((client.total_points / current_user.reward_threshold) * 100)|int, 100]|min %}
+                <tr>
+                    <td style="width:42px" class="text-center fs-5">
+                        {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}<span class="text-muted">{{ loop.index }}</span>{% endif %}
+                    </td>
+                    <td style="width:48px">
+                        <span class="avatar" style="background:{{ palette[loop.index0 % palette|length] }}">{{ client.first_name[:1]|upper }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ client.first_name }}</strong>
+                        {% if client.total_points >= current_user.reward_threshold %}<span class="ms-1">🎁</span>{% endif %}
+                        <div class="text-muted small">{{ client.email }}</div>
+                    </td>
+                    <td style="min-width:160px">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height:8px;border-radius:99px">
+                                <div class="progress-bar" style="width:{{ progression }}%;background:linear-gradient(90deg,#1BBFB2,#3DBE78)"></div>
                             </div>
-                            <small class="text-muted">{{ progression }}%</small>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="text-muted text-center py-3">Aucun client encore inscrit.</p>
-        {% endif %}
+                            <span class="pill pill-amber">{{ client.total_points }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    {% else %}
+    <p class="text-muted text-center py-3 mb-0">Aucun client encore inscrit.</p>
+    {% endif %}
 </div>
+
+<style>
+.stats-head h2{letter-spacing:-.5px}
+.stat-card{
+    background:#fff;border-radius:18px;padding:1.3rem 1.4rem;height:100%;
+    box-shadow:0 4px 18px rgba(26,26,46,.06);
+    transition:transform .22s ease, box-shadow .22s ease;
+    opacity:0;animation:cardIn .5s ease forwards;
+}
+.stat-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(26,26,46,.13)}
+.stat-card.stat-alert{box-shadow:0 4px 18px rgba(242,120,159,.20)}
+.stat-icon{
+    width:46px;height:46px;border-radius:13px;display:flex;align-items:center;
+    justify-content:center;font-size:1.35rem;margin-bottom:.85rem
+}
+.stat-value{font-size:2rem;font-weight:800;line-height:1;color:#1a1a2e;letter-spacing:-1px}
+.stat-label{color:#8a8a9a;font-size:.83rem;margin-top:.35rem;font-weight:500}
+.stat-panel{background:#fff;border-radius:18px;padding:1.5rem;box-shadow:0 4px 18px rgba(26,26,46,.06)}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.donut-wrap{position:relative;max-width:210px;margin:0 auto}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.donut-total{font-size:1.9rem;font-weight:800;color:#1a1a2e;line-height:1}
+.donut-sub{font-size:.78rem;color:#8a8a9a}
+.avatar{
+    display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;
+    border-radius:50%;color:#fff;font-weight:700;font-size:.95rem
+}
+.stat-table tr{border-bottom:1px solid #f1f2f6}
+.stat-table tr:last-child{border-bottom:none}
+.pill{display:inline-block;padding:.28rem .65rem;border-radius:99px;font-size:.78rem;font-weight:600}
+.pill-amber{background:rgba(225,169,72,.16);color:#b07d1d}
+.pill-red{background:rgba(242,120,159,.16);color:#c43c66}
+.pill-grey{background:#eef0f4;color:#7a7f8c}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const ctx = document.getElementById('chartVisites').getContext('2d')
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: {{ labels | tojson }},
-        datasets: [{
-            label: 'Visites',
-            data: {{ data | tojson }},
-            backgroundColor: 'rgba(27, 191, 178, 0.25)',
-            borderColor: '#1BBFB2',
-            borderWidth: 2,
-            borderRadius: 6,
+const tooltipStyle = {
+    backgroundColor:'#1a1a2e', padding:12, cornerRadius:10,
+    titleFont:{weight:'600'}, bodyFont:{size:13}, displayColors:true, boxPadding:4
+}
+
+// ── Activité (aires dégradées) ──
+const cv = document.getElementById('chartVisites').getContext('2d')
+const gradV = cv.createLinearGradient(0,0,0,300)
+gradV.addColorStop(0,'rgba(27,191,178,.38)'); gradV.addColorStop(1,'rgba(27,191,178,0)')
+new Chart(cv, {
+    type:'line',
+    data:{
+        labels:{{ labels | tojson }},
+        datasets:[
+            { label:'Visites', data:{{ data | tojson }}, borderColor:'#1BBFB2',
+              backgroundColor:gradV, borderWidth:2.5, fill:true, tension:.4,
+              pointRadius:0, pointHoverRadius:5, pointHoverBackgroundColor:'#1BBFB2', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
+            { label:'Nouveaux clients', data:{{ data_inscriptions | tojson }}, borderColor:'#1a1a2e',
+              backgroundColor:'#1a1a2e', borderWidth:2, fill:false, tension:.4,
+              borderDash:[5,4], pointRadius:0, pointHoverRadius:5 }
+        ]
+    },
+    options:{
+        responsive:true, maintainAspectRatio:true,
+        interaction:{mode:'index', intersect:false},
+        plugins:{ legend:{display:false}, tooltip:tooltipStyle },
+        scales:{
+            y:{beginAtZero:true, ticks:{stepSize:1, color:'#aab', font:{size:11}},
+               grid:{color:'#f2f3f7', drawTicks:false}, border:{display:false}},
+            x:{ticks:{maxTicksLimit:8, color:'#aab', font:{size:10}}, grid:{display:false}, border:{display:false}}
+        }
+    }
+})
+
+// ── Répartition clients (anneau) ──
+const dn = document.getElementById('chartDonut').getContext('2d')
+new Chart(dn, {
+    type:'doughnut',
+    data:{
+        labels:['Actifs','À risque','Jamais venus'],
+        datasets:[{
+            data:[{{ clients_actifs }}, {{ clients_a_risque_count }}, {{ jamais_venus }}],
+            backgroundColor:['#3DBE78','#F2789F','#d9dbe3'],
+            borderWidth:0, hoverOffset:6
         }]
     },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: { stepSize: 1 },
-                grid: { color: '#f0f0f0' }
-            },
-            x: {
-                grid: { display: false },
-                ticks: {
-                    maxTicksLimit: 10,
-                    font: { size: 11 }
-                }
-            }
-        }
+    options:{
+        responsive:true, cutout:'72%',
+        plugins:{ legend:{display:false}, tooltip:tooltipStyle }
     }
 })
 </script>
