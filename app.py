@@ -17,6 +17,8 @@ import qrcode
 import io
 import base64
 import time
+import queue
+import threading
 import secrets
 import string
 import csv
@@ -159,7 +161,70 @@ def hera_email(content_html):
   </table>
 </body></html>"""
 
+# ── File d'attente d'emails ─────────────────────────────────────
+# Tous les emails passent par une file en mémoire consommée par UN seul
+# worker : envoi en série (fini la rafale d'un thread par email vers Brevo),
+# léger throttle entre deux envois, et retries automatiques sur échec
+# transitoire. Remplace l'ancien « un thread par email » qui perdait
+# définitivement l'email au premier pépin réseau.
+#
+# Limite connue : file en mémoire → un redéploiement Render perd les emails
+# encore en attente. Acceptable au volume actuel ; passer à une file en base
+# (table EmailOutbox) le jour où la fiabilité doit être garantie à 100 %.
+_BREVO_URL = "https://api.brevo.com/v3/smtp/email"
+_email_queue = queue.Queue()
+
+
+def _brevo_post(payload, tentatives=3):
+    """Envoie un payload à Brevo avec retries + backoff exponentiel.
+    Ne réessaie pas sur une erreur définitive (4xx hors 429 rate-limit)."""
+    api_key = os.environ.get('BREVO_API_KEY') or os.environ.get('MAIL_PASSWORD')
+    if not api_key:
+        app.logger.warning("Brevo API key manquante — email non envoyé")
+        return
+    import requests as req
+    headers = {"api-key": api_key, "Content-Type": "application/json"}
+    for essai in range(1, tentatives + 1):
+        try:
+            resp = req.post(_BREVO_URL, headers=headers, json=payload, timeout=15)
+            resp.raise_for_status()
+            app.logger.info(f"Email envoyé via Brevo : {resp.status_code}")
+            return
+        except Exception as e:
+            statut = getattr(getattr(e, 'response', None), 'status_code', None)
+            # 4xx (adresse invalide, payload refusé…) = définitif → inutile de réessayer.
+            if statut and 400 <= statut < 500 and statut != 429:
+                app.logger.error(f"Email rejeté par Brevo ({statut}) — pas de retry : {e}")
+                return
+            if essai == tentatives:
+                app.logger.error(f"Email abandonné après {tentatives} tentatives : {e}")
+                return
+            time.sleep(2 ** essai)  # backoff : 2s puis 4s
+
+
+def _email_worker():
+    """Consomme la file d'emails en série, pour toute la vie du process."""
+    while True:
+        payload = _email_queue.get()
+        try:
+            _brevo_post(payload)
+        except Exception:
+            app.logger.exception("Erreur inattendue dans le worker email")
+        finally:
+            _email_queue.task_done()
+            time.sleep(0.35)  # throttle léger vers Brevo entre deux envois
+
+
+threading.Thread(target=_email_worker, daemon=True, name='email-worker').start()
+
+
+def enfiler_email(payload):
+    """Place un payload Brevo (déjà construit) dans la file d'envoi."""
+    _email_queue.put(payload)
+
+
 def send_email(subject, recipients, body_text, body_html=None):
+    """Construit un email simple et le place dans la file d'envoi."""
     api_key = os.environ.get('BREVO_API_KEY') or os.environ.get('MAIL_PASSWORD')
     sender = os.environ.get('MAIL_DEFAULT_SENDER') or os.environ.get('MAIL_USERNAME')
     if not api_key or not sender:
@@ -174,23 +239,7 @@ def send_email(subject, recipients, body_text, body_html=None):
     }
     if body_html:
         payload["htmlContent"] = body_html
-
-    def _send():
-        try:
-            import requests as req
-            resp = req.post(
-                "https://api.brevo.com/v3/smtp/email",
-                headers={"api-key": api_key, "Content-Type": "application/json"},
-                json=payload,
-                timeout=15
-            )
-            resp.raise_for_status()
-            app.logger.info(f"Email envoyé via Brevo API : {resp.status_code}")
-        except Exception as e:
-            app.logger.error(f"Erreur Brevo API : {e}")
-
-    import threading
-    threading.Thread(target=_send, daemon=True).start()
+    enfiler_email(payload)
 
 
 def _unsub_serializer():
@@ -997,36 +1046,21 @@ def envoyer_message():
 
         logo_html = f'<img src="{resto_logo}" alt="{resto_name}" style="height:48px;object-fit:contain;margin-bottom:16px">' if resto_logo else f'<strong>{resto_name}</strong>'
 
-        def _envoyer():
-            try:
-                import requests as req
-                html = f"""<div style="font-family:Inter,sans-serif;max-width:520px;margin:auto;padding:32px 24px;color:#1a1a2e">
-                    <div style="text-align:center;margin-bottom:24px">{logo_html}</div>
-                    <p style="line-height:1.7;white-space:pre-line">{contenu}</p>
-                    <hr style="margin:24px 0;border:none;border-top:1px solid #eee">
-                    <p style="font-size:0.85rem;color:#999">— {resto_name}</p>
-                </div>"""
-                payload = {
-                    "sender": {"email": sender},
-                    "to": [{"email": resto_email}],
-                    "bcc": [{"email": e} for e in destinataires],
-                    "subject": f'[{resto_name}] {sujet}',
-                    "textContent": f'{contenu}\n\n— {resto_name}',
-                    "htmlContent": html,
-                }
-                resp = req.post(
-                    "https://api.brevo.com/v3/smtp/email",
-                    headers={"api-key": api_key, "Content-Type": "application/json"},
-                    json=payload,
-                    timeout=15
-                )
-                resp.raise_for_status()
-                app.logger.info(f"Message envoyé à {len(destinataires)} clients : {resp.status_code}")
-            except Exception as e:
-                app.logger.error(f"Erreur envoi message clients : {e}")
-
-        import threading
-        threading.Thread(target=_envoyer, daemon=True).start()
+        html = f"""<div style="font-family:Inter,sans-serif;max-width:520px;margin:auto;padding:32px 24px;color:#1a1a2e">
+            <div style="text-align:center;margin-bottom:24px">{logo_html}</div>
+            <p style="line-height:1.7;white-space:pre-line">{contenu}</p>
+            <hr style="margin:24px 0;border:none;border-top:1px solid #eee">
+            <p style="font-size:0.85rem;color:#999">— {resto_name}</p>
+        </div>"""
+        # Un seul envoi groupé en BCC, placé dans la file (avec retries).
+        enfiler_email({
+            "sender": {"email": sender},
+            "to": [{"email": resto_email}],
+            "bcc": [{"email": e} for e in destinataires],
+            "subject": f'[{resto_name}] {sujet}',
+            "textContent": f'{contenu}\n\n— {resto_name}',
+            "htmlContent": html,
+        })
         enregistrer_campagne(current_user.id, 'message', len(destinataires))
         flash(f'Message en cours d\'envoi à {len(destinataires)} client(s) !', 'success')
 
