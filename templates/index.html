@@ -51,8 +51,8 @@
     <div class="col-md-6 d-none d-md-block ps-md-3 mt-4 mt-md-0">
         <div class="position-relative">
             <div class="rounded-4 overflow-hidden shadow-lg position-relative" style="height:500px">
-                <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=75"
-                     alt="Restaurant belge"
+                <img src="{{ url_for('static', filename='img/resto-hero.webp') }}"
+                     alt="Restaurant belge" decoding="async" fetchpriority="high"
                      style="width:100%;height:100%;object-fit:cover">
                 <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.4) 0%,transparent 55%)"></div>
                 <div class="position-absolute bottom-0 start-0 p-3" style="color:rgba(255,255,255,0.7);font-size:0.72rem;letter-spacing:0.3px">
@@ -91,8 +91,8 @@
 
 <!-- ── Strip atmosphérique ────────────────────────────────────── -->
 <div class="position-relative overflow-hidden rounded-4 my-5" style="height:200px">
-    <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1600&q=60"
-         alt="" style="width:100%;height:100%;object-fit:cover;object-position:center 55%">
+    <img src="{{ url_for('static', filename='img/resto-strip.webp') }}"
+         alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:center 55%">
     <div style="position:absolute;inset:0;background:linear-gradient(100deg,rgba(27,191,178,0.88) 0%,rgba(19,153,142,0.75) 100%)"></div>
     <div class="position-absolute top-50 start-50 translate-middle text-white text-center px-4" style="width:100%">
         <div class="fw-bold mb-1 strip-text" style="font-size:1.35rem;letter-spacing:-0.4px">
@@ -101,6 +101,97 @@
         <div class="d-none d-sm-block" style="opacity:0.88;font-size:0.95rem">{{ t.index_strip_sub }}</div>
     </div>
 </div>
+
+<!-- ── Aperçu du vrai tableau de bord ─────────────────────────── -->
+<div class="text-center mb-4">
+    <span class="section-eyebrow">{% if lang == 'nl' %}Het echte product{% else %}Le vrai produit{% endif %}</span>
+    <h2 class="fw-bold">{% if lang == 'nl' %}Uw dashboard, in het echt{% else %}Votre tableau de bord, en vrai{% endif %}</h2>
+    <p class="text-muted">{% if lang == 'nl' %}Geen schermen vol opties. Eén overzicht: uw klanten, hun punten, één klik om een bezoek te valideren.{% else %}Pas d'usine à gaz. Un seul écran : vos clients, leurs points, un clic pour valider une visite.{% endif %}</p>
+</div>
+
+<div class="browser-mock mb-2">
+    <div class="browser-bar">
+        <span class="browser-dot" style="background:#ff5f57"></span>
+        <span class="browser-dot" style="background:#febc2e"></span>
+        <span class="browser-dot" style="background:#28c840"></span>
+        <span class="browser-url">🔒 hera.be/dashboard</span>
+    </div>
+    <div class="browser-body">
+
+        <!-- En-tête -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="mock-logo">🍴</span>
+                <span class="fw-bold" style="font-size:1.05rem">{% if lang == 'nl' %}Hallo, Chez Marie 👋{% else %}Bonjour, Chez Marie 👋{% endif %}</span>
+            </div>
+            <div class="d-flex gap-1">
+                <span class="mock-btn">📊</span>
+                <span class="mock-btn">⚙️</span>
+                <span class="mock-btn mock-btn-gold">📱 QR</span>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row g-2 g-sm-3 mb-3">
+            <div class="col-4">
+                <div class="mock-stat">
+                    <div class="mock-stat-val" style="color:var(--turquoise)">47</div>
+                    <div class="mock-stat-lbl">{% if lang == 'nl' %}Klanten{% else %}Clients{% endif %}</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="mock-stat">
+                    <div class="mock-stat-val" style="color:var(--turquoise)">213</div>
+                    <div class="mock-stat-lbl">{% if lang == 'nl' %}Bezoeken{% else %}Visites{% endif %}</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="mock-stat">
+                    <div class="mock-stat-val" style="color:var(--dark)">10€</div>
+                    <div class="mock-stat-lbl">{% if lang == 'nl' %}Min. aankoop{% else %}Min. achat{% endif %}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bandeau récompense -->
+        <div class="mock-reward mb-3">
+            <strong>{% if lang == 'nl' %}Beloning:{% else %}Récompense :{% endif %}</strong>
+            {% if lang == 'nl' %}Een gratis dessert vanaf <strong>10 punten</strong> — <strong>1 pt</strong> per gevalideerd bezoek{% else %}Un dessert offert à partir de <strong>10 points</strong> — <strong>1 pt</strong> par visite validée{% endif %}
+        </div>
+
+        <!-- Tableau clients -->
+        <div class="mock-table">
+            <div class="mock-row mock-head">
+                <span>{% if lang == 'nl' %}Voornaam{% else %}Prénom{% endif %}</span>
+                <span>Points</span>
+                <span class="d-none d-sm-block">{% if lang == 'nl' %}Voortgang{% else %}Progression{% endif %}</span>
+                <span class="text-end">Actions</span>
+            </div>
+            {% set mock_clients = [
+                {'n':'Sophie','p':9,'pct':90,'r':true},
+                {'n':'Karim','p':6,'pct':60,'r':false},
+                {'n':'Léa','p':4,'pct':40,'r':false},
+                {'n':'Tom','p':2,'pct':20,'r':false}
+            ] %}
+            {% for c in mock_clients %}
+            <div class="mock-row">
+                <span class="fw-semibold">{{ c.n }} {% if c.r %}🎁{% endif %}</span>
+                <span><span class="mock-pts">{{ c.p }} pts</span></span>
+                <span class="d-none d-sm-block">
+                    <span class="mock-prog"><span class="mock-prog-fill" style="width:{{ c.pct }}%"></span></span>
+                </span>
+                <span class="text-end">
+                    <span class="mock-validate">✔ {% if lang == 'nl' %}Valideren{% else %}Valider{% endif %}</span>
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+<p class="text-center text-muted mb-5" style="font-size:0.8rem">
+    {% if lang == 'nl' %}Voorbeeld ter illustratie — uw echte dashboard ziet er net zo uit.{% else %}Aperçu à titre d'illustration — votre vrai tableau de bord ressemble exactement à ça.{% endif %}
+</p>
 
 <!-- ── Carte de fidélité réinventée (carte à tampons) ─────────── -->
 <div class="stamp-showcase p-4 p-md-5 my-5">
@@ -200,7 +291,7 @@
     <div class="carousel-inner">
         <div class="carousel-item active">
             <div class="slide-media">
-                <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=70" alt="">
+                <img src="{{ url_for('static', filename='img/resto-hero.webp') }}" alt="" loading="lazy" decoding="async">
                 <div class="slide-overlay">
                     <span class="slide-step">1</span>
                     <h3 class="slide-title">{{ t.index_step1_title }}</h3>
@@ -210,7 +301,7 @@
         </div>
         <div class="carousel-item">
             <div class="slide-media">
-                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=70" alt="">
+                <img src="{{ url_for('static', filename='img/resto-step2.webp') }}" alt="" loading="lazy" decoding="async">
                 <div class="slide-overlay">
                     <span class="slide-step">2</span>
                     <h3 class="slide-title">{{ t.index_step2_title }}</h3>
@@ -220,7 +311,7 @@
         </div>
         <div class="carousel-item">
             <div class="slide-media">
-                <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1200&q=70" alt="">
+                <img src="{{ url_for('static', filename='img/resto-strip.webp') }}" alt="" loading="lazy" decoding="async">
                 <div class="slide-overlay">
                     <span class="slide-step">3</span>
                     <h3 class="slide-title">{{ t.index_step3_title }}</h3>
@@ -230,7 +321,7 @@
         </div>
         <div class="carousel-item">
             <div class="slide-media">
-                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=70" alt="">
+                <img src="{{ url_for('static', filename='img/resto-step4.webp') }}" alt="" loading="lazy" decoding="async">
                 <div class="slide-overlay">
                     <span class="slide-step">★</span>
                     <h3 class="slide-title">{% if lang == 'nl' %}Uw klant komt terug{% else %}Votre client revient{% endif %}</h3>
@@ -284,8 +375,8 @@
 
 <!-- ── CTA final avec image de fond ──────────────────────────── -->
 <div class="position-relative overflow-hidden rounded-4 mb-5 text-white text-center" style="min-height:280px">
-    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1600&q=65"
-         alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 60%">
+    <img src="{{ url_for('static', filename='img/resto-step4.webp') }}"
+         alt="" loading="lazy" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 60%">
     <div style="position:absolute;inset:0;background:rgba(26,26,46,0.78)"></div>
     <div class="position-relative py-5 px-3">
         <h2 class="fw-bold mb-2">{{ t.index_cta_title }}</h2>
@@ -301,6 +392,60 @@
 @keyframes floatCard {
     0%, 100% { transform: translateY(0px); }
     50%       { transform: translateY(-6px); }
+}
+
+/* ── Maquette navigateur du dashboard ── */
+.browser-mock{
+    max-width:760px;margin:0 auto;border-radius:14px;overflow:hidden;
+    box-shadow:0 24px 60px -18px rgba(26,26,46,.35);border:1px solid #e7e9ef;background:#fff;
+}
+.browser-bar{
+    display:flex;align-items:center;gap:7px;padding:10px 14px;
+    background:#f3f4f7;border-bottom:1px solid #e7e9ef;
+}
+.browser-dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+.browser-url{
+    margin-left:12px;font-size:.78rem;color:#8a8f9c;background:#fff;
+    padding:3px 12px;border-radius:20px;border:1px solid #e7e9ef;
+}
+.browser-body{padding:18px 18px 22px}
+.mock-logo{
+    width:34px;height:34px;border-radius:8px;background:var(--turquoise-light);
+    display:inline-flex;align-items:center;justify-content:center;font-size:1.05rem;
+}
+.mock-btn{
+    display:inline-flex;align-items:center;font-size:.78rem;padding:5px 9px;
+    border-radius:7px;border:1px solid #e2e4ea;color:#555;background:#fff;
+}
+.mock-btn-gold{background:var(--gold);color:#fff;border-color:var(--gold);font-weight:600}
+.mock-stat{
+    border:1px solid #eceef3;border-radius:12px;padding:12px 6px;text-align:center;background:#fff;
+}
+.mock-stat-val{font-weight:800;font-size:clamp(1.3rem,5vw,1.9rem);line-height:1.1}
+.mock-stat-lbl{font-size:.74rem;color:#8a8f9c;margin-top:2px}
+.mock-reward{
+    background:#fafbfc;border:1px solid #eceef3;border-radius:10px;
+    padding:10px 14px;font-size:.85rem;color:#444;
+}
+.mock-table{border:1px solid #eceef3;border-radius:12px;overflow:hidden}
+.mock-row{
+    display:grid;grid-template-columns:1.4fr .8fr 1.4fr 1fr;align-items:center;
+    gap:8px;padding:11px 14px;font-size:.86rem;border-top:1px solid #f1f2f5;
+}
+.mock-row:first-child{border-top:0}
+.mock-head{background:#f8f9fb;color:#8a8f9c;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px}
+.mock-pts{
+    background:#fff3cd;color:#7a5b00;font-weight:600;font-size:.78rem;
+    padding:2px 9px;border-radius:20px;white-space:nowrap;
+}
+.mock-prog{display:block;height:7px;border-radius:20px;background:#eceef3;overflow:hidden}
+.mock-prog-fill{display:block;height:100%;border-radius:20px;background:var(--gold)}
+.mock-validate{
+    background:#22a06b;color:#fff;font-size:.76rem;font-weight:600;
+    padding:4px 10px;border-radius:7px;white-space:nowrap;
+}
+@media (max-width:575px){
+    .mock-row{grid-template-columns:1.4fr .8fr 1fr}
 }
 </style>
 
