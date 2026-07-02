@@ -29,5 +29,8 @@ stripe==15.2.0
 # ── Divers ───────────────────────────────────────────────────
 requests==2.34.2
 
+# ── Suivi des erreurs en production ──────────────────────────
+sentry-sdk[flask]==2.64.0
+
 # ── Serveur de production ────────────────────────────────────
 gunicorn==26.0.0

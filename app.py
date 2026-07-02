@@ -23,6 +23,26 @@ import csv
 import stripe
 from itsdangerous import URLSafeSerializer, BadData
 
+# ── Suivi des erreurs (Sentry) ──────────────────────────────────
+# Actif uniquement si SENTRY_DSN est défini (donc silencieux en local,
+# actif en prod une fois la variable configurée dans Render).
+# Doit être initialisé AVANT la création de l'app Flask.
+SENTRY_DSN = os.environ.get('SENTRY_DSN')
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.flask import FlaskIntegration
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[FlaskIntegration()],
+        environment='production' if IS_PRODUCTION else 'development',
+        # RGPD : ne jamais transmettre de données personnelles (emails,
+        # IP, cookies) à Sentry. On veut la trace technique, pas le client.
+        send_default_pii=False,
+        # Échantillonnage des traces de performance : 0 = erreurs seulement
+        # (suffisant et économe en quota). Passe à 0.1 pour un peu d'APM.
+        traces_sample_rate=0.0,
+    )
+
 app = Flask(__name__)
 app.config.from_object(Config)
 
