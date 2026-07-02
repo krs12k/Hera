@@ -1,10 +1,11 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, session, make_response
 from translations import TRANSLATIONS
-from sqlalchemy import text, func
+from sqlalchemy import func, inspect as sa_inspect
 from collections import defaultdict
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mail import Mail, Message
+from flask_migrate import Migrate, upgrade as db_upgrade, stamp as db_stamp
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -26,6 +27,9 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 db.init_app(app)
+# render_as_batch : indispensable pour que les futures migrations de colonnes
+# (ALTER) fonctionnent sur SQLite en local, pas seulement sur Postgres en prod.
+migrate = Migrate(app, db, render_as_batch=True)
 mail = Mail(app)
 csrf = CSRFProtect(app)
 
@@ -75,27 +79,33 @@ def set_language(lang):
 def load_user(user_id):
     return Restaurant.query.get(int(user_id))
 
-with app.app_context():
-    db.create_all()
-    for sql in [
-        "ALTER TABLE restaurants ADD COLUMN point_mode VARCHAR(20) DEFAULT 'simple'",
-        "ALTER TABLE restaurants ADD COLUMN reset_token VARCHAR(100)",
-        "ALTER TABLE restaurants ADD COLUMN reset_token_expires TIMESTAMP",
-        "ALTER TABLE restaurants ADD COLUMN logo_data TEXT",
-        "ALTER TABLE restaurants ADD COLUMN notify_clients BOOLEAN DEFAULT TRUE",
-        "ALTER TABLE clients ADD COLUMN last_relance_at TIMESTAMP",
-        "ALTER TABLE clients ADD COLUMN email_opt_out BOOLEAN DEFAULT FALSE",
-        # Restos déjà existants : considérés comme onboardés (DEFAULT TRUE).
-        "ALTER TABLE restaurants ADD COLUMN onboarding_configured BOOLEAN DEFAULT TRUE",
-        "ALTER TABLE restaurants ADD COLUMN qr_seen BOOLEAN DEFAULT TRUE",
-        "ALTER TABLE restaurants ADD COLUMN weekly_digest BOOLEAN DEFAULT TRUE",
-    ]:
-        try:
-            with db.engine.connect() as conn:
-                conn.execute(text(sql))
-                conn.commit()
-        except Exception:
-            pass
+def init_database():
+    """Met la base au niveau du schéma courant via Alembic (Flask-Migrate).
+
+    Trois cas gérés automatiquement, sans intervention manuelle :
+      • Base vierge (nouveau déploiement / nouvelle machine) → `upgrade` crée
+        tout le schéma à partir des migrations.
+      • Base déjà peuplée mais antérieure à Alembic (l'ancien système
+        `ALTER TABLE` en prod) → on la « tamponne » (stamp) à la révision de
+        base, sans rien recréer, puis les migrations futures s'appliqueront.
+      • Base déjà suivie par Alembic → `upgrade` applique les migrations en
+        attente (no-op s'il n'y en a pas).
+    """
+    with app.app_context():
+        insp = sa_inspect(db.engine)
+        schema_existant = insp.has_table('restaurants')
+        deja_suivi = insp.has_table('alembic_version')
+        if schema_existant and not deja_suivi:
+            # Base pré-Alembic : le schéma correspond déjà aux modèles.
+            db_stamp()
+        else:
+            db_upgrade()
+
+
+# Sauté pendant les commandes `flask db …` (le dossier migrations/ peut être
+# en cours de génération) ; l'app applique les migrations au démarrage normal.
+if os.environ.get('SKIP_DB_INIT') != '1':
+    init_database()
 
 stripe.api_key = app.config.get('STRIPE_SECRET_KEY')
 
@@ -498,6 +508,44 @@ def tarifs():
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
+
+
+# ── SEO : robots.txt & sitemap.xml ──────────────────────────────
+# Pages publiques indexables (celles derrière login/token sont exclues).
+_PAGES_PUBLIQUES = [
+    'home', 'comment_ca_marche', 'pour_restaurateurs',
+    'tarifs', 'contact', 'mentions_legales', 'confidentialite',
+]
+
+
+@app.route('/robots.txt')
+def robots_txt():
+    lignes = [
+        'User-agent: *',
+        'Allow: /$',
+        # Espaces privés / à usage unique : pas d'indexation.
+        'Disallow: /dashboard',
+        'Disallow: /hera-admin',
+        'Disallow: /abonnement',
+        'Disallow: /rejoindre/',
+        'Disallow: /desinscription/',
+        'Disallow: /reinitialiser-mdp/',
+        '',
+        f'Sitemap: {url_for("sitemap_xml", _external=True)}',
+    ]
+    return app.response_class('\n'.join(lignes), mimetype='text/plain')
+
+
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    urls = ''.join(
+        f'  <url><loc>{url_for(ep, _external=True)}</loc></url>\n'
+        for ep in _PAGES_PUBLIQUES
+    )
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+           f'{urls}</urlset>\n')
+    return app.response_class(xml, mimetype='application/xml')
 
 
 # ── Inscription restaurateur ────────────────────────────────────
