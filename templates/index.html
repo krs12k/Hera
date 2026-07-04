@@ -174,14 +174,14 @@
                 {'n':'Tom','p':2,'pct':20,'r':false}
             ] %}
             {% for c in mock_clients %}
-            <div class="mock-row"{% if loop.first %} data-hero{% endif %}>
+            <div class="mock-row" data-pts="{{ c.p }}" data-max="10"{% if loop.first %} data-hero{% endif %}>
                 <span class="fw-semibold mock-name">{{ c.n }}<span class="mock-gift">{% if c.r %} 🎁{% endif %}</span></span>
                 <span><span class="mock-pts">{{ c.p }} pts</span></span>
                 <span class="d-none d-sm-block">
                     <span class="mock-prog"><span class="mock-prog-fill" style="width:{{ c.pct }}%" data-target="{{ c.pct }}"></span></span>
                 </span>
                 <span class="text-end">
-                    <span class="mock-validate">✔ {% if lang == 'nl' %}Valideren{% else %}Valider{% endif %}</span>
+                    <span class="mock-validate" role="button" tabindex="0" aria-label="{% if lang == 'nl' %}Bezoek valideren{% else %}Valider une visite{% endif %}">✔ {% if lang == 'nl' %}Valideren{% else %}Valider{% endif %}</span>
                 </span>
             </div>
             {% endfor %}
@@ -189,9 +189,13 @@
 
     </div>
 </div>
+<p class="text-center mb-1" data-mock-hint style="font-size:0.9rem;color:var(--turquoise);font-weight:600;display:none">
+    👆 {% if lang == 'nl' %}Klik op « Valideren » om zelf punten toe te voegen{% else %}Cliquez sur « Valider » pour ajouter des points vous-même{% endif %}
+</p>
 <p class="text-center text-muted mb-5" style="font-size:0.8rem">
     {% if lang == 'nl' %}Voorbeeld ter illustratie — uw echte dashboard ziet er net zo uit.{% else %}Aperçu à titre d'illustration — votre vrai tableau de bord ressemble exactement à ça.{% endif %}
 </p>
+{# masqué si prefers-reduced-motion ou pas de JS : voir script en bas #}
 
 <!-- ── Carte de fidélité réinventée (carte à tampons) ─────────── -->
 <div class="stamp-showcase p-4 p-md-5 my-5">
@@ -454,11 +458,18 @@
 .mock-row.is-active{background:#f0fbfa}
 .mock-pts{transition:transform .3s ease}
 .mock-row.is-active .mock-pts{transform:scale(1.12)}
-.mock-validate{transition:transform .15s ease, box-shadow .15s ease}
+.mock-validate{
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    cursor:pointer;user-select:none;touch-action:manipulation;
+}
+.mock-interactive .mock-validate:hover{background:#1c8f5f}
+.mock-validate:active{transform:scale(.93)}
+.mock-validate:focus-visible{outline:2px solid #22a06b;outline-offset:2px}
 .mock-validate.pulse{
     transform:scale(1.08);
     box-shadow:0 0 0 4px rgba(34,160,107,.18);
 }
+.mock-row.maxed{background:#f0fbfa}
 .mock-name{position:relative}
 .plus-one{
     position:absolute;left:100%;margin-left:6px;top:50%;
@@ -487,14 +498,98 @@
     var mock = document.querySelector('.browser-mock');
     if (!mock) return;
 
-    // Respecte la préférence système : on laisse l'état statique (barres
-    // pleines, chiffres finaux) sans aucune animation.
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var fills = mock.querySelectorAll('.mock-prog-fill');
     var stats = mock.querySelectorAll('[data-count]');
+    var rows = mock.querySelectorAll('.mock-row[data-pts]');
+    var reward = mock.querySelector('.mock-reward');
+    var visitesEl = stats[1] || null;   // 2e compteur = « Visites »
+    var hint = document.querySelector('[data-mock-hint]');
 
-    // État de départ : barres vides, compteurs à zéro (JS actif uniquement).
+    var userActed = false;   // passe à true au 1er clic → coupe l'auto-démo
+    var autoTimer = null;
+
+    // ── État d'une ligne (points → texte, barre, récompense) ──
+    function setRow(row, pts) {
+        var max = parseInt(row.dataset.max, 10) || 10;
+        row.dataset.pts = pts;
+        row.querySelector('.mock-pts').textContent = pts + ' pts';
+        row.querySelector('.mock-prog-fill').style.width = Math.min(pts / max * 100, 100) + '%';
+        row.classList.toggle('maxed', pts >= max);
+        var gift = row.querySelector('.mock-gift');
+        if (pts >= max) {
+            if (!gift.textContent) { gift.textContent = ' 🎁'; gift.classList.add('pop'); }
+        } else {
+            gift.textContent = ''; gift.classList.remove('pop');
+        }
+    }
+
+    function floatPlus(row) {
+        var name = row.querySelector('.mock-name');
+        var plus = name.querySelector('.plus-one');
+        if (!plus) {
+            plus = document.createElement('span');
+            plus.className = 'plus-one';
+            plus.textContent = '+1 pt';
+            name.appendChild(plus);
+        }
+        plus.classList.remove('show'); void plus.offsetWidth; plus.classList.add('show');
+    }
+
+    function flashReward() {
+        reward.classList.add('flash');
+        setTimeout(function () { reward.classList.remove('flash'); }, 1200);
+    }
+
+    // ── Un clic/tap sur « Valider » : ajoute un point (ou utilise la récompense) ──
+    function validate(row) {
+        var max = parseInt(row.dataset.max, 10) || 10;
+        var pts = parseInt(row.dataset.pts, 10) || 0;
+        var btn = row.querySelector('.mock-validate');
+        btn.classList.add('pulse');
+        setTimeout(function () { btn.classList.remove('pulse'); }, 300);
+
+        if (pts >= max) {            // récompense atteinte → on l'utilise, carte remise à zéro
+            flashReward();
+            setRow(row, 0);
+            return;
+        }
+        pts++;
+        setRow(row, pts);
+        floatPlus(row);
+        if (visitesEl) visitesEl.textContent = (parseInt(visitesEl.textContent, 10) || 0) + 1;
+        if (pts >= max) flashReward();
+    }
+
+    function onInteract(row) {
+        if (!userActed) {
+            userActed = true;                 // 1er clic : on coupe l'auto-démo…
+            if (autoTimer) clearInterval(autoTimer);
+            var hero = mock.querySelector('[data-hero]');
+            hero.classList.remove('is-active');
+            reward.classList.remove('flash');
+            setRow(hero, parseInt(hero.dataset.base, 10));   // …et on nettoie la ligne héros
+        }
+        validate(row);
+    }
+
+    rows.forEach(function (row) {
+        row.dataset.base = row.dataset.pts;   // mémorise le point de départ
+        var btn = row.querySelector('.mock-validate');
+        btn.addEventListener('click', function () { onInteract(row); });
+        btn.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onInteract(row); }
+        });
+    });
+
+    // Interactivité toujours dispo ; l'invite n'apparaît que si le JS tourne.
+    mock.classList.add('mock-interactive');
+    if (hint) hint.style.display = 'block';
+
+    // ── Sans animation demandée : état statique, mais cliquable ──
+    if (reduce) return;
+
+    // État de départ animé : barres vides, compteurs à zéro.
     fills.forEach(function (f) { f.style.width = '0%'; });
     stats.forEach(function (s) { s.textContent = '0'; });
 
@@ -523,49 +618,37 @@
         requestAnimationFrame(step);
     }
 
-    // Boucle « héros » : Sophie passe de 9 à 10 points et débloque sa récompense.
+    // Auto-démo « héros » (Sophie 9→10→🎁), jusqu'au premier clic de l'utilisateur.
     function startHeroLoop() {
+        if (userActed) return;
         var row = mock.querySelector('[data-hero]');
         if (!row) return;
         var pts = row.querySelector('.mock-pts');
         var fill = row.querySelector('.mock-prog-fill');
-        var name = row.querySelector('.mock-name');
         var gift = row.querySelector('.mock-gift');
         var btn = row.querySelector('.mock-validate');
-        var reward = mock.querySelector('.mock-reward');
-        var plus = document.createElement('span');
-        plus.className = 'plus-one';
-        plus.textContent = '+1 pt';
-        name.appendChild(plus);
 
         function cycle() {
+            if (userActed) return;
             btn.classList.add('pulse');
             setTimeout(function () { btn.classList.remove('pulse'); }, 400);
-
-            plus.classList.remove('show'); void plus.offsetWidth; plus.classList.add('show');
-
+            floatPlus(row);
             row.classList.add('is-active');
             pts.textContent = '10 pts';
             fill.style.width = '100%';
-
             setTimeout(function () {
-                gift.textContent = ' 🎁';
-                gift.classList.add('pop');
-                reward.classList.add('flash');
+                if (userActed) return;
+                gift.textContent = ' 🎁'; gift.classList.add('pop'); reward.classList.add('flash');
             }, 700);
-
-            setTimeout(function () {          // reset pour reboucler
-                row.classList.remove('is-active');
-                gift.classList.remove('pop');
-                reward.classList.remove('flash');
-                pts.textContent = '9 pts';
-                fill.style.width = '90%';
-                setTimeout(function () { gift.textContent = ''; }, 400);
+            setTimeout(function () {
+                if (userActed) return;
+                row.classList.remove('is-active'); gift.classList.remove('pop'); reward.classList.remove('flash');
+                pts.textContent = '9 pts'; fill.style.width = '90%';
+                setTimeout(function () { if (!userActed) gift.textContent = ''; }, 400);
             }, 2600);
         }
-
         cycle();
-        setInterval(cycle, 5000);
+        autoTimer = setInterval(cycle, 5000);
     }
 })();
 </script>
