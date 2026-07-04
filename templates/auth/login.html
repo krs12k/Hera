@@ -12,11 +12,19 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label">{{ t.login_email }}</label>
-                        <input type="email" name="email" class="form-control" required>
+                        <input type="email" name="email" class="form-control" required
+                               autocomplete="email" inputmode="email" autocapitalize="none"
+                               spellcheck="false" autofocus>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">{{ t.login_password }}</label>
-                        <input type="password" name="password" class="form-control" required>
+                        <div class="input-group">
+                            <input type="password" name="password" class="form-control" required
+                                   autocomplete="current-password">
+                            <button class="btn btn-outline-secondary" type="button"
+                                    tabindex="-1" aria-label="Afficher le mot de passe"
+                                    onclick="togglePw(this)">👁</button>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-dark w-100">{{ t.login_btn }}</button>
                 </form>

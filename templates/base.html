@@ -171,6 +171,16 @@
         if (!localStorage.getItem('hera_cookies_ok')) {
             document.getElementById('cookie-banner').style.display = 'block';
         }
+
+        // Affiche / masque un champ mot de passe (bouton œil des formulaires).
+        function togglePw(btn) {
+            var input = btn.parentNode.querySelector('input');
+            if (!input) return;
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            btn.textContent = show ? '🙈' : '👁';
+            btn.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+        }
     </script>
 </body>
 </html>

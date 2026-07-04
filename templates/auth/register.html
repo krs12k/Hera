@@ -79,25 +79,35 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_name }} *</label>
-                        <input type="text" name="name" class="form-control" placeholder="{% if lang == 'nl' %}Bv: Bij Marie{% else %}Ex : Chez Marie{% endif %}" required>
+                        <input type="text" name="name" class="form-control" placeholder="{% if lang == 'nl' %}Bv: Bij Marie{% else %}Ex : Chez Marie{% endif %}"
+                               autocomplete="organization" autofocus required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_email }} *</label>
-                        <input type="email" name="email" class="form-control" placeholder="contact@mijnrestaurant.be" required>
+                        <input type="email" name="email" class="form-control" placeholder="contact@mijnrestaurant.be" required
+                               autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_password }} *</label>
-                        <input type="password" name="password" class="form-control" minlength="6"
-                               placeholder="{% if lang == 'nl' %}Minimum 6 tekens{% else %}6 caractères minimum{% endif %}" required>
+                        <div class="input-group">
+                            <input type="password" name="password" class="form-control" minlength="6"
+                                   placeholder="{% if lang == 'nl' %}Minimum 6 tekens{% else %}6 caractères minimum{% endif %}"
+                                   autocomplete="new-password" required>
+                            <button class="btn btn-outline-secondary" type="button"
+                                    tabindex="-1" aria-label="Afficher le mot de passe"
+                                    onclick="togglePw(this)">👁</button>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-7 mb-3">
-                            <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_address }}</label>
-                            <input type="text" name="address" class="form-control" placeholder="{% if lang == 'nl' %}Straat, stad{% else %}Rue, ville{% endif %}">
+                            <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_address }} <span class="text-muted fw-normal">({% if lang == 'nl' %}optioneel{% else %}facultatif{% endif %})</span></label>
+                            <input type="text" name="address" class="form-control" placeholder="{% if lang == 'nl' %}Straat, stad{% else %}Rue, ville{% endif %}"
+                                   autocomplete="street-address">
                         </div>
                         <div class="col-md-5 mb-3">
-                            <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_phone }}</label>
-                            <input type="tel" name="phone" class="form-control" placeholder="04…">
+                            <label class="form-label fw-semibold" style="font-size:0.88rem">{{ t.register_phone }} <span class="text-muted fw-normal">({% if lang == 'nl' %}optioneel{% else %}facultatif{% endif %})</span></label>
+                            <input type="tel" name="phone" class="form-control" placeholder="04…"
+                                   autocomplete="tel" inputmode="tel">
                         </div>
                     </div>
 
