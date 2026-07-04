@@ -135,13 +135,13 @@
         <div class="row g-2 g-sm-3 mb-3">
             <div class="col-4">
                 <div class="mock-stat">
-                    <div class="mock-stat-val" style="color:var(--turquoise)">47</div>
+                    <div class="mock-stat-val" style="color:var(--turquoise)" data-count="47">47</div>
                     <div class="mock-stat-lbl">{% if lang == 'nl' %}Klanten{% else %}Clients{% endif %}</div>
                 </div>
             </div>
             <div class="col-4">
                 <div class="mock-stat">
-                    <div class="mock-stat-val" style="color:var(--turquoise)">213</div>
+                    <div class="mock-stat-val" style="color:var(--turquoise)" data-count="213">213</div>
                     <div class="mock-stat-lbl">{% if lang == 'nl' %}Bezoeken{% else %}Visites{% endif %}</div>
                 </div>
             </div>
@@ -168,17 +168,17 @@
                 <span class="text-end">Actions</span>
             </div>
             {% set mock_clients = [
-                {'n':'Sophie','p':9,'pct':90,'r':true},
+                {'n':'Sophie','p':9,'pct':90,'r':false},
                 {'n':'Karim','p':6,'pct':60,'r':false},
                 {'n':'Léa','p':4,'pct':40,'r':false},
                 {'n':'Tom','p':2,'pct':20,'r':false}
             ] %}
             {% for c in mock_clients %}
-            <div class="mock-row">
-                <span class="fw-semibold">{{ c.n }} {% if c.r %}🎁{% endif %}</span>
+            <div class="mock-row"{% if loop.first %} data-hero{% endif %}>
+                <span class="fw-semibold mock-name">{{ c.n }}<span class="mock-gift">{% if c.r %} 🎁{% endif %}</span></span>
                 <span><span class="mock-pts">{{ c.p }} pts</span></span>
                 <span class="d-none d-sm-block">
-                    <span class="mock-prog"><span class="mock-prog-fill" style="width:{{ c.pct }}%"></span></span>
+                    <span class="mock-prog"><span class="mock-prog-fill" style="width:{{ c.pct }}%" data-target="{{ c.pct }}"></span></span>
                 </span>
                 <span class="text-end">
                     <span class="mock-validate">✔ {% if lang == 'nl' %}Valideren{% else %}Valider{% endif %}</span>
@@ -447,6 +447,127 @@
 @media (max-width:575px){
     .mock-row{grid-template-columns:1.4fr .8fr 1fr}
 }
+
+/* ── Animation de la maquette dashboard ── */
+.mock-prog-fill{transition:width 1.1s cubic-bezier(.22,.61,.36,1)}
+.mock-row{transition:background .3s ease}
+.mock-row.is-active{background:#f0fbfa}
+.mock-pts{transition:transform .3s ease}
+.mock-row.is-active .mock-pts{transform:scale(1.12)}
+.mock-validate{transition:transform .15s ease, box-shadow .15s ease}
+.mock-validate.pulse{
+    transform:scale(1.08);
+    box-shadow:0 0 0 4px rgba(34,160,107,.18);
+}
+.mock-name{position:relative}
+.plus-one{
+    position:absolute;left:100%;margin-left:6px;top:50%;
+    color:#22a06b;font-weight:700;font-size:.8rem;white-space:nowrap;
+    opacity:0;transform:translateY(-50%);pointer-events:none;
+}
+.plus-one.show{animation:plusOne 1.1s ease forwards}
+@keyframes plusOne{
+    0%{opacity:0;transform:translate(-4px,-50%)}
+    25%{opacity:1;transform:translate(0,-50%)}
+    100%{opacity:0;transform:translate(0,-140%)}
+}
+.mock-gift{display:inline-block}
+.mock-gift.pop{animation:giftPop .55s cubic-bezier(.18,.89,.32,1.28)}
+@keyframes giftPop{0%{transform:scale(0);opacity:0}60%{transform:scale(1.35)}100%{transform:scale(1);opacity:1}}
+.mock-reward.flash{animation:rewardFlash 1.2s ease}
+@keyframes rewardFlash{0%,100%{background:#fafbfc}35%{background:#e8f8f7;border-color:#1BBFB2}}
+
+@media (prefers-reduced-motion: reduce){
+    .mock-prog-fill{transition:none}
+}
 </style>
+
+<script>
+(function () {
+    var mock = document.querySelector('.browser-mock');
+    if (!mock) return;
+
+    // Respecte la préférence système : on laisse l'état statique (barres
+    // pleines, chiffres finaux) sans aucune animation.
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var fills = mock.querySelectorAll('.mock-prog-fill');
+    var stats = mock.querySelectorAll('[data-count]');
+
+    // État de départ : barres vides, compteurs à zéro (JS actif uniquement).
+    fills.forEach(function (f) { f.style.width = '0%'; });
+    stats.forEach(function (s) { s.textContent = '0'; });
+
+    var started = false;
+    function reveal() {
+        if (started) return;
+        started = true;
+        fills.forEach(function (f) { f.style.width = f.dataset.target + '%'; });
+        stats.forEach(countUp);
+        setTimeout(startHeroLoop, 1500);
+    }
+
+    if (!('IntersectionObserver' in window)) { reveal(); return; }
+    new IntersectionObserver(function (entries, obs) {
+        entries.forEach(function (e) { if (e.isIntersecting) { reveal(); obs.disconnect(); } });
+    }, { threshold: 0.35 }).observe(mock);
+
+    function countUp(el) {
+        var target = parseInt(el.dataset.count, 10) || 0, dur = 1200, t0 = null;
+        function step(ts) {
+            if (!t0) t0 = ts;
+            var p = Math.min((ts - t0) / dur, 1);
+            el.textContent = Math.round(p * target);
+            if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+
+    // Boucle « héros » : Sophie passe de 9 à 10 points et débloque sa récompense.
+    function startHeroLoop() {
+        var row = mock.querySelector('[data-hero]');
+        if (!row) return;
+        var pts = row.querySelector('.mock-pts');
+        var fill = row.querySelector('.mock-prog-fill');
+        var name = row.querySelector('.mock-name');
+        var gift = row.querySelector('.mock-gift');
+        var btn = row.querySelector('.mock-validate');
+        var reward = mock.querySelector('.mock-reward');
+        var plus = document.createElement('span');
+        plus.className = 'plus-one';
+        plus.textContent = '+1 pt';
+        name.appendChild(plus);
+
+        function cycle() {
+            btn.classList.add('pulse');
+            setTimeout(function () { btn.classList.remove('pulse'); }, 400);
+
+            plus.classList.remove('show'); void plus.offsetWidth; plus.classList.add('show');
+
+            row.classList.add('is-active');
+            pts.textContent = '10 pts';
+            fill.style.width = '100%';
+
+            setTimeout(function () {
+                gift.textContent = ' 🎁';
+                gift.classList.add('pop');
+                reward.classList.add('flash');
+            }, 700);
+
+            setTimeout(function () {          // reset pour reboucler
+                row.classList.remove('is-active');
+                gift.classList.remove('pop');
+                reward.classList.remove('flash');
+                pts.textContent = '9 pts';
+                fill.style.width = '90%';
+                setTimeout(function () { gift.textContent = ''; }, 400);
+            }, 2600);
+        }
+
+        cycle();
+        setInterval(cycle, 5000);
+    }
+})();
+</script>
 
 {% endblock %}
