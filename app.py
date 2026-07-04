@@ -69,6 +69,19 @@ def ratelimit_handler(e):
     flash('Trop de tentatives. Patiente une minute avant de réessayer.', 'danger')
     return redirect(request.referrer or url_for('home')), 429
 
+
+@app.errorhandler(404)
+def page_introuvable(e):
+    return render_template('errors/404.html'), 404
+
+
+@app.errorhandler(500)
+def erreur_serveur(e):
+    # Session potentiellement cassée par l'exception : on la remet à zéro
+    # pour que la page d'erreur puisse s'afficher sans planter à son tour.
+    db.session.rollback()
+    return render_template('errors/500.html'), 500
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Connecte-toi pour accéder à cette page.'

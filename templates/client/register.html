@@ -18,7 +18,8 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label fw-bold">{{ t.client_register_email }}</label>
-                        <input type="email" name="email" class="form-control form-control-lg" placeholder="exemple@email.com" required autofocus>
+                        <input type="email" name="email" class="form-control form-control-lg" placeholder="exemple@email.com" required autofocus
+                               inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false">
                     </div>
                     <button type="submit" class="btn hera-btn-gold btn-lg w-100 fw-bold">
                         {{ t.client_register_btn }} →

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}{% if lang == 'nl' %}Er ging iets mis{% else %}Une erreur est survenue{% endif %} — hera.{% endblock %}
+
+{% block content %}
+<div class="text-center py-5 my-5">
+    <div style="font-size:4rem;line-height:1">🛠️</div>
+    <h1 class="fw-bold mt-3" style="font-size:3rem;letter-spacing:-2px;color:var(--turquoise)">500</h1>
+    <h2 class="fw-bold mb-2" style="font-size:1.4rem">
+        {% if lang == 'nl' %}Er ging even iets mis{% else %}Quelque chose a mal tourné{% endif %}
+    </h2>
+    <p class="text-muted mb-4" style="max-width:440px;margin-left:auto;margin-right:auto">
+        {% if lang == 'nl' %}
+            Onze excuses — er trad een technisch probleem op. We zijn op de hoogte gebracht. Probeer het over enkele ogenblikken opnieuw.
+        {% else %}
+            Toutes nos excuses — un problème technique est survenu. Nous en avons été informés. Réessayez dans quelques instants.
+        {% endif %}
+    </p>
+    <a href="{{ url_for('home') }}" class="btn hera-btn-gold btn-lg fw-bold px-4">
+        {% if lang == 'nl' %}Terug naar de startpagina{% else %}Retour à l'accueil{% endif %}
+    </a>
+</div>
+{% endblock %}

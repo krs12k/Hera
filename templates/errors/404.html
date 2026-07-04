@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}{% if lang == 'nl' %}Pagina niet gevonden{% else %}Page introuvable{% endif %} — hera.{% endblock %}
+
+{% block content %}
+<div class="text-center py-5 my-5">
+    <div style="font-size:4rem;line-height:1">🍽️</div>
+    <h1 class="fw-bold mt-3" style="font-size:3rem;letter-spacing:-2px;color:var(--turquoise)">404</h1>
+    <h2 class="fw-bold mb-2" style="font-size:1.4rem">
+        {% if lang == 'nl' %}Deze pagina bestaat niet{% else %}Cette page n'existe pas{% endif %}
+    </h2>
+    <p class="text-muted mb-4" style="max-width:420px;margin-left:auto;margin-right:auto">
+        {% if lang == 'nl' %}
+            De link is misschien verouderd of verkeerd getypt. Geen zorgen, u vindt uw weg terug.
+        {% else %}
+            Le lien est peut-être périmé ou mal saisi. Pas d'inquiétude, on vous ramène en terrain connu.
+        {% endif %}
+    </p>
+    <a href="{{ url_for('home') }}" class="btn hera-btn-gold btn-lg fw-bold px-4">
+        {% if lang == 'nl' %}Terug naar de startpagina{% else %}Retour à l'accueil{% endif %}
+    </a>
+</div>
+{% endblock %}
